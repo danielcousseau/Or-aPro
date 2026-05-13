@@ -7,47 +7,33 @@ module.exports = {
     async login(req, res) {
         const { usuario, senha } = req.body;
 
-        console.log(`\n[DEBUG LOGIN] ------------------------`);
-        console.log(`1. Tentando logar com usuário: "${usuario}" e senha: "${senha}"`);
-
         try {
             // Busca o usuário no banco de dados
             let user = await prisma.user.findUnique({
                 where: { usuario }
             });
 
-            console.log(`2. Achou no banco de dados?`, user ? `SIM (ID: ${user.id})` : `NÃO`);
-
-            // --- INÍCIO DA CRIAÇÃO AUTOMÁTICA (SALVA-VIDAS) ---
-            // Se não achar o admin, ele cria na mesma hora e deixa logar!
-            if (!user && usuario === 'admin' && senha === 'ninguemsabe') {
-                console.log(`[SALVA-VIDAS] Criando o usuário admin automaticamente agora...`);
-                const hashPassword = await bcrypt.hash('ninguemsabe', 10);
-                user = await prisma.user.create({
-                    data: {
-                        name: 'Administrador',
-                        usuario: 'admin',
-                        password: hashPassword
-                    }
-                });
-                console.log(`[SALVA-VIDAS] Usuário criado com sucesso! ID: ${user.id}`);
-            }
-            // --- FIM DA CRIAÇÃO AUTOMÁTICA ---
-
             // Se não achou o usuário ou a senha estiver errada, bloqueia
             if (!user) {
+                // Retornamos 401 direto. A ambiguidade impede a enumeração de usuários por cibercriminosos.
                 return res.status(401).json({ error: 'Usuário ou senha inválidos' });
             }
 
             // Compara a senha digitada com a criptografia salva no banco
             const senhaValida = await bcrypt.compare(senha, user.password);
-            console.log(`3. A senha bateu com a criptografia?`, senhaValida ? `SIM` : `NÃO`);
             if (!senhaValida) {
                 return res.status(401).json({ error: 'Usuário ou senha inválidos' });
             }
 
-            // Se tudo estiver certo, gera o token real
-            const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'segredo_super_seguro_orcamento', {
+            // [SecOps] Fail-Secure: Garante que o sistema não emita tokens com base em um segredo previsível
+            const jwtSecret = process.env.JWT_SECRET;
+            if (!jwtSecret) {
+                console.error("CRÍTICO: Tentativa de login falhou porque JWT_SECRET não está configurado no .env");
+                return res.status(500).json({ error: 'Erro interno de configuração do servidor' });
+            }
+
+            // Gera o token real e seguro
+            const token = jwt.sign({ id: user.id }, jwtSecret, {
                 expiresIn: '1d', 
             });
 

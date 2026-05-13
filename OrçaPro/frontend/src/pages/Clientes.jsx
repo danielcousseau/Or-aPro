@@ -74,6 +74,28 @@ export default function Clientes() {
         }
     };
 
+    // Busca o CEP automaticamente na API pública do ViaCEP
+    const buscarCep = async (e) => {
+        const cepLimpo = e.target.value.replace(/\D/g, ''); // Limpa traços e pontos, deixando só números
+        
+        if (cepLimpo.length === 8) {
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+                const data = await response.json();
+
+                if (!data.erro) {
+                    setFormData(prev => ({
+                        ...prev,
+                        cidade: data.localidade || prev.cidade, // O ViaCEP chama cidade de "localidade"
+                        bairro: data.bairro || prev.bairro
+                    }));
+                }
+            } catch (error) {
+                console.error("Erro ao buscar informações do CEP:", error);
+            }
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -116,6 +138,18 @@ export default function Clientes() {
                 </section>
 
                 <section className="form-section">
+                    <label>CEP</label>
+                    <input 
+                        type="text" 
+                        name="cep" 
+                        value={formData.cep} 
+                        onChange={handleChange} 
+                        onBlur={buscarCep} /* Aciona a busca ao sair do campo */
+                        placeholder="Apenas números ou com traço" 
+                    />
+                </section>
+
+                <section className="form-section">
                     <label>Cidade</label>
                     <input type="text" name="cidade" value={formData.cidade} onChange={handleChange} />
                 </section>
@@ -128,11 +162,6 @@ export default function Clientes() {
                 <section className="form-section">
                     <label>Número</label>
                     <input type="text" name="numero" value={formData.numero} onChange={handleChange} />
-                </section>
-
-                <section className="form-section">
-                    <label>CEP</label>
-                    <input type="text" name="cep" value={formData.cep} onChange={handleChange} />
                 </section>
 
                 <section className="form-section">

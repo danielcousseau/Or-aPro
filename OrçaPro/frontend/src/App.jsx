@@ -23,7 +23,9 @@ function RotaProtegida({ children }) {
 function LayoutSistema({ children }) {
     const location = useLocation();
     const isLoginPage = location.pathname === '/login';
-
+    // [Correção] Adicionamos uma verificação para a rota de impressão.
+    // Qualquer URL que comece com /imprimir/ será considerada uma página de impressão.
+    const isPrintPage = location.pathname.startsWith('/imprimir/');
     // Puxa os dados do usuário do localStorage (se existirem)
     const userStorage = localStorage.getItem('@OrcaPro:user');
     const user = userStorage ? JSON.parse(userStorage) : null;
@@ -36,7 +38,9 @@ function LayoutSistema({ children }) {
 
     return (
         <>
-            {!isLoginPage && (
+            {/* [Correção] A condição agora exclui o layout para a página de login E para a de impressão.
+                Se não for a página de login E não for a página de impressão, mostra o layout. */}
+            {!isLoginPage && !isPrintPage && (
                 <>
                     {/* Topbar do Usuário (Elegante e Harmônica) */}
                     <div style={{ 
@@ -80,7 +84,8 @@ function LayoutSistema({ children }) {
                     <Menu />
                 </>
             )}
-            <main className={!isLoginPage ? "container" : ""}>
+            {/* [Correção] O container principal também só aplica a classe 'container' se não for login ou impressão. */}
+            <main className={!isLoginPage && !isPrintPage ? "container" : ""}>
                 {children}
             </main>
         </>

@@ -6,17 +6,45 @@ export default function ImprimirOrcamento() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [orc, setOrc] = useState(null);
+    const [erro, setErro] = useState(false);
 
     useEffect(() => {
-        api.get(`/orcamentos/${id}`).then(res => setOrc(res.data));
+        // [SecOps] Prevenção de falhas silenciosas. O frontend deve reagir se a API recusar o acesso ou falhar.
+        api.get(`/orcamentos/${id}`)
+            .then(res => setOrc(res.data))
+            .catch(err => {
+                console.error("Erro ao carregar orçamento para impressão:", err);
+                setErro(true);
+            });
     }, [id]);
 
-    if (!orc) return <p>Carregando orçamento...</p>;
+    // [Melhoria de UX] Altera o título da aba para definir o nome sugerido do PDF ao salvar.
+    useEffect(() => {
+        if (orc) {
+            const tituloOriginal = document.title; // Guarda o título antigo
+            // Formata o nome do arquivo, trocando espaços por underline (ex: Orcamento_12_Joao_da_Silva)
+            const nomeClienteFormatado = orc.cliente.nome.replace(/\s+/g, '_');
+            document.title = `Orcamento_${orc.id}_${nomeClienteFormatado}`;
+            
+            return () => { document.title = tituloOriginal; }; // Restaura ao sair da página
+        }
+    }, [orc]);
+
+    // [Arquitetura] Função segura para formatação financeira (evita bugs de ponto flutuante do JS)
+    const formatarMoeda = (valor) => {
+        return new Intl.NumberFormat('pt-BR', { 
+            style: 'currency', 
+            currency: 'BRL' 
+        }).format(valor || 0);
+    };
+
+    if (erro) return <p style={{ padding: '20px', color: '#e74c3c' }}>Erro ao carregar o orçamento. Verifique se ele existe ou se tem permissões de acesso.</p>;
+    if (!orc) return <p style={{ padding: '20px' }}>Carregando orçamento...</p>;
 
     return (
         <div className="print-container">
             {/* Botões que somem na hora de imprimir */}
-            <div className="no-print" style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+            <div className="no-print" style={{ marginBottom: '20px', display: 'flex', gap: '10px', padding: '20px' }}>
                 <button onClick={() => window.print()} style={{ background: '#27ae60' }}>🖨️ Imprimir / Salvar PDF</button>
                 <button onClick={() => navigate('/historico')} style={{ background: '#7f8c8d' }}>Voltar</button>
             </div>
@@ -63,8 +91,8 @@ export default function ImprimirOrcamento() {
                                 <tr key={i}>
                                     <td style={{ padding: '8px', border: '1px solid #ddd' }}>{m.nome}</td>
                                     <td style={{ padding: '8px', border: '1px solid #ddd' }}>{m.quantidade}</td>
-                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>R$ {m.valor.toFixed(2)}</td>
-                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>R$ {(m.valor * m.quantidade).toFixed(2)}</td>
+                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{formatarMoeda(m.valor)}</td>
+                                    <td style={{ padding: '8px', border: '1px solid #ddd' }}>{formatarMoeda(m.valor * m.quantidade)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -75,7 +103,7 @@ export default function ImprimirOrcamento() {
                     <div style={{ display: 'inline-block', minWidth: '250px', border: '2px solid #333', padding: '15px', borderRadius: '8px' }}>
                         <p style={{ margin: '5px 0' }}>Prazo: <strong>{orc.prazo || 'A combinar'}</strong></p>
                         <p style={{ margin: '5px 0' }}>Pagamento: <strong>{orc.pagamento || 'A combinar'}</strong></p>
-                        <h2 style={{ margin: '10px 0 0 0', color: '#27ae60' }}>Total: R$ {Number(orc.totalFinal).toFixed(2)}</h2>
+                        <h2 style={{ margin: '10px 0 0 0', color: '#27ae60' }}>Total: {formatarMoeda(orc.totalFinal)}</h2>
                     </div>
                 </section>
 
@@ -88,6 +116,10 @@ export default function ImprimirOrcamento() {
             {/* CSS específico para impressão */}
             <style>{`
                 @media print {
+                    @page { 
+                        size: A4; 
+                        margin: 0; /* Remove rodapés de impressão nativos do navegador */
+                    }
                     .no-print, .menu { display: none !important; }
                     body { background: white !important; }
                     .container { margin: 0 !important; padding: 0 !important; width: 100% !important; }
