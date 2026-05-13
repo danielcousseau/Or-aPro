@@ -70,6 +70,6 @@ Após iniciar o frontend e o backend, você será redirecionado para a tela de L
 - **Usuário:** `admin`
 - **Senha:** `ninguemsabe`
 
-## 📦 Tecnologias Utilizadas
+##  Tecnologias Utilizadas
 - **Frontend:** React, React Router Dom, Chart.js (Gráficos), Axios.
 - **Backend:** Node.js, Express, Prisma (ORM), Zod (Validação), JSON Web Token (Autenticação), BcryptJS (Criptografia).
