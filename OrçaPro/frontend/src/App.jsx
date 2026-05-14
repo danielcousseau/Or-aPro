@@ -8,6 +8,8 @@ import ImprimirOrcamento from './pages/ImprimirOrcamento';
 import Materiais from './pages/Materiais';
 import Kanban from './pages/Kanban';
 import Login from './pages/Login';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 // 1. Guarda de Segurança: Protege as rotas verificando se o Token existe
 function RotaProtegida({ children }) {
@@ -94,23 +96,27 @@ function LayoutSistema({ children }) {
 
 export default function App() {
     return (
-        <BrowserRouter>
-            <LayoutSistema>
-                <Routes>
-                    {/* Rota Pública (Aba de Autenticação) */}
-                    <Route path="/login" element={<Login />} />
-                    
-                    {/* Rotas Privadas (Blindadas pelo RotaProtegida) */}
-                    <Route path="/" element={<RotaProtegida><Dashboard /></RotaProtegida>} />
-                    <Route path="/clientes" element={<RotaProtegida><Clientes /></RotaProtegida>} />
-                    <Route path="/materiais" element={<RotaProtegida><Materiais /></RotaProtegida>} />
-                    <Route path="/orcamento" element={<RotaProtegida><NovoOrcamento /></RotaProtegida>} />
-                    <Route path="/orcamento/:id" element={<RotaProtegida><NovoOrcamento /></RotaProtegida>} />
-                    <Route path="/historico" element={<RotaProtegida><Historico /></RotaProtegida>} />
-                    <Route path="/imprimir/:id" element={<RotaProtegida><ImprimirOrcamento /></RotaProtegida>} />
-                    <Route path="/kanban" element={<RotaProtegida><Kanban /></RotaProtegida>} />
-                </Routes>
-            </LayoutSistema>
-        </BrowserRouter>
+        <>
+            <BrowserRouter>
+                <LayoutSistema>
+                    <Routes>
+                        {/* Rota Pública (Aba de Autenticação) */}
+                        <Route path="/login" element={<Login />} />
+                        
+                        {/* Rotas Privadas (Blindadas pelo RotaProtegida) */}
+                        <Route path="/" element={<RotaProtegida><Dashboard /></RotaProtegida>} />
+                        <Route path="/clientes" element={<RotaProtegida><Clientes /></RotaProtegida>} />
+                        <Route path="/materiais" element={<RotaProtegida><Materiais /></RotaProtegida>} />
+                        <Route path="/orcamento" element={<RotaProtegida><NovoOrcamento /></RotaProtegida>} />
+                        <Route path="/orcamento/:id" element={<RotaProtegida><NovoOrcamento /></RotaProtegida>} />
+                        <Route path="/historico" element={<RotaProtegida><Historico /></RotaProtegida>} />
+                        <Route path="/imprimir/:id" element={<RotaProtegida><ImprimirOrcamento /></RotaProtegida>} />
+                        <Route path="/kanban" element={<RotaProtegida><Kanban /></RotaProtegida>} />
+                    </Routes>
+                </LayoutSistema>
+            </BrowserRouter>
+            {/* Configuração global do Toast (Pode mudar a posição, ex: bottom-right) */}
+            <ToastContainer position="bottom-right" autoClose={3000} theme="colored" />
+        </>
     );
 }

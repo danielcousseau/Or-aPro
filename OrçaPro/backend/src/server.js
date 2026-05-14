@@ -4,7 +4,11 @@ const cors = require('cors');
 
 const app = express();
 
-app.use(cors());
+// Configuração do CORS: Atualmente liberado para todas as origens.
+// Para maior segurança no futuro, troque '*' pela URL da sua Vercel.
+app.use(cors({
+    origin: '*'
+}));
 app.use(express.json());
 
 // Importando as Rotas

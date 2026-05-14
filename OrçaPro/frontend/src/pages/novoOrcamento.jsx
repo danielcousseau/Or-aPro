@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import DadosGerais from '../components/Orcamento/DadosGerais';
+import ListaMateriais from '../components/Orcamento/ListaMateriais';
+import ResumoValores from '../components/Orcamento/ResumoValores';
 
 export default function NovoOrcamento() {
     const { id } = useParams(); // Pega o ID da URL se estiver editando
@@ -227,143 +230,26 @@ export default function NovoOrcamento() {
 
             <form onSubmit={salvarOrcamento}>
                 
-                {/* DADOS GERAIS */}
-                <div className="cliente-card highlight-primary">
-                    <h3>1. Dados Gerais</h3>
-                    <section className="form-section">
-                        <label>Título do Orçamento *</label>
-                        <input type="text" name="titulo" value={orcamento.titulo} onChange={handleChange} placeholder="Ex: Cozinha Planejada Dona Maria" required />
-                    </section>
-                    <section className="form-section">
-                        <label>Cliente *</label>
-                        <select name="clienteId" value={orcamento.clienteId} onChange={handleChange} required>
-                            <option value="">Selecione um cliente...</option>
-                            {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                        </select>
-                    </section>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                        <section className="form-section">
-                            <label>Ambiente</label>
-                            <input type="text" name="ambiente" value={orcamento.ambiente} onChange={handleChange} />
-                        </section>
-                        <section className="form-section">
-                            <label>Tipo de Móvel</label>
-                            <input type="text" name="tipoMovel" value={orcamento.tipoMovel} onChange={handleChange} />
-                        </section>
-                    </div>
-                </div>
+                <DadosGerais 
+                    orcamento={orcamento} 
+                    clientes={clientes} 
+                    onChange={handleChange} 
+                />
 
-                {/* MATERIAIS */}
-                <div className="cliente-card">
-                    <h3>2. Materiais</h3>
-                    {materiaisSelecionados.map((mat, index) => (
-                        <div key={mat.idFalso} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr auto', gap: '10px', alignItems: 'end', marginBottom: '12px' }}>
-                            <section className="form-section">
-                                <label>Puxar do Cadastro</label>
-                                <select onChange={(e) => atualizarMaterialSelecionado(mat.idFalso, 'selectDb', e.target.value)}>
-                                    <option value="">Material avulso...</option>
-                                    {materiaisDb.map(mdb => <option key={mdb.id} value={mdb.id}>{mdb.nome} - R${mdb.valor}</option>)}
-                                </select>
-                            </section>
-                            <section className="form-section">
-                                <label>Nome/Descrição</label>
-                                <input type="text" value={mat.nome} onChange={(e) => atualizarMaterialSelecionado(mat.idFalso, 'nome', e.target.value)} required />
-                            </section>
-                            <section className="form-section">
-                                <label>Valor (R$)</label>
-                                <input type="number" step="0.01" value={mat.valor} onChange={(e) => atualizarMaterialSelecionado(mat.idFalso, 'valor', Number(e.target.value))} onFocus={(e) => e.target.select()} required />
-                            </section>
-                            <section className="form-section">
-                                <label>Qtd</label>
-                                <input type="number" step="0.01" value={mat.quantidade} onChange={(e) => atualizarMaterialSelecionado(mat.idFalso, 'quantidade', Number(e.target.value))} onFocus={(e) => e.target.select()} required />
-                            </section>
-                            {index > 0 && (
-                                <button type="button" onClick={() => removerLinhaMaterial(mat.idFalso)} className="btn-delete" style={{ height: '46px', marginBottom: '18px' }}>X</button>
-                            )}
-                        </div>
-                    ))}
-                    <button type="button" className="btn-cancel" onClick={adicionarLinhaMaterial}>+ Adicionar Material</button>
-                </div>
+                <ListaMateriais 
+                    materiaisSelecionados={materiaisSelecionados} 
+                    materiaisDb={materiaisDb} 
+                    onAdd={adicionarLinhaMaterial} 
+                    onRemove={removerLinhaMaterial} 
+                    onUpdate={atualizarMaterialSelecionado} 
+                />
 
-                {/* PRECIFICAÇÃO */}
-                <div className="cliente-card">
-                    <h3>3. Precificação</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                        <div>
-                            <label>Mão de Obra</label>
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <select name="tipoMaoDeObra" value={orcamento.tipoMaoDeObra} onChange={handleChange}>
-                                    <option value="porcentagem">% sobre material</option>
-                                    <option value="fixo">Valor Fixo (R$)</option>
-                                </select>
-                                <input type="number" name="maoDeObraValor" value={orcamento.maoDeObraValor} onChange={handleChange} onFocus={(e) => e.target.select()} />
-                            </div>
-                        </div>
-                        <div>
-                            <label>Lucro</label>
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                                <select name="tipoLucro" value={orcamento.tipoLucro} onChange={handleChange}>
-                                    <option value="porcentagem">% sobre total</option>
-                                    <option value="fixo">Valor Fixo (R$)</option>
-                                </select>
-                                <input type="number" name="lucroValor" value={orcamento.lucroValor} onChange={handleChange} onFocus={(e) => e.target.select()} />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* RESUMO TOTAL */}
-                <div className="dashboard-grid">
-                    <div className="dashboard-card">
-                        <span className="dashboard-label">Custo Materiais</span>
-                        <h2>R$ {totais.materiais.toFixed(2)}</h2>
-                    </div>
-                    <div className="dashboard-card">
-                        <span className="dashboard-label">Mão de Obra</span>
-                        <h2>R$ {totais.maoDeObra.toFixed(2)}</h2>
-                    </div>
-                    <div className="dashboard-card">
-                        <span className="dashboard-label">Lucro</span>
-                        <h2>R$ {totais.lucro.toFixed(2)}</h2>
-                    </div>
-                    <div className="dashboard-card highlight-primary">
-                        <span className="dashboard-label">Total do Orçamento</span>
-                        <h2 className="text-primary">R$ {totais.final.toFixed(2)}</h2>
-                    </div>
-                </div>
-
-                {/* CONDIÇÕES COMERCIAIS E OBSERVAÇÕES */}
-                <div className="cliente-card highlight-success">
-                    <h3>4. Condições Comerciais e Detalhes Finais</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
-                        <section className="form-section">
-                            <label>Forma de Pagamento</label>
-                            <input 
-                                type="text" 
-                                name="pagamento" 
-                                list="lista-pagamentos"
-                                value={orcamento.pagamento} 
-                                onChange={handleChange} 
-                                placeholder="Selecione ou digite..." 
-                            />
-                            <datalist id="lista-pagamentos">
-                                {formasPagamento.map(fp => <option key={fp.id} value={fp.nome} />)}
-                            </datalist>
-                        </section>
-                        <section className="form-section">
-                            <label>Prazo de Entrega</label>
-                            <input type="text" name="prazo" value={orcamento.prazo} onChange={handleChange} placeholder="Ex: 15 dias úteis" />
-                        </section>
-                        <section className="form-section">
-                            <label>Validade do Orçamento</label>
-                            <input type="text" name="validade" value={orcamento.validade} onChange={handleChange} placeholder="Ex: 7 dias" />
-                        </section>
-                    </div>
-                    <section className="form-section" style={{ marginTop: '15px' }}>
-                        <label>Observações Adicionais</label>
-                        <textarea name="observacoes" value={orcamento.observacoes} onChange={handleChange} rows="3" placeholder="Garantia, condições de instalação, etc..."></textarea>
-                    </section>
-                </div>
+                <ResumoValores 
+                    orcamento={orcamento} 
+                    totais={totais} 
+                    formasPagamento={formasPagamento} 
+                    onChange={handleChange} 
+                />
 
                 <div className="form-buttons">
                     <button type="submit" style={{ fontSize: '1.1rem', padding: '16px 24px' }}>

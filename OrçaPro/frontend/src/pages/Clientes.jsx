@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { toast } from 'react-toastify';
 
 export default function Clientes() {
     const [clientes, setClientes] = useState([]);
     const [clienteEmEdicao, setClienteEmEdicao] = useState(null); // Guarda o cliente que está sendo editado
     const [clienteParaExcluir, setClienteParaExcluir] = useState(null); // Guarda o ID do cliente para o modal de exclusão
+    const [abaAtiva, setAbaAtiva] = useState('consulta'); // 'consulta' ou 'cadastro'
+    const [termoBusca, setTermoBusca] = useState(''); // Guarda o texto da pesquisa
     
     // State único para o formulário
     const [formData, setFormData] = useState({
@@ -12,6 +15,7 @@ export default function Clientes() {
         cpfCnpj: '',
         email: '',
         telefone: '',
+        rua: '',
         cidade: '',
         bairro: '',
         numero: '',
@@ -40,7 +44,8 @@ export default function Clientes() {
     const limparFormulario = () => {
         setFormData({
             nome: '', cpfCnpj: '', email: '', telefone: '',
-            cidade: '', bairro: '', numero: '', cep: '', observacoes: ''
+            rua: '', cidade: '', bairro: '', numero: '', 
+            cep: '', observacoes: ''
         });
         setClienteEmEdicao(null);
     };
@@ -52,12 +57,14 @@ export default function Clientes() {
             cpfCnpj: cliente.cpfCnpj || '',
             email: cliente.email || '',
             telefone: cliente.telefone || '',
+            rua: cliente.rua || '',
             cidade: cliente.cidade || '',
             bairro: cliente.bairro || '',
             numero: cliente.numero || '',
             cep: cliente.cep || '',
             observacoes: cliente.observacoes || ''
         });
+        setAbaAtiva('cadastro'); // Muda para a aba de cadastro automaticamente ao editar
         window.scrollTo(0, 0); // Rola para o topo para o usuário ver o formulário preenchido
     };
 
@@ -65,11 +72,11 @@ export default function Clientes() {
         if (!clienteParaExcluir) return;
         try {
             await api.delete(`/clientes/${clienteParaExcluir}`);
-            alert('Cliente excluído com sucesso!');
+            toast.success('Cliente excluído com sucesso!');
             setClienteParaExcluir(null);
             carregarClientes();
         } catch (error) {
-            alert('Erro ao excluir cliente.');
+            toast.error('Erro ao excluir cliente.');
             setClienteParaExcluir(null);
         }
     };
@@ -86,6 +93,7 @@ export default function Clientes() {
                 if (!data.erro) {
                     setFormData(prev => ({
                         ...prev,
+                        rua: data.logradouro || prev.rua, // O ViaCEP chama rua de "logradouro"
                         cidade: data.localidade || prev.cidade, // O ViaCEP chama cidade de "localidade"
                         bairro: data.bairro || prev.bairro
                     }));
@@ -103,121 +111,185 @@ export default function Clientes() {
                 ? await api.put(`/clientes/${clienteEmEdicao.id}`, formData)
                 : await api.post('/clientes', formData);
 
-            alert(`Cliente ${clienteEmEdicao ? 'atualizado' : 'salvo'} com sucesso!`);
+            toast.success(`Cliente ${clienteEmEdicao ? 'atualizado' : 'salvo'} com sucesso!`);
             limparFormulario();
             carregarClientes();
+            setAbaAtiva('consulta'); // Volta pra lista de clientes após salvar
         } catch (error) {
             console.error("Erro detalhado do backend:", error.response?.data || error.message);
-            alert('Erro ao salvar cliente. Verifique o console (F12).');
+            toast.error('Erro ao salvar cliente. Verifique o console.');
         }
     };
 
+    // Filtra os clientes com base na barra de pesquisa (busca por nome, fone, email ou doc)
+    const clientesFiltrados = clientes.filter(cliente => {
+        const termo = termoBusca.toLowerCase();
+        return (
+            (cliente.nome && cliente.nome.toLowerCase().includes(termo)) ||
+            (cliente.telefone && cliente.telefone.includes(termo)) ||
+            (cliente.email && cliente.email.toLowerCase().includes(termo)) ||
+            (cliente.cpfCnpj && cliente.cpfCnpj.includes(termo))
+        );
+    });
+
     return (
         <div>
-            <h1>{clienteEmEdicao ? 'Editar Cliente' : 'Cadastro de Cliente'}</h1>
-            
-            <form onSubmit={handleSubmit}>
-                <section className="form-section">
-                    <label>Nome Completo *</label>
-                    <input type="text" name="nome" value={formData.nome} onChange={handleChange} required />
-                </section>
-
-                <section className="form-section">
-                    <label>CPF / CNPJ</label>
-                    <input type="text" name="cpfCnpj" value={formData.cpfCnpj} onChange={handleChange} />
-                </section>
-
-                <section className="form-section">
-                    <label>E-mail</label>
-                    <input type="email" name="email" value={formData.email} onChange={handleChange} />
-                </section>
-
-                <section className="form-section">
-                    <label>Telefone *</label>
-                    <input type="text" name="telefone" value={formData.telefone} onChange={handleChange} required />
-                </section>
-
-                <section className="form-section">
-                    <label>CEP</label>
-                    <input 
-                        type="text" 
-                        name="cep" 
-                        value={formData.cep} 
-                        onChange={handleChange} 
-                        onBlur={buscarCep} /* Aciona a busca ao sair do campo */
-                        placeholder="Apenas números ou com traço" 
-                    />
-                </section>
-
-                <section className="form-section">
-                    <label>Cidade</label>
-                    <input type="text" name="cidade" value={formData.cidade} onChange={handleChange} />
-                </section>
-
-                <section className="form-section">
-                    <label>Bairro</label>
-                    <input type="text" name="bairro" value={formData.bairro} onChange={handleChange} />
-                </section>
-
-                <section className="form-section">
-                    <label>Número</label>
-                    <input type="text" name="numero" value={formData.numero} onChange={handleChange} />
-                </section>
-
-                <section className="form-section">
-                    <label>Observações</label>
-                    <textarea name="observacoes" value={formData.observacoes} onChange={handleChange}></textarea>
-                </section>
-
-                <div className="form-buttons">
-                    <button type="submit">
-                        {clienteEmEdicao ? 'Atualizar Cliente' : 'Salvar Cliente'}
+            {/* Navegação entre abas */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
+                <h1 style={{ margin: 0 }}>Gestão de Clientes</h1>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button 
+                        type="button"
+                        onClick={() => { setAbaAtiva('consulta'); limparFormulario(); }} 
+                        style={{ background: abaAtiva === 'consulta' ? 'var(--primary)' : '#e0e0e0', color: abaAtiva === 'consulta' ? '#fff' : '#333', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
+                    >
+                          Consultar
                     </button>
-                    {/* O botão de cancelar só aparece durante a edição */}
-                    {clienteEmEdicao && (
-                        <button type="button" className="btn-cancel" onClick={limparFormulario}>Cancelar Edição</button>
-                    )}
+                    <button 
+                        type="button"
+                        onClick={() => { setAbaAtiva('cadastro'); limparFormulario(); }} 
+                        style={{ background: abaAtiva === 'cadastro' ? 'var(--primary)' : '#e0e0e0', color: abaAtiva === 'cadastro' ? '#fff' : '#333', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
+                    >
+                          Novo Cliente
+                    </button>
                 </div>
-            </form>
+            </div>
 
-            <section className="lista-clientes">
-                <h2>Clientes Cadastrados</h2>
-                <div id="listaClientes">
-                    {clientes.length === 0 ? (
-                        <p>Nenhum cliente cadastrado.</p>
-                    ) : (
-                        clientes.map((cliente) => (
-                            <div key={cliente.id} className="cliente-card">
-                                <h3>{cliente.nome}</h3>
-                                <p><strong>Telefone:</strong> {cliente.telefone}</p>
-                                <p><strong>E-mail:</strong> {cliente.email || "Não informado"}</p>
-                                {(() => {
-                                    let enderecoParts = [];
-                                    if (cliente.cidade) enderecoParts.push(cliente.cidade);
-                                    if (cliente.bairro) enderecoParts.push(cliente.bairro);
-                                    
-                                    let enderecoStr = enderecoParts.join(", ");
-                                    if (cliente.numero) enderecoStr += (enderecoStr ? " - " : "") + cliente.numero;
-                                    if (cliente.cep) enderecoStr += (enderecoStr ? ". " : "") + "CEP: " + cliente.cep;
-                                    
-                                    return enderecoStr ? <p><strong>Endereço:</strong> {enderecoStr}</p> : null;
-                                })()}
-                                {cliente.observacoes && <p><strong>Obs:</strong> {cliente.observacoes}</p>}
-                                
-                                {/* Botões de Ação */}
-                                <div className="card-actions">
-                                    <button type="button" className="btn-action btn-edit" onClick={() => handleEditar(cliente)}>
-                                        Editar
-                                    </button>
-                                    <button type="button" className="btn-action btn-delete" onClick={() => setClienteParaExcluir(cliente.id)}>
-                                        Excluir
-                                    </button>
-                                </div>
-                            </div>
-                        ))
-                    )}
+            {/* CONTEÚDO DA ABA DE CADASTRO */}
+            {abaAtiva === 'cadastro' && (
+                <div>
+                    <h2 style={{ marginBottom: '20px', color: 'var(--text-main)', borderBottom: '2px solid var(--border)', paddingBottom: '10px' }}>
+                        {clienteEmEdicao ? 'Editar Cliente' : 'Cadastro de Cliente'}
+                    </h2>
+                    
+                    <form onSubmit={handleSubmit}>
+                        <section className="form-section">
+                            <label>Nome Completo *</label>
+                            <input type="text" name="nome" value={formData.nome} onChange={handleChange} required />
+                        </section>
+
+                        <section className="form-section">
+                            <label>CPF / CNPJ</label>
+                            <input type="text" name="cpfCnpj" value={formData.cpfCnpj} onChange={handleChange} />
+                        </section>
+
+                        <section className="form-section">
+                            <label>E-mail</label>
+                            <input type="email" name="email" value={formData.email} onChange={handleChange} />
+                        </section>
+
+                        <section className="form-section">
+                            <label>Telefone *</label>
+                            <input type="text" name="telefone" value={formData.telefone} onChange={handleChange} required />
+                        </section>
+
+                        <section className="form-section">
+                            <label>CEP</label>
+                            <input 
+                                type="text" 
+                                name="cep" 
+                                value={formData.cep} 
+                                onChange={handleChange} 
+                                onBlur={buscarCep} /* Aciona a busca ao sair do campo */
+                                placeholder="Apenas números ou com traço" 
+                            />
+                        </section>
+
+                        <section className="form-section">
+                            <label>Rua / Logradouro</label>
+                            <input type="text" name="rua" value={formData.rua} onChange={handleChange} />
+                        </section>
+
+                        <section className="form-section">
+                            <label>Cidade</label>
+                            <input type="text" name="cidade" value={formData.cidade} onChange={handleChange} />
+                        </section>
+
+                        <section className="form-section">
+                            <label>Bairro</label>
+                            <input type="text" name="bairro" value={formData.bairro} onChange={handleChange} />
+                        </section>
+
+                        <section className="form-section">
+                            <label>Número</label>
+                            <input type="text" name="numero" value={formData.numero} onChange={handleChange} />
+                        </section>
+
+                        <section className="form-section">
+                            <label>Observações</label>
+                            <textarea name="observacoes" value={formData.observacoes} onChange={handleChange}></textarea>
+                        </section>
+
+                        <div className="form-buttons">
+                            <button type="submit">
+                                {clienteEmEdicao ? 'Atualizar Cliente' : 'Salvar Cliente'}
+                            </button>
+                            {/* O botão de cancelar retorna para a aba de consulta */}
+                            {clienteEmEdicao && (
+                                <button type="button" className="btn-cancel" onClick={() => { limparFormulario(); setAbaAtiva('consulta'); }}>
+                                    Cancelar Edição
+                                </button>
+                            )}
+                        </div>
+                    </form>
                 </div>
-            </section>
+            )}
+
+            {/* CONTEÚDO DA ABA DE CONSULTA */}
+            {abaAtiva === 'consulta' && (
+                <section className="lista-clientes">
+                    {/* Barra de Pesquisa */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px', background: 'var(--panel)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                        <h2 style={{ margin: 0 }}>Cadastrados ({clientesFiltrados.length})</h2>
+                        <input 
+                            type="text" 
+                            placeholder="Pesquisar por nome, telefone, email ou documento..." 
+                            value={termoBusca}
+                            onChange={(e) => setTermoBusca(e.target.value)}
+                            style={{ maxWidth: '400px', width: '100%', padding: '10px 15px', borderRadius: '4px', border: '1px solid var(--border)', outline: 'none' }}
+                        />
+                    </div>
+
+                    <div id="listaClientes">
+                        {clientesFiltrados.length === 0 ? (
+                            <p style={{ textAlign: 'center', padding: '20px', color: 'var(--text-soft)' }}>
+                                Nenhum cliente encontrado com os filtros atuais.
+                            </p>
+                        ) : (
+                            clientesFiltrados.map((cliente) => (
+                                <div key={cliente.id} className="cliente-card">
+                                    <h3>{cliente.nome}</h3>
+                                    <p><strong>Telefone:</strong> {cliente.telefone}</p>
+                                    <p><strong>E-mail:</strong> {cliente.email || "Não informado"}</p>
+                                    
+                                    {/* Exibição explícita e organizada do endereço */}
+                                    <div style={{ background: 'var(--panel)', padding: '10px', borderLeft: '3px solid var(--primary)', borderRadius: '4px', marginTop: '10px', marginBottom: '10px', fontSize: '0.9rem' }}>
+                                        <p style={{ margin: '0 0 5px 0' }}>
+                                            <strong>Rua/Logradouro:</strong> {cliente.rua || "Não informada"}{cliente.numero ? `, nº ${cliente.numero}` : ''}
+                                        </p>
+                                        <p style={{ margin: '0 0 5px 0' }}>
+                                            <strong>Bairro/Cidade:</strong> {cliente.bairro || "-"} / {cliente.cidade || "-"}
+                                        </p>
+                                        <p style={{ margin: 0 }}><strong>CEP:</strong> {cliente.cep || "Não informado"}</p>
+                                    </div>
+
+                                    {cliente.observacoes && <p><strong>Obs:</strong> {cliente.observacoes}</p>}
+                                    
+                                    {/* Botões de Ação */}
+                                    <div className="card-actions">
+                                        <button type="button" className="btn-action btn-edit" onClick={() => handleEditar(cliente)}>
+                                            Editar
+                                        </button>
+                                        <button type="button" className="btn-action btn-delete" onClick={() => setClienteParaExcluir(cliente.id)}>
+                                            Excluir
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </section>
+            )}
 
             {/* Modal de Confirmação de Exclusão */}
             {clienteParaExcluir && (

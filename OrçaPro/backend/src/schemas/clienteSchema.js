@@ -8,6 +8,7 @@ const clienteSchema = z.object({
     telefone: z.string().min(8, "O telefone é obrigatório"),
     cidade: z.string().optional().nullable(),
     bairro: z.string().optional().nullable(),
+    rua: z.string().optional().nullable(),
     numero: z.string().optional().nullable(),
     cep: z.string().optional().nullable(),
     observacoes: z.string().optional().nullable()

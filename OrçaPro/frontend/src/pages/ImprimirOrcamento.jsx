@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { formatarMoeda } from '../utils/format';
 
 export default function ImprimirOrcamento() {
     const { id } = useParams();
@@ -29,14 +30,6 @@ export default function ImprimirOrcamento() {
             return () => { document.title = tituloOriginal; }; // Restaura ao sair da página
         }
     }, [orc]);
-
-    // [Arquitetura] Função segura para formatação financeira (evita bugs de ponto flutuante do JS)
-    const formatarMoeda = (valor) => {
-        return new Intl.NumberFormat('pt-BR', { 
-            style: 'currency', 
-            currency: 'BRL' 
-        }).format(valor || 0);
-    };
 
     if (erro) return <p style={{ padding: '20px', color: '#e74c3c' }}>Erro ao carregar o orçamento. Verifique se ele existe ou se tem permissões de acesso.</p>;
     if (!orc) return <p style={{ padding: '20px' }}>Carregando orçamento...</p>;

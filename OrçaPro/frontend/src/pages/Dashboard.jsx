@@ -11,16 +11,18 @@ import {
   ArcElement,
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
+import { formatarMoeda } from '../utils/format';
 
 // Registrando os componentes do gráfico
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 export default function Dashboard() {
     const [metricas, setMetricas] = useState({
-        totalClientes: 0,
-        totalOrcamentos: 0,
-        faturamentoTotal: 0,
-        lucroTotal: 0,
+        projetosFechados: 0,
+        orcamentosPendentes: 0,
+        valorAguardando: 0,
+        faturamentoConfirmado: 0,
+        lucroProjetado: 0,
         taxaConversao: 0
     });
 
@@ -44,19 +46,29 @@ export default function Dashboard() {
 
             setOrcamentos(orcamentosData);
 
-            // A Mágica Matemática: soma todos os orçamentos e lucros
-            const faturamento = orcamentosData.reduce((acc, orc) => acc + Number(orc.totalFinal), 0);
-            const lucro = orcamentosData.reduce((acc, orc) => acc + Number(orc.lucroValor), 0);
+            // STATUS REAIS DO KANBAN:
+            const statusFechados = ['Aprovado', 'Produção', 'Instalação', 'Entregue'];
             
-            // Taxa de conversão: (Aprovados / Total) * 100
-            const aprovados = orcamentosData.filter(orc => orc.status === 'Aprovado' || orc.status === 'Concluído').length;
-            const conversao = orcamentosData.length > 0 ? (aprovados / orcamentosData.length) * 100 : 0;
+            // SEPARA OS ORÇAMENTOS POR REALIDADE COMERCIAL
+            const fechados = orcamentosData.filter(orc => statusFechados.includes(orc.status));
+            const pendentes = orcamentosData.filter(orc => !orc.status || orc.status === 'Aguardando');
+
+            // A MÁGICA: Só soma faturamento e lucro do que virou negócio (projetos fechados)
+            const faturamento = fechados.reduce((acc, orc) => acc + Number(orc.totalFinal), 0);
+            const lucro = fechados.reduce((acc, orc) => acc + Number(orc.lucroValor), 0);
+            
+            // Valor na mesa: Quanto de dinheiro o marceneiro tá esperando os clientes aprovarem?
+            const valorNaMesa = pendentes.reduce((acc, orc) => acc + Number(orc.totalFinal), 0);
+            
+            // Taxa de conversão: (Fechados / Total de Orçamentos) * 100
+            const conversao = orcamentosData.length > 0 ? (fechados.length / orcamentosData.length) * 100 : 0;
 
             setMetricas({
-                totalClientes: clientesData.length,
-                totalOrcamentos: orcamentosData.length,
-                faturamentoTotal: faturamento,
-                lucroTotal: lucro,
+                projetosFechados: fechados.length,
+                orcamentosPendentes: pendentes.length,
+                valorAguardando: valorNaMesa,
+                faturamentoConfirmado: faturamento,
+                lucroProjetado: lucro,
                 taxaConversao: conversao
             });
 
@@ -87,8 +99,17 @@ export default function Dashboard() {
     };
 
     // Montando dados para o Gráfico de Status (Doughnut)
+    // Agora associando uma cor FIXA para cada status para não embaralhar visualmente
+    const CORES_STATUS = {
+        'Aguardando': '#f39c12', // Laranja/Amarelado (Na mesa)
+        'Aprovado': '#3498db',   // Azul (Fechado, vai começar)
+        'Produção': '#9b59b6',   // Roxo (Mão na massa)
+        'Instalação': '#e67e22', // Laranja Escuro (Na rua)
+        'Entregue': '#27ae60'    // Verde (Sucesso/Dinheiro no bolso)
+    };
+
     const statusCount = orcamentos.reduce((acc, orc) => {
-        const status = orc.status || 'Pendente';
+        const status = orc.status || 'Aguardando';
         acc[status] = (acc[status] || 0) + 1;
         return acc;
     }, {});
@@ -97,7 +118,7 @@ export default function Dashboard() {
         labels: Object.keys(statusCount),
         datasets: [{
             data: Object.values(statusCount),
-            backgroundColor: ['#f1c40f', '#27ae60', '#e74c3c', '#3498db', '#95a5a6'], // Amarelo, Verde, Vermelho, Azul, Cinza
+            backgroundColor: Object.keys(statusCount).map(status => CORES_STATUS[status] || '#95a5a6'),
             borderWidth: 1,
         }]
     };
@@ -114,24 +135,28 @@ export default function Dashboard() {
             {/* CARDS DE RESUMO */}
             <section className="dashboard-grid">
                 <div className="dashboard-card">
-                    <span className="dashboard-label">Clientes Cadastrados</span>
-                    <h2>{metricas.totalClientes}</h2>
+                    <span className="dashboard-label">Projetos Fechados</span>
+                    <h2>{metricas.projetosFechados}</h2>
                 </div>
                 <div className="dashboard-card">
-                    <span className="dashboard-label">Orçamentos Gerados</span>
-                    <h2>{metricas.totalOrcamentos}</h2>
+                    <span className="dashboard-label">Orçamentos Pendentes</span>
+                    <h2>{metricas.orcamentosPendentes}</h2>
                 </div>
                 <div className="dashboard-card">
                     <span className="dashboard-label">Taxa de Conversão</span>
                     <h2>{metricas.taxaConversao.toFixed(1)}%</h2>
                 </div>
+                <div className="dashboard-card" style={{ borderLeft: '4px solid #f39c12' }}>
+                    <span className="dashboard-label">Valor em Negociação</span>
+                    <h2 style={{ color: '#f39c12' }}>{formatarMoeda(metricas.valorAguardando)}</h2>
+                </div>
                 <div className="dashboard-card highlight-primary">
-                    <span className="dashboard-label">Faturamento Total</span>
-                    <h2 className="text-primary">R$ {metricas.faturamentoTotal.toFixed(2)}</h2>
+                    <span className="dashboard-label">Faturamento Confirmado</span>
+                    <h2 className="text-primary">{formatarMoeda(metricas.faturamentoConfirmado)}</h2>
                 </div>
                 <div className="dashboard-card highlight-success">
-                    <span className="dashboard-label">Lucro Estimado</span>
-                    <h2 className="text-success">R$ {metricas.lucroTotal.toFixed(2)}</h2>
+                    <span className="dashboard-label">Lucro Projetado</span>
+                    <h2 className="text-success">{formatarMoeda(metricas.lucroProjetado)}</h2>
                 </div>
             </section>
 
