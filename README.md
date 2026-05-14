@@ -2,14 +2,14 @@
 
 Sistema completo para gestão de orçamentos e acompanhamento de projetos para marcenarias. Inclui cadastro de clientes, controle de materiais, precificação, dashboard gerencial e kanban de produção.
 
-## 🛠️ Pré-requisitos
+##  Pré-requisitos
 
 Antes de começar, certifique-se de ter as seguintes ferramentas instaladas na sua máquina:
 - [Git](https://git-scm.com)
 - [Node.js](https://nodejs.org/en/) (Recomendamos baixar a versão LTS mais recente)
 - Um editor de código, como o [VS Code](https://code.visualstudio.com/)
 
-## 🚀 Passo a Passo para Instalação e Execução
+##  Passo a Passo para Instalação e Execução
 
 O projeto é dividido em duas partes principais: o **Backend** (servidor e banco de dados) e o **Frontend** (interface que o usuário interage). 
 **Você precisará rodar ambas as partes simultaneamente, em terminais separados.**
@@ -65,11 +65,11 @@ O frontend é a aplicação React onde o usuário navega.
 
 ---
 
-## 🔑 Primeiro Acesso
+##  Primeiro Acesso
 Após iniciar o frontend e o backend, você será redirecionado para a tela de Login. Utilize as credenciais padrão geradas pelo sistema para entrar:
 - **Usuário:** `admin`
 - **Senha:** `ninguemsabe`
 
-## 📦 Tecnologias Utilizadas
+##  Tecnologias Utilizadas
 - **Frontend:** React, React Router Dom, Chart.js (Gráficos), Axios.
 - **Backend:** Node.js, Express, Prisma (ORM), Zod (Validação), JSON Web Token (Autenticação), BcryptJS (Criptografia).
