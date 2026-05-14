@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Menu from './components/Menu';
+import Menu from './components/menu';
 import Clientes from './pages/Clientes';
 import Dashboard from './pages/Dashboard';
+import NovoOrcamento from './pages/NovoOrcamento';
 import NovoOrcamento from './pages/NovoOrcamento';
 import Historico from './pages/Historico';
 import ImprimirOrcamento from './pages/ImprimirOrcamento';
