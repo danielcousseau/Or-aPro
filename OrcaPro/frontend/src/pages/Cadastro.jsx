@@ -7,6 +7,7 @@ export default function Cadastro() {
     const [nome, setNome] = useState('');
     const [usuario, setUsuario] = useState('');
     const [senha, setSenha] = useState('');
+    const [confirmarSenha, setConfirmarSenha] = useState('');
     const [carregando, setCarregando] = useState(false);
     const [erro, setErro] = useState('');
     const navigate = useNavigate();
@@ -15,6 +16,13 @@ export default function Cadastro() {
         e.preventDefault();
         setErro('');
         setCarregando(true);
+
+        // [UX/SecOps] Impede o cadastro se as senhas não forem idênticas
+        if (senha !== confirmarSenha) {
+            setErro('As senhas não coincidem. Verifique e tente novamente.');
+            setCarregando(false);
+            return;
+        }
 
         try {
             await api.post('/registrar', {
@@ -55,6 +63,10 @@ export default function Cadastro() {
                     <section className="form-section">
                         <label>Senha</label>
                         <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="Mínimo de 6 caracteres" required minLength={6} />
+                    </section>
+                    <section className="form-section">
+                        <label>Confirmar Senha</label>
+                        <input type="password" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} placeholder="Digite a senha novamente" required minLength={6} />
                     </section>
                     <button type="submit" disabled={carregando} style={{ width: '100%', marginTop: '15px', padding: '12px', opacity: carregando ? 0.7 : 1, cursor: carregando ? 'not-allowed' : 'pointer' }}>
                         {carregando ? 'Criando conta...' : 'Registrar'}

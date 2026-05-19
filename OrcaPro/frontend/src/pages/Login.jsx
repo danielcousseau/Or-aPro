@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { toast } from 'react-toastify'; // Importando para a notificação de esqueci a senha
 
 export default function Login() {
     const [usuario, setUsuario] = useState('');
@@ -75,6 +76,12 @@ export default function Login() {
                         <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="******" required />
                     </section>
                     
+                    <div style={{ textAlign: 'right', marginTop: '-10px', marginBottom: '15px' }}>
+                        <button type="button" onClick={() => toast.info('Para redefinir sua senha, entre em contato com o administrador do sistema.')} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.85rem', cursor: 'pointer', textDecoration: 'underline' }}>
+                            Esqueceu a senha?
+                        </button>
+                    </div>
+
                     <button 
                         type="submit" 
                         disabled={carregando} 
