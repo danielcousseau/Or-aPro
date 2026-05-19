@@ -242,6 +242,47 @@ button:active {
     transform: translateY(0);
 }
 
+/* --- Botões de Texto (Links transparentes) --- */
+.btn-link {
+    background: transparent !important;
+    color: var(--primary) !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    font-weight: bold;
+}
+.btn-link:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    text-decoration: underline;
+}
+
+/* --- Input com Ícone (Olhinho da Senha) --- */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.btn-eye {
+    position: absolute;
+    right: 12px;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: var(--text-soft) !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-eye:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    color: var(--primary) !important;
+}
+
 .cliente-card {
     background: var(--panel);
     border: 1px solid var(--border);
