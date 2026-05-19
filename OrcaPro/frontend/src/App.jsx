@@ -3,6 +3,7 @@ import Menu from './components/Menu';
 import Clientes from './pages/Clientes';
 import Dashboard from './pages/Dashboard';
 import NovoOrcamento from './pages/NovoOrcamento';
+import NovoOrcamento from './pages/novoOrcamento';
 import Historico from './pages/Historico';
 import ImprimirOrcamento from './pages/ImprimirOrcamento';
 import Materiais from './pages/Materiais';
