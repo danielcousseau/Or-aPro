@@ -32,6 +32,7 @@
 
 * {
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent; /* [Mobile] Remove aquele quadrado azul/cinza chato ao tocar nos botões */
 }
 
 body {
@@ -255,6 +256,11 @@ button:hover {
 
 button:active {
     transform: translateY(0);
+}
+
+button:focus, 
+a:focus {
+    outline: none; /* Remove a borda de foco azul padrão dos navegadores ao clicar */
 }
 
 /* --- Botões de Texto (Links transparentes) --- */
