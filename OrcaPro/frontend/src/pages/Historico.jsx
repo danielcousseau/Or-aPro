@@ -100,7 +100,7 @@ export default function Historico() {
 
                                 <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: '15px 0' }} />
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                <div className="form-grid-1-1">
                                     <p><strong>Cliente:</strong> {orc.cliente?.nome || 'Não informado'}</p>
                                     <p><strong>Telefone:</strong> {orc.cliente?.telefone || 'Não informado'}</p>
                                     <p><strong>Móvel:</strong> {orc.tipoMovel || '-'}</p>

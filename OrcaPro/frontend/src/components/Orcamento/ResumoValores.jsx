@@ -3,10 +3,10 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
         <>
             <div className="cliente-card">
                 <h3>3. Precificação</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div className="form-grid-1-1">
                     <div>
                         <label>Mão de Obra</label>
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        <div className="input-group-flex">
                             <select name="tipoMaoDeObra" value={orcamento.tipoMaoDeObra} onChange={onChange}>
                                 <option value="porcentagem">Porcentagem (%)</option>
                                 <option value="fixo">Valor Fixo (R$)</option>
@@ -35,7 +35,7 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
                     </div>
                     <div>
                         <label>Lucro</label>
-                        <div style={{ display: 'flex', gap: '10px' }}>
+                        <div className="input-group-flex">
                             <select name="tipoLucro" value={orcamento.tipoLucro} onChange={onChange}>
                                 <option value="porcentagem">% sobre total</option>
                                 <option value="fixo">Valor Fixo (R$)</option>
@@ -84,7 +84,7 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
 
             <div className="cliente-card highlight-success">
                 <h3>4. Condições Comerciais e Detalhes Finais</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
+                <div className="form-grid-3">
                     <section className="form-section">
                         <label>Forma de Pagamento</label>
                         <input type="text" name="pagamento" list="lista-pagamentos" value={orcamento.pagamento} onChange={onChange} placeholder="Selecione ou digite..." />

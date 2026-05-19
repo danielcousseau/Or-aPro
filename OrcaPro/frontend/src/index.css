@@ -224,6 +224,40 @@ textarea {
     gap: 15px;
 }
 
+/* --- Grid de 3 colunas (Condições Comerciais) --- */
+.form-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 15px;
+}
+
+/* --- Grid específica para a Lista de Materiais do Orçamento --- */
+.form-grid-materiais {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed var(--border);
+}
+.form-grid-materiais:last-child {
+    border-bottom: none;
+}
+
+/* --- Agrupador flexível de Inputs --- */
+.input-group-flex {
+    display: flex;
+    gap: 10px;
+}
+
+/* --- Grids de Cards (Listagens de Consulta) --- */
+.grid-cards {
+    display: grid;
+    gap: 15px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
 .form-buttons {
     display: flex;
     flex-wrap: wrap;
@@ -277,6 +311,13 @@ a:focus {
     transform: none !important;
     box-shadow: none !important;
     text-decoration: underline;
+}
+
+/* --- Botão Excluir Material na Lista --- */
+.btn-remover-material {
+    min-height: 46px;
+    margin-bottom: 18px; /* Alinha com as caixas do formulário no PC */
+    width: 100%;
 }
 
 /* --- Input com Ícone (Olhinho da Senha) --- */
@@ -485,7 +526,23 @@ input[type="number"] {
 
     /* No celular, quebra os campos lado a lado para um embaixo do outro */
     .form-grid-2-1, 
-    .form-grid-1-1 {
+    .form-grid-1-1,
+    .form-grid-3,
+    .form-grid-materiais {
+        grid-template-columns: 1fr;
+    }
+
+    .input-group-flex {
+        flex-direction: column;
+    }
+
+    /* Arruma o botão de remover que fica empilhado no mobile */
+    .btn-remover-material {
+        margin-bottom: 0;
+    }
+
+    /* No celular, garante que as listas de consulta não vazem a tela (1 coluna forçada) */
+    .grid-cards {
         grid-template-columns: 1fr;
     }
 }

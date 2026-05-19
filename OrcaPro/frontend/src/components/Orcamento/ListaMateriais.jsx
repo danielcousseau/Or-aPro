@@ -3,7 +3,7 @@ export default function ListaMateriais({ materiaisSelecionados, materiaisDb, onA
         <div className="cliente-card">
             <h3>2. Materiais</h3>
             {materiaisSelecionados.map((mat, index) => (
-                <div key={mat.idFalso} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr auto', gap: '10px', alignItems: 'end', marginBottom: '12px' }}>
+                <div key={mat.idFalso} className="form-grid-materiais">
                     <section className="form-section">
                         <label>Puxar do Cadastro</label>
                         <select onChange={(e) => onUpdate(mat.idFalso, 'selectDb', e.target.value)}>
@@ -23,7 +23,7 @@ export default function ListaMateriais({ materiaisSelecionados, materiaisDb, onA
                         <label>Qtd</label>
                         <input type="number" step="0.01" value={mat.quantidade} onChange={(e) => onUpdate(mat.idFalso, 'quantidade', e.target.value)} onFocus={(e) => e.target.select()} required />
                     </section>
-                    {index > 0 && <button type="button" onClick={() => onRemove(mat.idFalso)} className="btn-delete" style={{ height: '46px', marginBottom: '18px' }}>X</button>}
+                    {index > 0 && <button type="button" onClick={() => onRemove(mat.idFalso)} className="btn-delete btn-remover-material">🗑️ Remover</button>}
                 </div>
             ))}
             <button type="button" className="btn-cancel" onClick={onAdd}>+ Adicionar Material</button>

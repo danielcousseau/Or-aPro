@@ -13,7 +13,7 @@ export default function DadosGerais({ orcamento, clientes, onChange }) {
                     {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                 </select>
             </section>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div className="form-grid-1-1">
                 <section className="form-section">
                     <label>Ambiente</label>
                     <input type="text" name="ambiente" value={orcamento.ambiente} onChange={onChange} />

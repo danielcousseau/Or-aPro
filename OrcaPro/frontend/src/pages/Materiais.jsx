@@ -204,7 +204,7 @@ export default function Materiais() {
                                 Nenhum material encontrado.
                             </p>
                         ) : (
-                            <div style={{ display: 'grid', gap: '15px', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+                            <div className="grid-cards">
                                 {materiaisFiltrados.map((material) => (
                                 <div key={material.id} className="cliente-card">
                                     <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem' }}>{material.nome}</h3>
