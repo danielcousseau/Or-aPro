@@ -25,6 +25,12 @@ export default function Login() {
                 senha 
             });
             
+            // [SecOps] Armadilha para Falsos Positivos: Verifica se a API realmente mandou o token
+            if (!response.data || !response.data.token) {
+                setErro(response.data?.error || response.data?.message || 'O servidor não gerou o token de acesso. Verifique as credenciais.');
+                return;
+            }
+
             // [SecOps] Blindagem contra dados indefinidos da API
             const token = response.data.token;
             const userData = response.data.user || {
