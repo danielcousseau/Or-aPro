@@ -328,15 +328,15 @@ a:focus {
 }
 .input-wrapper input {
     width: 100%;
-    padding-right: 46px !important; /* [Mobile] Força o recuo da senha digitada */
+    padding-right: 50px !important; /* Aumentado para o novo tamanho do botão */
 }
 .btn-eye {
     position: absolute;
     right: 4px; /* Posiciona o olhinho precisamente no canto */
     top: 50%;
     transform: translateY(-50%);
-    width: 40px; /* Tamanho exato e fixo, cria uma hitbox perfeita para o dedo */
-    height: 40px;
+    width: 44px; /* Aumentamos a hitbox para acomodar o ícone maior */
+    height: 44px;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
