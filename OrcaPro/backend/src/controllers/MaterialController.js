@@ -5,6 +5,7 @@ module.exports = {
     async listar(req, res) {
         try {
             const materiais = await prisma.material.findMany({
+                where: { userId: req.userId }, // [SaaS]
                 orderBy: { createdAt: 'desc' }
             });
             return res.json(materiais);
@@ -17,7 +18,10 @@ module.exports = {
         try {
             const dados = req.body; // Zod já validou e converteu os dados
             const novoMaterial = await prisma.material.create({
-                data: dados
+                data: {
+                    ...dados,
+                    userId: req.userId // [SaaS]
+                }
             });
             return res.status(201).json(novoMaterial);
         } catch (error) {
@@ -28,6 +32,10 @@ module.exports = {
     async atualizar(req, res) {
         try {
             const { id } = req.params;
+            
+            const pertence = await prisma.material.findFirst({ where: { id: Number(id), userId: req.userId } });
+            if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
+
             const dados = req.body; // Zod já validou e converteu os dados
             const materialAtualizado = await prisma.material.update({
                 where: { id: Number(id) },
@@ -42,6 +50,10 @@ module.exports = {
     async excluir(req, res) {
         try {
             const { id } = req.params;
+            
+            const pertence = await prisma.material.findFirst({ where: { id: Number(id), userId: req.userId } });
+            if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
+
             await prisma.material.delete({ where: { id: Number(id) } });
             return res.json({ message: 'Material excluído com sucesso!' });
         } catch (error) {

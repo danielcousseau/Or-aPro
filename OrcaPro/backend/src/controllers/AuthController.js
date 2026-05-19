@@ -45,5 +45,34 @@ module.exports = {
             console.error(error);
             return res.status(500).json({ error: 'Erro interno no servidor' });
         }
+    },
+
+    // [SaaS] Rota para cadastrar novos usuários no sistema
+    async register(req, res) {
+        try {
+            const { nome, usuario, senha } = req.body;
+
+            // Verifica se o login já existe no banco
+            const userExists = await prisma.user.findUnique({
+                where: { usuario }
+            });
+
+            if (userExists) {
+                return res.status(400).json({ error: 'Este nome de usuário já está em uso.' });
+            }
+
+            // Criptografa a senha do novo usuário
+            const hashPassword = await bcrypt.hash(senha, 10);
+
+            // Salva no banco
+            const newUser = await prisma.user.create({
+                data: { name: nome, usuario, password: hashPassword }
+            });
+
+            return res.status(201).json({ message: 'Conta criada com sucesso!' });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ error: 'Erro ao criar conta.' });
+        }
     }
 };

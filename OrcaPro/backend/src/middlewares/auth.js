@@ -22,6 +22,10 @@ module.exports = (req, res, next) => {
     // Verifica se o token é verdadeiro e não expirou
     jwt.verify(token, process.env.JWT_SECRET || 'segredo_super_seguro_orcamento', (err, decoded) => {
         if (err) return res.status(401).json({ error: 'Token inválido ou expirado.' });
+        
+        // [SaaS] A MÁGICA: Pega o ID do usuário de dentro do crachá e cola na requisição
+        req.userId = decoded.id;
+        
         return next(); // Tudo certo! Permite que a requisição continue para o Controller
     });
 };

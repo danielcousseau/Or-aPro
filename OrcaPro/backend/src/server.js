@@ -47,6 +47,7 @@ app.get('/api/health', (req, res) => {
 // Usando as Rotas
 // Rota de Login (Pública) - Tem que vir antes das rotas fechadas!
 app.post('/api/login', AuthController.login);
+app.post('/api/registrar', AuthController.register); // [SaaS] Rota pública para criar novas contas
 
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/materiais', materialRoutes);

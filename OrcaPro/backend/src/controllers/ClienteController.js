@@ -4,7 +4,9 @@ const prisma = new PrismaClient();
 module.exports = {
     async listar(req, res) {
         try {
-            const clientes = await prisma.cliente.findMany();
+            const clientes = await prisma.cliente.findMany({
+                where: { userId: req.userId } // [SaaS] Traz apenas os clientes deste usuário
+            });
             return res.json(clientes);
         } catch (error) {
             console.error(error);
@@ -17,7 +19,10 @@ module.exports = {
             const dados = req.body;
             
             const novoCliente = await prisma.cliente.create({
-                data: dados
+                data: {
+                    ...dados,
+                    userId: req.userId // [SaaS] Carimba o ID do dono no cliente
+                }
             });
 
             return res.status(201).json(novoCliente);
@@ -31,6 +36,10 @@ module.exports = {
         try {
             const { id } = req.params;
             const dados = req.body;
+
+            // [SaaS] Valida se o usuário é dono do cliente antes de editar
+            const pertence = await prisma.cliente.findFirst({ where: { id: Number(id), userId: req.userId }});
+            if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
 
             const clienteAtualizado = await prisma.cliente.update({
                 where: { id: Number(id) },
@@ -48,6 +57,10 @@ module.exports = {
         try {
             const { id } = req.params;
             
+            // [SaaS] Valida posse
+            const pertence = await prisma.cliente.findFirst({ where: { id: Number(id), userId: req.userId }});
+            if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
+
             await prisma.cliente.delete({
                 where: { id: Number(id) }
             });
@@ -62,8 +75,8 @@ module.exports = {
     async buscarPorId(req, res) {
         try {
             const { id } = req.params;
-            const cliente = await prisma.cliente.findUnique({
-                where: { id: Number(id) }
+            const cliente = await prisma.cliente.findFirst({
+                where: { id: Number(id), userId: req.userId } // [SaaS] Traz apenas se for dono
             });
 
             if (!cliente) return res.status(404).json({ error: 'Cliente não encontrado' });

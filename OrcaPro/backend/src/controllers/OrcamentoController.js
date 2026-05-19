@@ -7,6 +7,7 @@ module.exports = {
         try {
             // O "include" faz o Prisma trazer os dados do cliente e os materiais junto!
             const orcamentos = await prisma.orcamento.findMany({
+                where: { userId: req.userId }, // [SaaS] Isola os orçamentos
                 include: { 
                     cliente: true,
                     materiais: true 
@@ -40,6 +41,7 @@ module.exports = {
                     lucroQtde,
                     totalFinal,
                     tipoMovel, ambiente, medidas, prazo, pagamento, validade, observacoes,
+                    userId: req.userId, // [SaaS] Etiqueta de posse
                     // Aqui ele já cria e vincula os materiais automaticamente
                     materiais: {
                         create: materiais.map(mat => ({
@@ -66,6 +68,9 @@ module.exports = {
                 tipoLucro, lucroValor, lucroQtde, totalFinal, tipoMovel, ambiente, medidas, 
                 prazo, pagamento, validade, observacoes, materiais
             } = req.body;
+
+            const pertence = await prisma.orcamento.findFirst({ where: { id: Number(id), userId: req.userId } });
+            if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
 
             const orcamentoAtualizado = await prisma.orcamento.update({
                 where: { id: Number(id) },
@@ -100,6 +105,10 @@ module.exports = {
     async excluir(req, res) {
         try {
             const { id } = req.params;
+            
+            const pertence = await prisma.orcamento.findFirst({ where: { id: Number(id), userId: req.userId } });
+            if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
+
             // Os materiais relacionados serão excluídos em cascata pelo Prisma
             await prisma.orcamento.delete({
                 where: { id: Number(id) },
@@ -114,8 +123,8 @@ module.exports = {
     async buscarPorId(req, res) {
         try {
             const { id } = req.params;
-            const orcamento = await prisma.orcamento.findUnique({
-                where: { id: Number(id) },
+            const orcamento = await prisma.orcamento.findFirst({
+                where: { id: Number(id), userId: req.userId }, // [SaaS] Traz se for o dono
                 include: { 
                     cliente: true,
                     materiais: true 
@@ -155,7 +164,7 @@ module.exports = {
             const jwtSecret = process.env.JWT_SECRET;
             if (!jwtSecret) return res.status(500).json({ error: 'Erro interno de configuração de segurança.' });
 
-            const orcamento = await prisma.orcamento.findUnique({ where: { id: Number(id) } });
+            const orcamento = await prisma.orcamento.findFirst({ where: { id: Number(id), userId: req.userId } });
             if (!orcamento) return res.status(404).json({ error: 'Orçamento não encontrado.' });
 
             // Assina um token válido por 7 dias contendo APENAS o ID

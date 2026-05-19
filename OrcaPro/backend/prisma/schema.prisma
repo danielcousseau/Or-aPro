@@ -15,6 +15,11 @@ model User {
   usuario   String   @unique
   password  String   
   createdAt DateTime @default(now())
+
+  // Relacionamentos: O que pertence a este usuário
+  clientes   Cliente[]
+  materiais  Material[]
+  orcamentos Orcamento[]
 }
 
 model Cliente {
@@ -31,6 +36,10 @@ model Cliente {
   observacoes String?
   createdAt   DateTime @default(now())
   orcamentos  Orcamento[]
+
+  // Etiqueta de dono (SaaS)
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model Material {
@@ -40,6 +49,10 @@ model Material {
   valor       Float
   unidade     String?
   createdAt   DateTime @default(now())
+
+  // Etiqueta de dono (SaaS)
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model Orcamento {
@@ -68,6 +81,10 @@ model Orcamento {
   materiais       OrcamentoMaterial[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  // Etiqueta de dono (SaaS)
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
 }
 
 model OrcamentoMaterial {
