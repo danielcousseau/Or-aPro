@@ -41,6 +41,8 @@ body {
     font-family: 'Lato', sans-serif;
     color: var(--text-main);
     background: var(--bg-main);
+    overflow-wrap: break-word; /* [Mobile] Evita que textos longos (como emails ou nomes) vazem da tela */
+    word-break: break-word;
 }
 
 html {
@@ -181,6 +183,7 @@ textarea {
     outline: none;
     transition: 0.25s ease;
     font-family: 'Lato', sans-serif;
+    max-width: 100%; /* [Mobile] Garante que inputs não fujam do card */
 }
 
 input::placeholder,
@@ -262,30 +265,34 @@ button:active {
 .input-wrapper {
     position: relative;
     width: 100%;
+    display: block; /* [Mobile] Dá estabilidade para a caixa que segura a senha */
 }
 .input-wrapper input {
-    padding-right: 46px; /* [Mobile] Evita que a senha digitada fique escondida debaixo do olho */
+    width: 100%;
+    padding-right: 46px !important; /* [Mobile] Força o recuo da senha digitada */
 }
 .btn-eye {
     position: absolute;
-    right: 12px;
+    right: 4px; /* Posiciona o olhinho precisamente no canto */
     top: 50%;
     transform: translateY(-50%);
+    width: 40px; /* Tamanho exato e fixo, cria uma hitbox perfeita para o dedo */
+    height: 40px;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     color: var(--text-soft) !important;
-    padding: 8px !important; /* [Mobile] Aumenta a área de toque para o dedo sem bugar o campo */
-    min-height: auto !important;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2;
+    cursor: pointer;
 }
-.btn-eye:hover {
+.btn-eye:hover, .btn-eye:active {
     transform: translateY(-50%) !important;
     box-shadow: none !important;
     color: var(--primary) !important;
+    background: transparent !important;
 }
 
 .cliente-card {
@@ -435,18 +442,19 @@ input[type="number"] {
 
 @media (max-width: 600px) {
     h1 {
-        font-size: 1.55rem;
+        font-size: 1.4rem; /* Um pouco menor para não apertar as margens em celulares estreitos */
     }
 
     .menu {
-        gap: 8px;
-        padding: 12px;
+        gap: 6px;
+        padding: 10px;
     }
 
     .menu a {
-        flex: 1 1 calc(50% - 8px);
+        flex: 1 1 calc(50% - 6px);
         text-align: center;
-        padding: 10px 12px;
+        padding: 10px 8px;
+        font-size: 0.85rem; /* Ajusta a fonte dos botões do menu para caber bonito no layout */
     }
 
     .form-section,
