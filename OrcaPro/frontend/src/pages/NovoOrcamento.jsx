@@ -50,6 +50,9 @@ export default function NovoOrcamento() {
 
     // Totais calculados automaticamente
     const [totais, setTotais] = useState({ materiais: 0, maoDeObra: 0, lucro: 0, final: 0 });
+    
+    // [UX/SecOps] Evita criação duplicada se o usuário clicar várias vezes rápido
+    const [salvando, setSalvando] = useState(false);
 
     // 1. Busca os clientes e materiais quando a tela abre
     useEffect(() => {
@@ -209,10 +212,15 @@ export default function NovoOrcamento() {
     // 4. Salvar no Banco
     const salvarOrcamento = async (e) => {
         e.preventDefault();
+        
+        if (salvando) return; // Se já está salvando, ignora novos cliques
+        
         if (!orcamento.clienteId) {
             toast.warn("Selecione um cliente antes de gerar o orçamento!");
             return;
         }
+
+        setSalvando(true); // Bloqueia o botão e inicia a submissão
 
         const dadosParaEnviar = {
             ...orcamento,
@@ -243,6 +251,8 @@ export default function NovoOrcamento() {
             navigate('/historico'); // Direciona pro histórico após salvar
         } catch (error) {
             toast.error('Falha de comunicação com o servidor. Tente novamente.');
+        } finally {
+            setSalvando(false); // Libera o botão independente de dar erro ou sucesso
         }
     };
     
@@ -293,8 +303,8 @@ export default function NovoOrcamento() {
                 />
 
                 <div className="form-buttons">
-                    <button type="submit" style={{ fontSize: '1.1rem', padding: '16px 24px' }}>
-                        {id ? 'Atualizar Orçamento Salvo' : 'Gerar e Salvar Orçamento'}
+                    <button type="submit" disabled={salvando} style={{ opacity: salvando ? 0.7 : 1, cursor: salvando ? 'not-allowed' : 'pointer', fontSize: '1.1rem', padding: '16px 24px' }}>
+                        {salvando ? 'Salvando...' : (id ? 'Atualizar Orçamento Salvo' : 'Gerar e Salvar Orçamento')}
                     </button>
                     {id && (
                         <button type="button" className="btn-cancel" onClick={() => navigate('/historico')}>Cancelar Edição</button>

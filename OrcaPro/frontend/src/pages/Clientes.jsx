@@ -10,6 +10,7 @@ export default function Clientes() {
     const [clienteParaExcluir, setClienteParaExcluir] = useState(null); // Guarda o ID do cliente para o modal de exclusão
     const [abaAtiva, setAbaAtiva] = useState('consulta'); // 'consulta' ou 'cadastro'
     const [termoBusca, setTermoBusca] = useState(''); // Guarda o texto da pesquisa
+    const [salvando, setSalvando] = useState(false);
     
     // State único para o formulário
     const [formData, setFormData] = useState({
@@ -135,6 +136,8 @@ export default function Clientes() {
         } catch (error) {
             console.error("Erro detalhado do backend:", error.response?.data || error.message);
             toast.error('Erro ao salvar cliente. Verifique o console.');
+        } finally {
+            setSalvando(false);
         }
     };
 
@@ -238,12 +241,12 @@ export default function Clientes() {
                         </section>
 
                         <div className="form-buttons">
-                            <button type="submit">
-                                {clienteEmEdicao ? 'Atualizar Cliente' : 'Salvar Cliente'}
+                            <button type="submit" disabled={salvando} style={{ opacity: salvando ? 0.7 : 1, cursor: salvando ? 'not-allowed' : 'pointer' }}>
+                                {salvando ? 'Salvando...' : (clienteEmEdicao ? 'Atualizar Cliente' : 'Salvar Cliente')}
                             </button>
                             {/* O botão de cancelar retorna para a aba de consulta */}
                             {clienteEmEdicao && (
-                                <button type="button" className="btn-cancel" onClick={() => { limparFormulario(); setAbaAtiva('consulta'); }}>
+                                <button type="button" className="btn-cancel" disabled={salvando} onClick={() => { limparFormulario(); setAbaAtiva('consulta'); }}>
                                     Cancelar Edição
                                 </button>
                             )}

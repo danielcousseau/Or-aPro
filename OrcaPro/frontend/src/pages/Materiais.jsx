@@ -10,6 +10,7 @@ export default function Materiais() {
     const [materialParaExcluir, setMaterialParaExcluir] = useState(null);
     const [abaAtiva, setAbaAtiva] = useState('consulta'); // 'consulta' ou 'cadastro'
     const [termoBusca, setTermoBusca] = useState(''); // Guarda o texto da pesquisa
+    const [salvando, setSalvando] = useState(false);
 
     const [formData, setFormData] = useState({
         nome: '',
@@ -72,6 +73,10 @@ export default function Materiais() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (salvando) return;
+        setSalvando(true);
+        
         try {
             const dadosParaEnviar = {
                 ...formData,
@@ -91,6 +96,8 @@ export default function Materiais() {
         } catch (error) {
             console.error("Erro detalhado do backend:", error.response?.data || error.message);
             toast.error('Erro ao salvar material. Verifique o console.');
+        } finally {
+            setSalvando(false);
         }
     };
 
@@ -174,8 +181,10 @@ export default function Materiais() {
                             </div>
 
                             <div className="form-buttons">
-                                <button type="submit">{materialEmEdicao ? 'Atualizar Material' : 'Salvar Material'}</button>
-                                <button type="button" className="btn-cancel" onClick={() => { limparFormulario(); setAbaAtiva('consulta'); }}>
+                                <button type="submit" disabled={salvando} style={{ opacity: salvando ? 0.7 : 1, cursor: salvando ? 'not-allowed' : 'pointer' }}>
+                                    {salvando ? 'Salvando...' : (materialEmEdicao ? 'Atualizar Material' : 'Salvar Material')}
+                                </button>
+                                <button type="button" className="btn-cancel" disabled={salvando} onClick={() => { limparFormulario(); setAbaAtiva('consulta'); }}>
                                     {materialEmEdicao ? 'Cancelar Edição' : 'Cancelar'}
                                 </button>
                             </div>

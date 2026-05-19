@@ -9,6 +9,7 @@ export default function Historico() {
     const [orcamentoParaExcluir, setOrcamentoParaExcluir] = useState(null);
     const [termoBusca, setTermoBusca] = useState(''); // [UX] Estado para a barra de pesquisa
     const [carregando, setCarregando] = useState(true); // [UX] Evita o "flash" de lista vazia
+    const [excluindo, setExcluindo] = useState(false);
     
     // [Clean Code] Importando a mesma paleta de cores usada no Dashboard para criar identidade visual
     const CORES_STATUS = {
@@ -40,7 +41,10 @@ export default function Historico() {
     };
 
     const confirmarExclusao = async () => {
-        if (!orcamentoParaExcluir) return;
+        if (!orcamentoParaExcluir || excluindo) return;
+        
+        setExcluindo(true);
+        
         try {
             await api.delete(`/orcamentos/${orcamentoParaExcluir}`);
             toast.success('Orçamento excluído com sucesso!');
@@ -50,6 +54,8 @@ export default function Historico() {
             console.error("Erro ao excluir orçamento", error);
             toast.error('Erro ao excluir orçamento.');
             setOrcamentoParaExcluir(null);
+        } finally {
+            setExcluindo(false);
         }
     };
 
@@ -134,8 +140,10 @@ export default function Historico() {
                         <h3>Confirmar Exclusão</h3>
                         <p>Tem certeza que deseja excluir este orçamento? Esta ação não pode ser desfeita e removerá todos os seus dados permanentemente.</p>
                         <div className="modal-actions">
-                            <button type="button" className="btn-cancel" onClick={() => setOrcamentoParaExcluir(null)}>Cancelar</button>
-                            <button type="button" className="btn-delete" onClick={confirmarExclusao}>Sim, Excluir</button>
+                            <button type="button" className="btn-cancel" disabled={excluindo} onClick={() => setOrcamentoParaExcluir(null)}>Cancelar</button>
+                            <button type="button" className="btn-delete" disabled={excluindo} onClick={confirmarExclusao} style={{ opacity: excluindo ? 0.7 : 1, cursor: excluindo ? 'not-allowed' : 'pointer' }}>
+                                {excluindo ? 'Excluindo...' : 'Sim, Excluir'}
+                            </button>
                         </div>
                     </div>
                 </div>
