@@ -25,9 +25,14 @@ export default function Login() {
                 senha 
             });
             
-            // Se deu certo, salva o token e os dados do usuário no LocalStorage
-            localStorage.setItem('@OrcaPro:token', response.data.token);
-            localStorage.setItem('@OrcaPro:user', JSON.stringify(response.data.user));
+            // [SecOps] Blindagem contra dados indefinidos da API
+            const token = response.data.token;
+            const userData = response.data.user || {
+                nome: response.data.nome || response.data.name || usuario,
+                usuario: usuario
+            };
+            localStorage.setItem('@OrcaPro:token', token);
+            localStorage.setItem('@OrcaPro:user', JSON.stringify(userData));
             
             // Redireciona para o Histórico (ou para a página que preferir)
             navigate('/historico'); 
