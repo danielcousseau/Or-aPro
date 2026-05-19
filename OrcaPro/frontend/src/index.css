@@ -177,7 +177,7 @@ textarea {
     border: 1px solid var(--border-input);
     background: var(--panel-soft);
     color: var(--text-main);
-    font-size: 0.95rem;
+    font-size: 1rem; /* [Mobile] 1rem = 16px. Evita o zoom automático irritante do iPhone ao clicar */
     outline: none;
     transition: 0.25s ease;
     font-family: 'Lato', sans-serif;
@@ -261,24 +261,29 @@ button:active {
 /* --- Input com Ícone (Olhinho da Senha) --- */
 .input-wrapper {
     position: relative;
-    display: flex;
-    align-items: center;
+    width: 100%;
+}
+.input-wrapper input {
+    padding-right: 46px; /* [Mobile] Evita que a senha digitada fique escondida debaixo do olho */
 }
 .btn-eye {
     position: absolute;
     right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
     color: var(--text-soft) !important;
-    padding: 0 !important;
+    padding: 8px !important; /* [Mobile] Aumenta a área de toque para o dedo sem bugar o campo */
     min-height: auto !important;
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 2;
 }
 .btn-eye:hover {
-    transform: none !important;
+    transform: translateY(-50%) !important;
     box-shadow: none !important;
     color: var(--primary) !important;
 }

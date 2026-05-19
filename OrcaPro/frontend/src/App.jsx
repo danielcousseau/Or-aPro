@@ -82,7 +82,7 @@ function LayoutSistema({ children }) {
                                 }}>
                                     {user.nome ? user.nome.charAt(0).toUpperCase() : 'U'}
                                 </div>
-                                <span style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.9rem' }}>
+                                <span style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.9rem', maxWidth: '130px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {user.nome || user.usuario}
                                 </span>
                             </div>
