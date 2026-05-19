@@ -5,6 +5,7 @@ const helmet = require('helmet'); // [SecOps] Proteção avançada de cabeçalho
 const rateLimit = require('express-rate-limit'); // [SecOps] Bloqueio contra ataques de repetição
 
 const app = express();
+app.set('trust proxy', 1);
 
 // [SecOps] Protegendo o CORS. 'origin: *' permite que qualquer site tente se comunicar com sua API.
 // É vital restringir isso para o domínio exato do seu frontend para evitar ataques cruzados.
