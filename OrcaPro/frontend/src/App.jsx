@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Menu from './components/Menu';
 import Clientes from './pages/Clientes';
@@ -26,6 +27,7 @@ function RotaProtegida({ children }) {
 // 2. Layout do Sistema: Esconde o Menu no Login e adiciona o botão de Sair
 function LayoutSistema({ children }) {
     const location = useLocation();
+    const [perfilAberto, setPerfilAberto] = useState(false);
     const isLoginPage = location.pathname === '/login';
     const isCadastroPage = location.pathname === '/cadastro';
     // [Correção] Adicionamos uma verificação para a rota de impressão.
