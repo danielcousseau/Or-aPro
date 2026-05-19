@@ -717,6 +717,9 @@ input[type="number"] {
     gap: 12px;
 }
 .dashboard-grid-2 {
+    display: grid;
+    gap: 20px;
+    margin-top: 30px;
     grid-template-columns: repeat(2, 1fr);
 }
 

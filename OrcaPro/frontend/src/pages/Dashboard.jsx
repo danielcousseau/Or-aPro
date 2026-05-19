@@ -181,11 +181,13 @@ export default function Dashboard() {
             </section>
 
             {/* SESSÃO DE GRÁFICOS LADO A LADO */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px', marginTop: '30px' }}>
+            <div className="dashboard-grid-2">
                 <section className="dashboard-card chart-section">
                     <h3 className="text-center">Projetos por Ambiente</h3>
                     {orcamentos.length > 0 ? (
-                        <Bar data={dataGrafico} options={{ responsive: true, maintainAspectRatio: false }} />
+                        <div style={{ position: 'relative', height: '300px', width: '100%' }}>
+                            <Bar data={dataGrafico} options={{ responsive: true, maintainAspectRatio: false }} />
+                        </div>
                     ) : (
                         <p className="text-center text-soft">Cadastre orçamentos para visualizar o gráfico.</p>
                     )}
@@ -194,7 +196,9 @@ export default function Dashboard() {
                 <section className="dashboard-card chart-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <h3 className="text-center">Status dos Orçamentos</h3>
                     {orcamentos.length > 0 ? (
-                        <div style={{ width: '80%', height: '300px' }}><Doughnut data={dataStatusGrafico} options={{ responsive: true, maintainAspectRatio: false }} /></div>
+                        <div style={{ position: 'relative', height: '300px', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                            <Doughnut data={dataStatusGrafico} options={{ responsive: true, maintainAspectRatio: false }} />
+                        </div>
                     ) : (
                         <p className="text-center text-soft">Sem dados de status.</p>
                     )}
