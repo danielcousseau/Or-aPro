@@ -367,10 +367,15 @@ a:focus {
 
 .card-actions {
     display: flex;
+    flex-wrap: wrap; /* [Mobile] Permite que os botões quebrem para a linha de baixo */
     gap: 10px;
     margin-top: 16px;
     border-top: 1px solid var(--border);
     padding-top: 16px;
+}
+
+.card-actions button {
+    flex: 1 1 auto; /* Faz com que os botões estiquem e preencham o espaço vazio de forma harmônica */
 }
 
 .cliente-card h3,

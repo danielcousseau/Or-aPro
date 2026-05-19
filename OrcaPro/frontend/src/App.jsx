@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Menu from './components/Menu';
 import Clientes from './pages/Clientes';
@@ -28,6 +28,7 @@ function RotaProtegida({ children }) {
 function LayoutSistema({ children }) {
     const location = useLocation();
     const [perfilAberto, setPerfilAberto] = useState(false);
+    const perfilRef = useRef(null); // Cria uma referência para detectar cliques fora
     const isLoginPage = location.pathname === '/login';
     const isCadastroPage = location.pathname === '/cadastro';
     // [Correção] Adicionamos uma verificação para a rota de impressão.
@@ -47,6 +48,28 @@ function LayoutSistema({ children }) {
         localStorage.removeItem('@OrcaPro:user');
         localStorage.removeItem('@OrcaPro:token');
     }
+
+    // [UX] Fecha o menu do perfil ao clicar fora ou apertar Esc
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (perfilRef.current && !perfilRef.current.contains(event.target)) {
+                setPerfilAberto(false);
+            }
+        }
+        function handleKeyDown(event) {
+            if (event.key === 'Escape') {
+                setPerfilAberto(false);
+            }
+        }
+        if (perfilAberto) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('keydown', handleKeyDown);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [perfilAberto]);
 
     const handleLogout = () => {
         localStorage.removeItem('@OrcaPro:token'); // Apaga o crachá
@@ -70,7 +93,7 @@ function LayoutSistema({ children }) {
                         gap: '12px' 
                     }}>
                         {user && (
-                            <div style={{ position: 'relative' }}>
+                            <div style={{ position: 'relative' }} ref={perfilRef}>
                                 <button 
                                     onClick={() => setPerfilAberto(!perfilAberto)} 
                                     style={{ 

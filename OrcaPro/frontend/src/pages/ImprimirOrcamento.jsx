@@ -9,11 +9,23 @@ export default function ImprimirOrcamento() {
     const navigate = useNavigate();
     const [orc, setOrc] = useState(null);
     const [erro, setErro] = useState(false);
+    const [numeroLocal, setNumeroLocal] = useState('');
 
     useEffect(() => {
-        // [SecOps] Prevenção de falhas silenciosas. O frontend deve reagir se a API recusar o acesso ou falhar.
-        api.get(`/orcamentos/${id}`)
-            .then(res => setOrc(res.data))
+        // Busca o orçamento atual e a lista de todos os orçamentos do usuário simultaneamente
+        Promise.all([
+            api.get(`/orcamentos/${id}`),
+            api.get('/orcamentos')
+        ])
+            .then(([resOrc, resTodos]) => {
+                setOrc(resOrc.data);
+                
+                // MÁGICA: Calcula qual é o número real deste orçamento para o usuário (1, 2, 3...)
+                // Ordena do mais antigo para o mais novo e acha a posição dele na lista
+                const listaCrescente = resTodos.data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                const index = listaCrescente.findIndex(o => o.id === Number(id));
+                setNumeroLocal(index !== -1 ? index + 1 : id);
+            })
             .catch(err => {
                 console.error("Erro ao carregar orçamento para impressão:", err);
                 setErro(true);
@@ -26,11 +38,11 @@ export default function ImprimirOrcamento() {
             const tituloOriginal = document.title; // Guarda o título antigo
             // Formata o nome do arquivo, trocando espaços por underline (ex: Orcamento_12_Joao_da_Silva)
             const nomeClienteFormatado = orc.cliente.nome.replace(/\s+/g, '_');
-            document.title = `Orcamento_${orc.id}_${nomeClienteFormatado}`;
+            document.title = `Orcamento_${numeroLocal || orc.id}_${nomeClienteFormatado}`;
             
             return () => { document.title = tituloOriginal; }; // Restaura ao sair da página
         }
-    }, [orc]);
+    }, [orc, numeroLocal]);
 
     if (erro) return <p style={{ padding: '20px', color: '#e74c3c' }}>Erro ao carregar o orçamento. Verifique se ele existe ou se tem permissões de acesso.</p>;
     if (!orc) return <p style={{ padding: '20px' }}>Carregando orçamento...</p>;
@@ -47,8 +59,12 @@ export default function ImprimirOrcamento() {
             const response = await api.post(`/orcamentos/${orc.id}/link-publico`);
             const token = response.data.token;
             
-            // 2. Monta o link mágico que o cliente vai clicar
-            const linkProposta = `${window.location.origin}/proposta/${token}`;
+            // 2. Monta o link mágico que o cliente vai clicar.
+            // [Inteligência] Se você clicar pelo PC local (localhost), ele força o envio do link da web!
+            const baseUrl = window.location.hostname === 'localhost' 
+                ? 'https://orca-pro-seven.vercel.app/' // 
+                : window.location.origin;
+            const linkProposta = `${baseUrl}/proposta/${token}`;
 
             let telefoneFormatado = orc.cliente.telefone.replace(/\D/g, ''); // Limpa traços e parênteses
             if (telefoneFormatado.length === 10 || telefoneFormatado.length === 11) {
@@ -77,7 +93,7 @@ export default function ImprimirOrcamento() {
                         <img src="/logo-orcapro.png" alt="Logo da Empresa" style={{ maxWidth: '250px', height: 'auto' }} />
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                        <h2 style={{ margin: 0 }}>Orçamento #{orc.id}</h2>
+                        <h2 style={{ margin: 0 }}>Orçamento #{numeroLocal || orc.id}</h2>
                         <p>Data: {new Date(orc.createdAt).toLocaleDateString('pt-BR')}</p>
                     </div>
                 </header>

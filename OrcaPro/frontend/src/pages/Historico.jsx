@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { toast } from 'react-toastify';
+import { formatarMoeda } from '../utils/format';
 
 export default function Historico() {
     const [orcamentos, setOrcamentos] = useState([]);
@@ -92,15 +93,15 @@ export default function Historico() {
                         {orcamentosFiltrados.map(orc => (
                             <div key={orc.id} className="cliente-card" style={{ borderLeft: '4px solid var(--primary)', position: 'relative' }}>
                                 
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
                                     <div>
                                         <h3 style={{ marginBottom: '5px' }}>{orc.titulo}</h3>
                                         <p style={{ color: 'var(--text-soft)', fontSize: '0.9rem' }}>
                                             Criado em: {new Date(orc.createdAt).toLocaleDateString('pt-BR')}
                                         </p>
                                     </div>
-                                    <h2 style={{ color: 'var(--primary)', margin: 0 }}>
-                                        R$ {Number(orc.totalFinal).toFixed(2)}
+                                    <h2 style={{ color: 'var(--primary)', margin: 0, fontSize: '1.4rem' }}>
+                                        {formatarMoeda(orc.totalFinal)}
                                     </h2>
                                 </div>
 
@@ -119,7 +120,7 @@ export default function Historico() {
                                     <button type="button" className="btn-action btn-edit" onClick={() => navigate(`/orcamento/${orc.id}`)}>
                                         ✏️ Editar
                                     </button>
-                                    <button type="button" onClick={() => navigate(`/imprimir/${orc.id}`)}>
+                                    <button type="button" className="btn-action" style={{ background: '#27ae60', color: '#fff', border: '1px solid #27ae60' }} onClick={() => navigate(`/imprimir/${orc.id}`)}>
                                         📄 Ver / Imprimir
                                     </button>
                                     <button type="button" className="btn-action btn-delete" onClick={() => setOrcamentoParaExcluir(orc.id)}>
