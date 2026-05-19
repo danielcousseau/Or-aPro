@@ -19,3 +19,4 @@ yarn-error.log*
 # Arquivos do Sistema Operacional e do VS Code
 .DS_Store
 .vscode/
+OrcaPro/backend/reset-senha.js
