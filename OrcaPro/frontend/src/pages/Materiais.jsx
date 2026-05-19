@@ -144,7 +144,7 @@ export default function Materiais() {
                     </h2>
                     <form onSubmit={handleSubmit}>
                         <div className="cliente-card">
-                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '15px' }}>
+                            <div className="form-grid-2-1">
                                 <section className="form-section">
                                     <label>Nome do Material *</label>
                                     <input type="text" name="nome" value={formData.nome} onChange={handleChange} required placeholder="Ex: MDF Branco TX 15mm" />
@@ -155,7 +155,7 @@ export default function Materiais() {
                                 </section>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                            <div className="form-grid-1-1">
                                 <section className="form-section">
                                     <label>Valor (R$) *</label>
                                     <input type="text" name="valor" value={formData.valor} onChange={handleChange} required placeholder="R$ 0,00" onFocus={(e) => e.target.select()} />

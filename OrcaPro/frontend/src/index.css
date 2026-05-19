@@ -211,6 +211,18 @@ textarea {
     resize: vertical;
 }
 
+/* --- Grids de Formulário Responsivas --- */
+.form-grid-2-1 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 15px;
+}
+.form-grid-1-1 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
 .form-buttons {
     display: flex;
     flex-wrap: wrap;
@@ -463,6 +475,12 @@ input[type="number"] {
     #resumoOrcamento {
         padding: 15px;
         border-radius: 14px;
+    }
+
+    /* No celular, quebra os campos lado a lado para um embaixo do outro */
+    .form-grid-2-1, 
+    .form-grid-1-1 {
+        grid-template-columns: 1fr;
     }
 }
 .dashboard-hero {
