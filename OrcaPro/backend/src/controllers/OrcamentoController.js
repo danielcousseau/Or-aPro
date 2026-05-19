@@ -144,6 +144,10 @@ module.exports = {
             const { id } = req.params;
             const { status } = req.body;
             
+            // [SaaS] Valida se o orçamento pertence ao usuário antes de alterar o status
+            const pertence = await prisma.orcamento.findFirst({ where: { id: Number(id), userId: req.userId } });
+            if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
+
             const orcamentoAtualizado = await prisma.orcamento.update({
                 where: { id: Number(id) },
                 data: { status }

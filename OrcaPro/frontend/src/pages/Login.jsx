@@ -83,6 +83,13 @@ export default function Login() {
                         {carregando ? 'Autenticando...' : 'Entrar'}
                     </button>
                 </form>
+
+                <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                    <span style={{ color: 'var(--text-soft)' }}>Ainda não tem uma conta? </span>
+                    <button type="button" onClick={() => navigate('/cadastro')} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 'bold', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                        Criar conta
+                    </button>
+                </div>
             </div>
         </div>
     );

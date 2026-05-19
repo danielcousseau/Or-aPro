@@ -8,6 +8,7 @@ import ImprimirOrcamento from './pages/ImprimirOrcamento';
 import Materiais from './pages/Materiais';
 import Kanban from './pages/Kanban';
 import Login from './pages/Login';
+import Cadastro from './pages/Cadastro';
 import Proposta from './pages/Proposta'; // [Feature] Importa a tela pública do cliente
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -26,6 +27,7 @@ function RotaProtegida({ children }) {
 function LayoutSistema({ children }) {
     const location = useLocation();
     const isLoginPage = location.pathname === '/login';
+    const isCadastroPage = location.pathname === '/cadastro';
     // [Correção] Adicionamos uma verificação para a rota de impressão.
     // Qualquer URL que comece com /imprimir/ será considerada uma página de impressão.
     const isPrintPage = location.pathname.startsWith('/imprimir/');
@@ -53,7 +55,7 @@ function LayoutSistema({ children }) {
     return (
         <>
             {/* O Layout (Menu superior) não deve aparecer no Login, na Impressão, nem na Proposta Pública */}
-            {!isLoginPage && !isPrintPage && !isPropostaPage && (
+            {!isLoginPage && !isCadastroPage && !isPrintPage && !isPropostaPage && (
                 <>
                     {/* Topbar do Usuário (Elegante e Harmônica) */}
                     <div style={{ 
@@ -97,7 +99,7 @@ function LayoutSistema({ children }) {
                     <Menu />
                 </>
             )}
-            <main className={!isLoginPage && !isPrintPage && !isPropostaPage ? "container" : ""}>
+            <main className={!isLoginPage && !isCadastroPage && !isPrintPage && !isPropostaPage ? "container" : ""}>
                 {children}
             </main>
         </>
@@ -112,6 +114,7 @@ export default function App() {
                     <Routes>
                         {/* Rota Pública (Aba de Autenticação) */}
                         <Route path="/login" element={<Login />} />
+                    <Route path="/cadastro" element={<Cadastro />} />
                         <Route path="/proposta/:token" element={<Proposta />} /> {/* Rota Pública do Cliente */}
                         
                         {/* Rotas Privadas (Blindadas pelo RotaProtegida) */}
