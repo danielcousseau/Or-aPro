@@ -54,11 +54,11 @@ html {
 
 .menu {
     max-width: 1200px;
-    margin: 12px auto 0;
-    padding: 8px 12px;
+    margin: 5px auto 0;
+    padding: 6px 12px;
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 4px;
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
@@ -73,7 +73,7 @@ html {
     color: var(--text-main);
     font-weight: 600;
     letter-spacing: 0.3px;
-    padding: 8px 14px;
+    padding: 6px 12px;
     border-radius: 12px;
     transition: 0.25s ease;
     border: 1px solid transparent;
@@ -89,7 +89,7 @@ html {
 
 .container {
     max-width: 1200px;
-    margin: 20px auto 40px;
+    margin: 15px auto 40px;
     padding: 30px;
     background: var(--panel);
     border: 1px solid var(--border);
@@ -505,15 +505,15 @@ input[type="number"] {
     }
 
     .menu {
-        gap: 4px;
-        padding: 6px;
+        gap: 2px;
+        padding: 4px;
     }
 
     .menu a {
-        flex: 1 1 calc(50% - 4px);
+        flex: 1 1 calc(50% - 2px);
         text-align: center;
-        padding: 8px 6px;
-        font-size: 0.8rem;
+        padding: 6px 4px;
+        font-size: 0.75rem;
     }
 
     .form-section,

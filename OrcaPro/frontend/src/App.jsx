@@ -70,32 +70,43 @@ function LayoutSistema({ children }) {
                         gap: '12px' 
                     }}>
                         {user && (
-                            <div style={{ 
-                                display: 'flex', alignItems: 'center', gap: '8px', 
-                                background: 'var(--panel)', padding: '6px 16px', 
-                                borderRadius: '999px', border: '1px solid var(--border)',
-                                boxShadow: 'var(--shadow-soft)'
-                            }}>
-                                <div style={{ 
-                                    width: '26px', height: '26px', borderRadius: '50%', 
-                                    background: 'var(--primary)', color: '#fff', 
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                                    fontWeight: 'bold', fontSize: '0.85rem'
-                                }}>
+                            <div style={{ position: 'relative' }}>
+                                <button 
+                                    onClick={() => setPerfilAberto(!perfilAberto)} 
+                                    style={{ 
+                                        width: '42px', height: '42px', borderRadius: '50%', 
+                                        background: 'var(--primary)', color: '#fff', 
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                        fontWeight: 'bold', fontSize: '1.1rem', padding: 0, minHeight: 'auto',
+                                        border: 'none', cursor: 'pointer', boxShadow: 'var(--shadow-soft)'
+                                    }}
+                                    title="Meu Perfil"
+                                >
                                     {user.nome ? user.nome.charAt(0).toUpperCase() : 'U'}
-                                </div>
-                                <span style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.9rem', maxWidth: '130px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {user.nome || user.usuario}
-                                </span>
+                                </button>
+
+                                {perfilAberto && (
+                                    <div style={{ 
+                                        position: 'absolute', top: '50px', right: '0', 
+                                        background: 'var(--panel)', border: '1px solid var(--border)', 
+                                        borderRadius: 'var(--radius-md)', padding: '16px', 
+                                        boxShadow: 'var(--shadow-main)', zIndex: 100, 
+                                        minWidth: '200px', textAlign: 'center' 
+                                    }}>
+                                        <p style={{ margin: '0 0 4px 0', fontWeight: 'bold', color: 'var(--text-main)' }}>
+                                            {user.nome || user.usuario}
+                                        </p>
+                                        <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: 'var(--text-soft)' }}>
+                                            @{user.usuario}
+                                        </p>
+                                        <hr style={{ margin: '12px 0', borderTop: '1px solid var(--border)' }} />
+                                        <button onClick={handleLogout} className="btn-delete" style={{ width: '100%', minHeight: 'auto', padding: '10px', fontSize: '0.85rem' }}>
+                                            🚪 Sair do Sistema
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
-                        
-                        <button onClick={handleLogout} className="btn-cancel" style={{ 
-                            padding: '6px 16px', minHeight: 'auto', borderRadius: '999px', 
-                            fontSize: '0.85rem', fontWeight: 'bold' 
-                        }}>
-                            Sair
-                        </button>
                     </div>
                     
                     <Menu />
