@@ -1,12 +1,25 @@
 const prisma = require('../lib/prisma');
+const MATERIAIS_PADRAO = require('../constants/materiaisPadrao');
 
 module.exports = {
     async listar(req, res) {
         try {
-            const materiais = await prisma.material.findMany({
-                where: { userId: req.userId }, // [SaaS]
+            let materiais = await prisma.material.findMany({
+                where: { userId: req.userId },
                 orderBy: { createdAt: 'desc' }
             });
+
+            // Na primeira vez que o usuário abre a tela sem nenhum material, inicializa os padrões
+            if (materiais.length === 0) {
+                await prisma.material.createMany({
+                    data: MATERIAIS_PADRAO.map(m => ({ ...m, userId: req.userId }))
+                });
+                materiais = await prisma.material.findMany({
+                    where: { userId: req.userId },
+                    orderBy: { nome: 'asc' }
+                });
+            }
+
             return res.json(materiais);
         } catch (error) {
             return res.status(500).json({ error: 'Erro ao listar materiais' });

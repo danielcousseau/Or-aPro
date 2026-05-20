@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const prisma = require('../lib/prisma');
 const { enviarEmailResetSenha } = require('../services/emailService');
+const MATERIAIS_PADRAO = require('../constants/materiaisPadrao');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -108,8 +109,12 @@ module.exports = {
             }
 
             const hashPassword = await bcrypt.hash(senha, 10);
-            await prisma.user.create({
+            const novoUsuario = await prisma.user.create({
                 data: { name: nome, usuario, password: hashPassword, email: email || null }
+            });
+
+            await prisma.material.createMany({
+                data: MATERIAIS_PADRAO.map(m => ({ ...m, userId: novoUsuario.id }))
             });
 
             return res.status(201).json({ message: 'Conta criada com sucesso!' });
