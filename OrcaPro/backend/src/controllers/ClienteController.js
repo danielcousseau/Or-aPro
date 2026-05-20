@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma');
+const { registrar } = require('../services/audit');
 
 module.exports = {
     async listar(req, res) {
@@ -24,6 +25,7 @@ module.exports = {
                 }
             });
 
+            await registrar(req.userId, 'criou', 'Cliente', novoCliente.id, novoCliente.nome);
             return res.status(201).json(novoCliente);
         } catch (error) {
             console.error(error);
@@ -45,6 +47,7 @@ module.exports = {
                 data: dados
             });
 
+            await registrar(req.userId, 'atualizou', 'Cliente', clienteAtualizado.id, clienteAtualizado.nome);
             return res.json(clienteAtualizado);
         } catch (error) {
             console.error(error);
@@ -60,6 +63,7 @@ module.exports = {
             const pertence = await prisma.cliente.findFirst({ where: { id: Number(id), userId: req.userId }});
             if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
 
+            await registrar(req.userId, 'excluiu', 'Cliente', pertence.id, pertence.nome);
             await prisma.cliente.delete({
                 where: { id: Number(id) }
             });

@@ -44,6 +44,7 @@ const authLimiter = isTest
 const clienteRoutes = require('./routes/clienteRoutes');
 const materialRoutes = require('./routes/materialRoutes');
 const orcamentoRoutes = require('./routes/orcamentoRoutes');
+const auditRoutes = require('./routes/auditRoutes');
 const AuthController = require('./controllers/AuthController');
 const authMiddleware = require('./middlewares/auth');
 const errorHandler = require('./middlewares/errorHandler');
@@ -66,6 +67,7 @@ app.put('/api/usuarios/senha', authMiddleware, AuthController.alterarSenha);
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/materiais', materialRoutes);
 app.use('/api/orcamentos', orcamentoRoutes);
+app.use('/api/audit-log', auditRoutes);
 
 app.use(errorHandler);
 

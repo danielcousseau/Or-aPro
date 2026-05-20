@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
 const MATERIAIS_PADRAO = require('../constants/materiaisPadrao');
+const { registrar } = require('../services/audit');
 
 module.exports = {
     async listar(req, res) {
@@ -37,6 +38,7 @@ module.exports = {
                     userId: req.userId // [SaaS]
                 }
             });
+            await registrar(req.userId, 'criou', 'Material', novoMaterial.id, novoMaterial.nome);
             return res.status(201).json(novoMaterial);
         } catch (error) {
             return res.status(500).json({ error: 'Erro ao criar material' });
@@ -55,6 +57,7 @@ module.exports = {
                 where: { id: Number(id) },
                 data: dados
             });
+            await registrar(req.userId, 'atualizou', 'Material', materialAtualizado.id, materialAtualizado.nome);
             return res.json(materialAtualizado);
         } catch (error) {
             return res.status(500).json({ error: 'Erro ao atualizar material' });
@@ -68,6 +71,7 @@ module.exports = {
             const pertence = await prisma.material.findFirst({ where: { id: Number(id), userId: req.userId } });
             if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
 
+            await registrar(req.userId, 'excluiu', 'Material', pertence.id, pertence.nome);
             await prisma.material.delete({ where: { id: Number(id) } });
             return res.json({ message: 'Material excluído com sucesso!' });
         } catch (error) {

@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const prisma = require('../lib/prisma');
 const { enviarEmailResetSenha } = require('../services/emailService');
 const MATERIAIS_PADRAO = require('../constants/materiaisPadrao');
+const { registrar } = require('../services/audit');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -48,6 +49,8 @@ module.exports = {
 
             res.cookie('token', accessToken, cookieOpts(15 * 60 * 1000));
             res.cookie('refreshToken', refreshToken, cookieOpts(7 * 24 * 60 * 60 * 1000));
+
+            await registrar(user.id, 'login', 'Sessão', null, null);
 
             // Tokens também no body: necessário para Safari/iOS (ITP bloqueia cookies cross-domain)
             return res.json({

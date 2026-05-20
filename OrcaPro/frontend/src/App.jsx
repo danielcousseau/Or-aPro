@@ -15,6 +15,7 @@ import Perfil from './pages/Perfil';
 import Proposta from './pages/Proposta';
 import EsqueciSenha from './pages/EsqueciSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
+import Admin from './pages/Admin';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -207,6 +208,7 @@ export default function App() {
                         <Route path="/perfil" element={<RotaProtegida><Perfil /></RotaProtegida>} />
                         <Route path="/imprimir/:id" element={<RotaProtegida><ImprimirOrcamento /></RotaProtegida>} />
                         <Route path="/kanban" element={<RotaProtegida><Kanban /></RotaProtegida>} />
+                        <Route path="/admin" element={<RotaProtegida><Admin /></RotaProtegida>} />
                     </Routes>
                 </LayoutSistema>
             </BrowserRouter>

@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma');
-const jwt = require('jsonwebtoken'); // [SecOps] JWT para gerar links públicos e seguros
+const jwt = require('jsonwebtoken');
+const { registrar } = require('../services/audit'); // [SecOps] JWT para gerar links públicos e seguros
 
 module.exports = {
     async listar(req, res) {
@@ -60,6 +61,7 @@ module.exports = {
                 }
             });
 
+            await registrar(req.userId, 'criou', 'Orçamento', novoOrcamento.id, novoOrcamento.titulo);
             return res.status(201).json(novoOrcamento);
         } catch (error) {
             console.error(error);
@@ -110,6 +112,7 @@ module.exports = {
                     }
                 }
             });
+            await registrar(req.userId, 'atualizou', 'Orçamento', orcamentoAtualizado.id, orcamentoAtualizado.titulo);
             return res.json(orcamentoAtualizado);
         } catch (error) {
             console.error(error);
@@ -124,6 +127,7 @@ module.exports = {
             const pertence = await prisma.orcamento.findFirst({ where: { id: Number(id), userId: req.userId } });
             if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
 
+            await registrar(req.userId, 'excluiu', 'Orçamento', pertence.id, pertence.titulo);
             // Os materiais relacionados serão excluídos em cascata pelo Prisma
             await prisma.orcamento.delete({
                 where: { id: Number(id) },
@@ -167,6 +171,7 @@ module.exports = {
                 where: { id: Number(id) },
                 data: { status }
             });
+            await registrar(req.userId, 'atualizou status', 'Orçamento', orcamentoAtualizado.id, `${orcamentoAtualizado.titulo} → ${status}`);
             return res.json(orcamentoAtualizado);
         } catch (error) {
             console.error(error);
