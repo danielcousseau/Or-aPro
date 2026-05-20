@@ -58,8 +58,9 @@ export default function ImprimirOrcamento() {
                 margin: 10,
                 filename: `Orcamento_${numeroLocal || orc.id}_${nomeCliente}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: 'avoid-all' }
             }).from(printRef.current).save();
         } finally {
             setGerando(false);
