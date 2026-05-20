@@ -1,6 +1,6 @@
 # OrçaPro - Sistema de Gestão para Marcenarias (SaaS)
 
-Sistema web completo, responsivo e em nuvem para gestão de orçamentos, acompanhamento de projetos e emissão de propostas para marcenarias. O sistema inclui cadastro de clientes, controle de materiais, cálculos inteligentes de precificação (Markup/Mão de Obra/Lucros), dashboard gerencial e geração de link seguro para envio da proposta em PDF/WhatsApp.
+Sistema web completo, responsivo e em nuvem para gestão de orçamentos, acompanhamento de projetos e emissão de propostas para marcenarias. Inclui cadastro de clientes, controle de materiais, cálculos de precificação (Markup/Mão de Obra/Lucros), dashboard gerencial, kanban de produção e geração de proposta para envio ao cliente.
 
 ## Arquitetura e Hospedagem
 O projeto foi modernizado para uma arquitetura Cloud-First (SaaS):
@@ -33,10 +33,14 @@ Caso deseje rodar o código no seu computador para adicionar novas funcionalidad
    ```bash
    npm install
    ```
-3. Crie um arquivo chamado `.env` e aponte para o seu banco de dados na Neon.tech:
+3. Crie um arquivo chamado `.env` na pasta `backend/`:
    ```env
    DATABASE_URL="postgresql://usuario:senha@ep-nome-do-banco.region.aws.neon.tech/neondb?sslmode=require"
-   JWT_SECRET="segredo_super_seguro_orcamento"
+   JWT_SECRET="uma_string_aleatoria_longa_e_segura"
+   JWT_REFRESH_SECRET="outra_string_aleatoria_diferente_da_de_cima"
+   FRONTEND_URL="http://localhost:5173"
+   BREVO_API_KEY="xkeysib-..."
+   EMAIL_FROM="seu@email.com"
    ```
 4. Sincronize o banco e inicie o servidor:
    ```bash
@@ -55,10 +59,11 @@ Caso deseje rodar o código no seu computador para adicionar novas funcionalidad
    npm run dev
    ```
 
-## Ferramentas do Administrador
-Como não há recuperação de senha por e-mail no momento, foi criado um script local na raiz do Backend (`reset-senha.js`) que se conecta diretamente ao banco em produção. Se um funcionário ou cliente perder a senha, basta executar `node reset-senha.js` no seu VS Code local para injetar uma senha temporária criptografada de forma segura.
+## Recuperação de Senha
+O sistema possui fluxo de recuperação de senha via e-mail (Brevo): o usuário clica em "Esqueci a senha" na tela de login, recebe um link por e-mail e redefine a senha. O link expira assim que a senha é alterada.
 
 ## Tecnologias Utilizadas
 - **Frontend:** React, Vite, React Router Dom, Chart.js, Vite PWA Plugin, CSS puro (Design System próprio).
-- **Backend:** Node.js, Express, Prisma ORM, CORS.
-- **Segurança:** JSON Web Token (JWT) para Sessões, BcryptJS (Hash de Senhas).
+- **Backend:** Node.js, Express, Prisma ORM, CORS, express-rate-limit.
+- **Segurança:** JWT com access token (15min) + refresh token (7d) em httpOnly cookies, BcryptJS (hash de senhas), rate limiting no login, isolamento multi-tenant por userId.
+- **E-mail:** Brevo (API REST) para recuperação de senha.
