@@ -34,7 +34,14 @@ function LayoutSistema({ children }) {
     const location = useLocation();
     const navigate = useNavigate();
     const [perfilAberto, setPerfilAberto] = useState(false);
-    const [avatarUrl, setAvatarUrl] = useState(null);
+    const [avatarUrl, setAvatarUrl] = useState(() => {
+        try {
+            const stored = localStorage.getItem('@OrcaPro:user');
+            return stored ? (JSON.parse(stored)?.avatar || null) : null;
+        } catch {
+            return null;
+        }
+    });
     const perfilRef = useRef(null); // Cria uma referência para detectar cliques fora
     const isLoginPage = location.pathname === '/login';
     const isCadastroPage = location.pathname === '/cadastro';

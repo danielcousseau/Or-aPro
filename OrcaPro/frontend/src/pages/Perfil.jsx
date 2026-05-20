@@ -62,6 +62,8 @@ export default function Perfil() {
             setFotoPreview(base64);
             await api.put('/usuarios/perfil', { nome, email, avatar: base64 });
             toast.success('Foto de perfil atualizada!');
+            const stored = localStorage.getItem('@OrcaPro:user');
+            if (stored) localStorage.setItem('@OrcaPro:user', JSON.stringify({ ...JSON.parse(stored), avatar: base64 }));
             window.dispatchEvent(new CustomEvent('avatarAtualizado', { detail: base64 }));
         } catch {
             toast.error('Erro ao salvar foto. Tente novamente.');
@@ -72,6 +74,8 @@ export default function Perfil() {
         try {
             await api.put('/usuarios/perfil', { nome, email, avatar: null });
             setFotoPreview(null);
+            const stored = localStorage.getItem('@OrcaPro:user');
+            if (stored) localStorage.setItem('@OrcaPro:user', JSON.stringify({ ...JSON.parse(stored), avatar: null }));
             toast.success('Foto removida.');
             window.dispatchEvent(new CustomEvent('avatarAtualizado', { detail: null }));
         } catch {
