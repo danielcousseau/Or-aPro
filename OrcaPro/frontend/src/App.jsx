@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Menu from './components/Menu';
 import Clientes from './pages/Clientes';
 import Dashboard from './pages/Dashboard';
@@ -10,6 +10,7 @@ import Materiais from './pages/Materiais';
 import Kanban from './pages/Kanban';
 import Login from './pages/Login';
 import Cadastro from './pages/Cadastro';
+import Perfil from './pages/Perfil';
 import Proposta from './pages/Proposta'; // [Feature] Importa a tela pública do cliente
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -27,7 +28,9 @@ function RotaProtegida({ children }) {
 // 2. Layout do Sistema: Esconde o Menu no Login e adiciona o botão de Sair
 function LayoutSistema({ children }) {
     const location = useLocation();
+    const navigate = useNavigate();
     const [perfilAberto, setPerfilAberto] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState(localStorage.getItem('@OrcaPro:avatar'));
     const perfilRef = useRef(null); // Cria uma referência para detectar cliques fora
     const isLoginPage = location.pathname === '/login';
     const isCadastroPage = location.pathname === '/cadastro';
@@ -48,6 +51,17 @@ function LayoutSistema({ children }) {
         localStorage.removeItem('@OrcaPro:user');
         localStorage.removeItem('@OrcaPro:token');
     }
+
+    // [UX] Escuta atualizações da foto de perfil em tempo real
+    useEffect(() => {
+        const handleStorage = () => setAvatarUrl(localStorage.getItem('@OrcaPro:avatar'));
+        window.addEventListener('storage', handleStorage);
+        window.addEventListener('avatarAtualizado', handleStorage);
+        return () => {
+            window.removeEventListener('storage', handleStorage);
+            window.removeEventListener('avatarAtualizado', handleStorage);
+        };
+    }, []);
 
     // [UX] Fecha o menu do perfil ao clicar fora ou apertar Esc
     useEffect(() => {
@@ -105,7 +119,11 @@ function LayoutSistema({ children }) {
                                     }}
                                     title="Meu Perfil"
                                 >
-                                    {user.nome ? user.nome.charAt(0).toUpperCase() : 'U'}
+                                    {avatarUrl ? (
+                                        <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                    ) : (
+                                        user.nome ? user.nome.charAt(0).toUpperCase() : 'U'
+                                    )}
                                 </button>
 
                                 {perfilAberto && (
@@ -123,6 +141,9 @@ function LayoutSistema({ children }) {
                                             @{user.usuario}
                                         </p>
                                         <hr style={{ margin: '12px 0', borderTop: '1px solid var(--border)' }} />
+                                        <button onClick={() => { setPerfilAberto(false); navigate('/perfil'); }} className="btn-edit" style={{ width: '100%', minHeight: 'auto', padding: '10px', fontSize: '0.85rem', marginBottom: '8px' }}>
+                                            👤 Editar Perfil
+                                        </button>
                                         <button onClick={handleLogout} className="btn-delete" style={{ width: '100%', minHeight: 'auto', padding: '10px', fontSize: '0.85rem' }}>
                                             Sair do Sistema
                                         </button>
@@ -160,6 +181,7 @@ export default function App() {
                         <Route path="/orcamento" element={<RotaProtegida><NovoOrcamento /></RotaProtegida>} />
                         <Route path="/orcamento/:id" element={<RotaProtegida><NovoOrcamento /></RotaProtegida>} />
                         <Route path="/historico" element={<RotaProtegida><Historico /></RotaProtegida>} />
+                        <Route path="/perfil" element={<RotaProtegida><Perfil /></RotaProtegida>} />
                         <Route path="/imprimir/:id" element={<RotaProtegida><ImprimirOrcamento /></RotaProtegida>} />
                         <Route path="/kanban" element={<RotaProtegida><Kanban /></RotaProtegida>} />
                     </Routes>
