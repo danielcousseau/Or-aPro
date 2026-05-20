@@ -5,6 +5,7 @@ import { formatarMoeda } from '../utils/format';
 import { mascaraMoeda, desmascararMoeda } from '../utils/masks';
 
 const CATEGORIAS_PADRAO = ['Chapas', 'Fixação', 'Ferragens', 'Acabamento'];
+const UNIDADES_PADRAO = ['Chapa', 'Unidade', 'Metro', 'Metro Linear', 'Metro Quadrado', 'Caixa', 'Par', 'Rolo', 'Litro', 'Kg'];
 
 export default function Materiais() {
     const [materiais, setMateriais] = useState([]);
@@ -14,6 +15,7 @@ export default function Materiais() {
     const [termoBusca, setTermoBusca] = useState(''); // Guarda o texto da pesquisa
     const [salvando, setSalvando] = useState(false);
     const [usandoOutrosCategoria, setUsandoOutrosCategoria] = useState(false);
+    const [usandoOutrosUnidade, setUsandoOutrosUnidade] = useState(false);
 
     const [formData, setFormData] = useState({
         nome: '',
@@ -48,6 +50,7 @@ export default function Materiais() {
         setFormData({ nome: '', categoria: '', valor: '', unidade: '' });
         setMaterialEmEdicao(null);
         setUsandoOutrosCategoria(false);
+        setUsandoOutrosUnidade(false);
     };
 
     const handleCategoriaChange = (e) => {
@@ -60,10 +63,22 @@ export default function Materiais() {
         }
     };
 
+    const handleUnidadeChange = (e) => {
+        if (e.target.value === 'Outros') {
+            setUsandoOutrosUnidade(true);
+            setFormData(prev => ({ ...prev, unidade: '' }));
+        } else {
+            setUsandoOutrosUnidade(false);
+            setFormData(prev => ({ ...prev, unidade: e.target.value }));
+        }
+    };
+
     const handleEditar = (material) => {
-        const isCustom = Boolean(material.categoria && !CATEGORIAS_PADRAO.includes(material.categoria));
+        const isCustomCategoria = Boolean(material.categoria && !CATEGORIAS_PADRAO.includes(material.categoria));
+        const isCustomUnidade = Boolean(material.unidade && !UNIDADES_PADRAO.includes(material.unidade));
         setMaterialEmEdicao(material);
-        setUsandoOutrosCategoria(isCustom);
+        setUsandoOutrosCategoria(isCustomCategoria);
+        setUsandoOutrosUnidade(isCustomUnidade);
         setFormData({
             nome: material.nome || '',
             categoria: material.categoria || '',
@@ -181,14 +196,22 @@ export default function Materiais() {
                                 </section>
                                 <section className="form-section">
                                     <label>Unidade de Medida</label>
-                                    <input type="text" name="unidade" list="lista-unidades" value={formData.unidade} onChange={handleChange} placeholder="Chapa, Unidade, Metro..." />
-                                    <datalist id="lista-unidades">
-                                        <option value="Chapa" />
-                                        <option value="Unidade" />
-                                        <option value="Metro" />
-                                        <option value="Caixa" />
-                                        <option value="Par" />
-                                    </datalist>
+                                    <select name="unidade" value={usandoOutrosUnidade ? 'Outros' : (formData.unidade || '')} onChange={handleUnidadeChange}>
+                                        <option value="">Selecione uma unidade...</option>
+                                        {UNIDADES_PADRAO.map(un => <option key={un} value={un}>{un}</option>)}
+                                        <option value="Outros">Outros...</option>
+                                    </select>
+                                    {usandoOutrosUnidade && (
+                                        <input
+                                            type="text"
+                                            name="unidade"
+                                            value={formData.unidade}
+                                            onChange={handleChange}
+                                            placeholder="Descreva a unidade..."
+                                            style={{ marginTop: '8px' }}
+                                            autoFocus
+                                        />
+                                    )}
                                 </section>
                             </div>
 
