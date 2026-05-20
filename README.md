@@ -1,75 +1,64 @@
-# OrçaPro - Marcenaria Planner
+# OrçaPro - Sistema de Gestão para Marcenarias (SaaS)
 
-Sistema completo para gestão de orçamentos e acompanhamento de projetos para marcenarias. Inclui cadastro de clientes, controle de materiais, precificação, dashboard gerencial e kanban de produção.
+Sistema web completo, responsivo e em nuvem para gestão de orçamentos, acompanhamento de projetos e emissão de propostas para marcenarias. O sistema inclui cadastro de clientes, controle de materiais, cálculos inteligentes de precificação (Markup/Mão de Obra/Lucros), dashboard gerencial e geração de link seguro para envio da proposta em PDF/WhatsApp.
 
-##  Pré-requisitos
-
-Antes de começar, certifique-se de ter as seguintes ferramentas instaladas na sua máquina:
-- [Git](https://git-scm.com)
-- [Node.js](https://nodejs.org/en/) (Recomendamos baixar a versão LTS mais recente)
-- Um editor de código, como o [VS Code](https://code.visualstudio.com/)
-
-##  Passo a Passo para Instalação e Execução
-
-O projeto é dividido em duas partes principais: o **Backend** (servidor e banco de dados) e o **Frontend** (interface que o usuário interage). 
-**Você precisará rodar ambas as partes simultaneamente, em terminais separados.**
+## Arquitetura e Hospedagem
+O projeto foi modernizado para uma arquitetura Cloud-First (SaaS):
+- **Frontend:** Hospedado na Vercel (Serverless, alta velocidade e deploy contínuo).
+- **Backend (API):** Hospedado no Render (Node.js REST API).
+- **Banco de Dados:** PostgreSQL hospedado na Neon.tech (Serverless Postgres).
+- **Mobile (PWA):** O sistema possui tecnologia Progressive Web App, permitindo instalação direta na tela inicial de smartphones (Android e iOS) com visual de aplicativo nativo.
 
 ---
 
-### 1. Configurando e Rodando o Backend (Servidor)
-O backend fornece e gerencia os dados do sistema.
+## Como acessar o sistema em produção
+Como o sistema agora está na nuvem e funciona no modelo de contas individuais (Multi-tenant):
+1. Acesse o link oficial do projeto na Vercel (Ex: https://seu-projeto.vercel.app).
+2. Clique em **"Criar Conta"** para registrar sua marcenaria.
+3. Faça login com suas novas credenciais.
+4. *(No celular)*: Clique em "Adicionar à Tela Inicial" pelo navegador para instalar o App do OrçaPro.
 
+---
+
+## Como Desenvolver Localmente
+
+Caso deseje rodar o código no seu computador para adicionar novas funcionalidades, siga os passos abaixo. É necessário ter o Node.js instalado.
+
+### 1. Backend (API)
 1. Abra o terminal e navegue até a pasta do backend:
    ```bash
    cd backend
    ```
-2. Instale as dependências necessárias:
+2. Instale as dependências:
    ```bash
    npm install
    ```
-3. Configure o Banco de Dados criando um arquivo chamado `.env` na pasta `backend` com as suas credenciais. Exemplo:
+3. Crie um arquivo chamado `.env` e aponte para o seu banco de dados na Neon.tech:
    ```env
-   DATABASE_URL="postgresql://seu_usuario:sua_senha@localhost:5432/orcapro?schema=public"
+   DATABASE_URL="postgresql://usuario:senha@ep-nome-do-banco.region.aws.neon.tech/neondb?sslmode=require"
    JWT_SECRET="segredo_super_seguro_orcamento"
    ```
-4. Sincronize as tabelas do banco de dados e rode a semente (seed) para gerar o usuário administrador inicial e dados de teste:
+4. Sincronize o banco e inicie o servidor:
    ```bash
-   npx prisma generate
    npx prisma db push
-   npx prisma db seed
-   ```
-5. Inicie o servidor:
-   ```bash
    npm run dev
    ```
-   *O servidor ficará rodando. Deixe este terminal aberto.*
 
----
-
-### 2. Configurando e Rodando o Frontend (Interface Visual)
-O frontend é a aplicação React onde o usuário navega.
-
-1. Abra um **novo terminal** e navegue até a pasta do frontend:
+### 2. Frontend (Interface React)
+1. Abra um novo terminal na pasta do frontend:
    ```bash
    cd frontend
    ```
-2. Instale as dependências da interface:
+2. Instale e inicie o Vite:
    ```bash
    npm install
-   ```
-3. Inicie o servidor de desenvolvimento do frontend:
-   ```bash
    npm run dev
    ```
-4. Após rodar o comando, o terminal exibirá um link (geralmente `http://localhost:5173/` ou similar). Segure a tecla `Ctrl` e clique no link para abrir o sistema no seu navegador.
 
----
+## Ferramentas do Administrador
+Como não há recuperação de senha por e-mail no momento, foi criado um script local na raiz do Backend (`reset-senha.js`) que se conecta diretamente ao banco em produção. Se um funcionário ou cliente perder a senha, basta executar `node reset-senha.js` no seu VS Code local para injetar uma senha temporária criptografada de forma segura.
 
-##  Primeiro Acesso
-Após iniciar o frontend e o backend, você será redirecionado para a tela de Login. Utilize as credenciais padrão geradas pelo sistema para entrar:
-- **Usuário:** `admin`
-- **Senha:** `ninguemsabe`
-
-##  Tecnologias Utilizadas
-- **Frontend:** React, React Router Dom, Chart.js (Gráficos), Axios.
-- **Backend:** Node.js, Express, Prisma (ORM), Zod (Validação), JSON Web Token (Autenticação), BcryptJS (Criptografia).
+## Tecnologias Utilizadas
+- **Frontend:** React, Vite, React Router Dom, Chart.js, Vite PWA Plugin, CSS puro (Design System próprio).
+- **Backend:** Node.js, Express, Prisma ORM, CORS.
+- **Segurança:** JSON Web Token (JWT) para Sessões, BcryptJS (Hash de Senhas).
