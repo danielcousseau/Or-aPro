@@ -8,6 +8,16 @@ const PAGAMENTOS_PADRAO = [
     'Boleto Bancário',
 ];
 
+const PLACEHOLDER_VALOR = {
+    porcentagem:   'Ex: 15 (%)',
+    fixo:          'R$ 0,00',
+    multiplicador: 'Ex: 1.5 (×)',
+    diaria:        'R$ 0,00 / dia',
+    hora:          'R$ 0,00 / hora',
+    metro_linear:  'R$ 0,00 / m',
+    metro_quadrado:'R$ 0,00 / m²',
+};
+
 export default function ResumoValores({ orcamento, totais, formasPagamento, onChange }) {
     const opcoesExtras = formasPagamento
         .map(fp => fp.nome)
@@ -44,7 +54,7 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
                                 <option value="metro_linear">Por Metro Linear</option>
                                 <option value="metro_quadrado">Por Metro Quadrado</option>
                             </select>
-                            <input type="text" name="maoDeObraValor" value={orcamento.maoDeObraValor} onChange={onChange} onFocus={(e) => e.target.select()} placeholder="R$ 0,00" />
+                            <input type="text" name="maoDeObraValor" value={orcamento.maoDeObraValor} onChange={onChange} onFocus={(e) => e.target.select()} placeholder={PLACEHOLDER_VALOR[orcamento.tipoMaoDeObra] || 'R$ 0,00'} />
                         </div>
                         {['diaria', 'hora', 'metro_linear', 'metro_quadrado'].includes(orcamento.tipoMaoDeObra) && (
                             <div style={{ marginTop: '10px' }}>
@@ -71,7 +81,7 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
                                 <option value="diaria">Por Dia</option>
                                 <option value="hora">Por Hora</option>
                             </select>
-                            <input type="text" name="lucroValor" value={orcamento.lucroValor} onChange={onChange} onFocus={(e) => e.target.select()} placeholder="R$ 0,00" />
+                            <input type="text" name="lucroValor" value={orcamento.lucroValor} onChange={onChange} onFocus={(e) => e.target.select()} placeholder={PLACEHOLDER_VALOR[orcamento.tipoLucro] || 'R$ 0,00'} />
                         </div>
                         {['diaria', 'hora'].includes(orcamento.tipoLucro) && (
                             <div style={{ marginTop: '10px' }}>

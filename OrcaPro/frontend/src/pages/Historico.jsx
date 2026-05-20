@@ -125,6 +125,7 @@ export default function Historico() {
                                         {orc.materiais?.length > 0 ? (
                                             <button
                                                 type="button"
+                                                className="btn-ghost"
                                                 onClick={() => toggleMateriais(orc.id)}
                                                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
                                             >

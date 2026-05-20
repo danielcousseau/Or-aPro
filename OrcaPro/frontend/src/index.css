@@ -331,6 +331,13 @@ button:active {
     transform: translateY(0);
 }
 
+.btn-ghost:hover,
+.btn-ghost:active {
+    transform: none;
+    box-shadow: none;
+    filter: none;
+}
+
 button:focus, 
 a:focus {
     outline: none; /* Remove a borda de foco azul padrão dos navegadores ao clicar */
