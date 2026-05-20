@@ -75,7 +75,7 @@ export default function Proposta() {
 
                 <div style={{ background: '#eaf4eb', padding: '20px', borderRadius: '12px', borderLeft: '5px solid #27ae60', marginBottom: '30px' }}>
                     <h3 style={{ margin: '0 0 10px 0', color: '#27ae60' }}>Investimento Total</h3>
-                    <h1 style={{ margin: '0 0 10px 0', fontSize: '2.5rem', color: '#333' }}>{formatarMoeda(orcamento.totalFinal)}</h1>
+                    <h1 style={{ margin: '0 0 10px 0', fontSize: 'clamp(1.4rem, 6vw, 2.5rem)', color: '#333', wordBreak: 'break-word' }}>{formatarMoeda(orcamento.totalFinal)}</h1>
                     <p style={{ margin: 0, color: '#555' }}><strong>Condições de Pagamento:</strong> {orcamento.pagamento || 'A combinar'}</p>
                 </div>
 
