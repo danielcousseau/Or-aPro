@@ -90,15 +90,36 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
                         <input type="text" name="pagamento" list="lista-pagamentos" value={orcamento.pagamento} onChange={onChange} placeholder="Selecione ou digite..." />
                         <datalist id="lista-pagamentos">
                             {formasPagamento.map(fp => <option key={fp.id} value={fp.nome} />)}
+                            {/* Sugestões padrão do mercado caso o banco de dados esteja vazio */}
+                            <option value="À vista (Pix ou Dinheiro)" />
+                            <option value="50% na Assinatura + 50% na Entrega" />
+                            <option value="30% Entrada + 30% Início Produção + 40% Instalação" />
+                            <option value="Cartão de Crédito em até 12x (Com juros da maquininha)" />
+                            <option value="Boleto Bancário (Sujeito a aprovação de crédito)" />
                         </datalist>
                     </section>
                     <section className="form-section">
                         <label>Prazo de Entrega</label>
-                        <input type="text" name="prazo" value={orcamento.prazo} onChange={onChange} placeholder="Ex: 15 dias úteis" />
+                        <select name="prazo" value={orcamento.prazo} onChange={onChange}>
+                            <option value="">Selecione o prazo...</option>
+                            <option value="Pronta Entrega">Pronta Entrega</option>
+                            <option value="7 dias úteis">7 dias úteis</option>
+                            <option value="15 dias úteis">15 dias úteis</option>
+                            <option value="30 dias úteis">30 dias úteis</option>
+                            <option value="45 dias úteis">45 dias úteis</option>
+                            <option value="60 dias úteis">60 dias úteis</option>
+                        </select>
                     </section>
                     <section className="form-section">
                         <label>Validade do Orçamento</label>
-                        <input type="text" name="validade" value={orcamento.validade} onChange={onChange} placeholder="Ex: 7 dias" />
+                        <select name="validade" value={orcamento.validade} onChange={onChange}>
+                            <option value="">Selecione a validade...</option>
+                            <option value="5 dias">5 dias</option>
+                            <option value="7 dias">7 dias</option>
+                            <option value="10 dias">10 dias</option>
+                            <option value="15 dias">15 dias</option>
+                            <option value="30 dias">30 dias</option>
+                        </select>
                     </section>
                 </div>
                 <section className="form-section" style={{ marginTop: '15px' }}>

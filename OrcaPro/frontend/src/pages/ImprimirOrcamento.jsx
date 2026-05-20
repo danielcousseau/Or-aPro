@@ -122,7 +122,7 @@ export default function ImprimirOrcamento() {
                 </section>
 
                 <footer style={{ marginTop: '50px', paddingTop: '20px', borderTop: '1px solid #eee', fontSize: '0.8rem', color: '#777' }}>
-                    <p>Este orçamento é válido por {orc.validade || '7'} dias.</p>
+                    <p>Este orçamento é válido por {orc.validade || '7 dias'}.</p>
                     <p>Observações: {orc.observacoes || 'Nenhuma.'}</p>
                 </footer>
             </div>
