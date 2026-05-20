@@ -57,8 +57,8 @@ html {
     margin: 5px auto 0;
     padding: 6px 12px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
+    align-items: center;
+    gap: 8px;
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
@@ -66,6 +66,32 @@ html {
     position: sticky;
     top: 14px;
     z-index: 20;
+}
+
+.menu-logo {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+.menu-logo img {
+    height: 40px;
+    object-fit: contain;
+}
+.menu-logo:hover {
+    transform: none;
+    background: transparent;
+}
+
+.menu-links {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: wrap;
+    flex: 1;
 }
 
 .menu a {
@@ -510,23 +536,25 @@ input[type="number"] {
         font-size: 1.3rem;
     }
 
-    /* Menu vira scroll horizontal — sem quebrar em múltiplas linhas */
+    /* Menu mobile: logo pequena + links em scroll horizontal */
     .menu {
-        gap: 2px;
+        gap: 6px;
         padding: 6px 10px;
-        overflow-x: auto;
-        flex-wrap: nowrap;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
         top: 8px;
     }
-    .menu::-webkit-scrollbar {
+    .menu-links {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .menu-links::-webkit-scrollbar {
         display: none;
     }
     .menu a {
         flex-shrink: 0;
         white-space: nowrap;
-        padding: 6px 12px;
+        padding: 6px 10px;
         font-size: 0.82rem;
     }
 
@@ -576,8 +604,7 @@ input[type="number"] {
         grid-template-columns: 1fr;
     }
 
-    /* Logo menor no mobile */
-    .menu img { height: 48px !important; }
+    .menu-logo img { height: 26px; }
 
     /* Modal não vaza a tela em celulares pequenos */
     .modal-content {
