@@ -2,6 +2,24 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import api from '../services/api';
 
+const comprimirImagem = (file) => new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+        const MAX = 300;
+        let { width: w, height: h } = img;
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    img.src = url;
+});
+
 export default function Perfil() {
     const [user, setUser] = useState({});
     const [nome, setNome] = useState('');
@@ -14,37 +32,50 @@ export default function Perfil() {
     const [salvandoSenha, setSalvandoSenha] = useState(false);
 
     useEffect(() => {
-        const userStorage = localStorage.getItem('@OrcaPro:user');
-        if (userStorage) {
-            const parsed = JSON.parse(userStorage);
-            setUser(parsed);
-            setNome(parsed.nome || '');
-            setEmail(parsed.email || '');
-        }
-
-        const avatar = localStorage.getItem('@OrcaPro:avatar');
-        if (avatar) setFotoPreview(avatar);
+        api.get('/me').then(({ data }) => {
+            setUser(data);
+            setNome(data.nome || '');
+            setEmail(data.email || '');
+            if (data.avatar) setFotoPreview(data.avatar);
+        }).catch(() => {
+            const userStorage = localStorage.getItem('@OrcaPro:user');
+            if (userStorage) {
+                const parsed = JSON.parse(userStorage);
+                setUser(parsed);
+                setNome(parsed.nome || '');
+                setEmail(parsed.email || '');
+            }
+        });
     }, []);
 
-    const handleFotoChange = (e) => {
+    const handleFotoChange = async (e) => {
         const file = e.target.files[0];
-        if (file) {
-            // Impede fotos gigantes de travarem o navegador (limite de 2MB)
-            if (file.size > 2 * 1024 * 1024) {
-                toast.error('A imagem é muito grande. Escolha uma foto de até 2MB.');
-                return;
-            }
+        if (!file) return;
 
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setFotoPreview(reader.result);
-                localStorage.setItem('@OrcaPro:avatar', reader.result); // Salva no cache do navegador
-                toast.success('Foto de perfil atualizada!');
-                
-                // Dispara um "sinalizador" para o sistema atualizar a bolinha do menu na mesma hora!
-                window.dispatchEvent(new Event('avatarAtualizado'));
-            };
-            reader.readAsDataURL(file);
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Imagem muito grande. Escolha uma foto de até 5MB.');
+            return;
+        }
+
+        try {
+            const base64 = await comprimirImagem(file);
+            setFotoPreview(base64);
+            await api.put('/usuarios/perfil', { nome, email, avatar: base64 });
+            toast.success('Foto de perfil atualizada!');
+            window.dispatchEvent(new CustomEvent('avatarAtualizado', { detail: base64 }));
+        } catch {
+            toast.error('Erro ao salvar foto. Tente novamente.');
+        }
+    };
+
+    const handleRemoverFoto = async () => {
+        try {
+            await api.put('/usuarios/perfil', { nome, email, avatar: null });
+            setFotoPreview(null);
+            toast.success('Foto removida.');
+            window.dispatchEvent(new CustomEvent('avatarAtualizado', { detail: null }));
+        } catch {
+            toast.error('Erro ao remover foto.');
         }
     };
 
@@ -90,16 +121,16 @@ export default function Perfil() {
     return (
         <div>
             <h1 style={{ marginBottom: '30px' }}>Meu Perfil</h1>
-            
+
             <div className="form-grid-1-1">
                 {/* Coluna da Foto */}
                 <div className="cliente-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifySelf: 'start', width: '100%' }}>
-                    <div style={{ 
-                        width: '130px', height: '130px', borderRadius: '50%', 
-                        background: 'var(--primary)', color: '#fff', 
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                        fontSize: '3.5rem', fontWeight: 'bold', marginBottom: '15px', 
-                        overflow: 'hidden', border: '4px solid var(--panel-soft)', 
+                    <div style={{
+                        width: '130px', height: '130px', borderRadius: '50%',
+                        background: 'var(--primary)', color: '#fff',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '3.5rem', fontWeight: 'bold', marginBottom: '15px',
+                        overflow: 'hidden', border: '4px solid var(--panel-soft)',
                         boxShadow: 'var(--shadow-soft)', position: 'relative'
                     }}>
                         {fotoPreview ? (
@@ -108,22 +139,34 @@ export default function Perfil() {
                             user.nome ? user.nome.charAt(0).toUpperCase() : 'U'
                         )}
                     </div>
-                    
+
                     <h2 style={{ margin: '0 0 5px 0', fontSize: '1.2rem', textAlign: 'center' }}>{user.nome || user.usuario}</h2>
                     <p style={{ margin: '0 0 20px 0', fontSize: '0.9rem', color: 'var(--text-soft)' }}>@{user.usuario}</p>
-                    
-                    <label style={{ 
-                        background: 'var(--panel-soft)', border: '1px solid var(--border)', 
-                        padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', 
-                        fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--primary)', 
+
+                    <label style={{
+                        background: 'var(--panel-soft)', border: '1px solid var(--border)',
+                        padding: '10px 20px', borderRadius: '6px', cursor: 'pointer',
+                        fontSize: '0.9rem', fontWeight: 'bold', color: 'var(--primary)',
                         transition: '0.2s', display: 'flex', alignItems: 'center', gap: '8px'
                     }}>
-                        📷 Trocar Foto
+                        Trocar Foto
                         <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFotoChange} />
                     </label>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--text-soft)', marginTop: '15px', textAlign: 'center', maxWidth: '80%' }}>
-                        A imagem ficará salva no seu navegador e não gastará espaço no servidor.
-                    </p>
+
+                    {fotoPreview && (
+                        <button
+                            type="button"
+                            onClick={handleRemoverFoto}
+                            style={{
+                                marginTop: '10px', background: 'transparent',
+                                border: '1px solid var(--border)', padding: '8px 16px',
+                                borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem',
+                                color: 'var(--text-soft)', transition: '0.2s'
+                            }}
+                        >
+                            Remover foto
+                        </button>
+                    )}
                 </div>
 
                 {/* Coluna do E-mail e Senha */}
@@ -165,7 +208,7 @@ export default function Perfil() {
                 {/* Card de Senha */}
                 <div className="cliente-card">
                     <h2 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '12px', marginBottom: '20px', fontSize: '1.2rem' }}>
-                        🔐 Segurança e Senha
+                        Segurança e Senha
                     </h2>
                     <form onSubmit={handleSenhaSubmit}>
                         <section className="form-section" style={{ background: 'transparent', border: 'none', padding: 0, marginBottom: '15px' }}>
@@ -180,7 +223,7 @@ export default function Perfil() {
                             <label>Confirmar Nova Senha</label>
                             <input type="password" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} required placeholder="Repita a nova senha" minLength={6} />
                         </section>
-                        
+
                         <button type="submit" disabled={salvandoSenha} style={{ width: '100%', opacity: salvandoSenha ? 0.7 : 1, cursor: salvandoSenha ? 'not-allowed' : 'pointer' }}>
                             {salvandoSenha ? 'Atualizando Segurança...' : 'Atualizar Senha'}
                         </button>

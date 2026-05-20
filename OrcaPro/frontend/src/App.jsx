@@ -34,7 +34,7 @@ function LayoutSistema({ children }) {
     const location = useLocation();
     const navigate = useNavigate();
     const [perfilAberto, setPerfilAberto] = useState(false);
-    const [avatarUrl, setAvatarUrl] = useState(localStorage.getItem('@OrcaPro:avatar'));
+    const [avatarUrl, setAvatarUrl] = useState(null);
     const perfilRef = useRef(null); // Cria uma referência para detectar cliques fora
     const isLoginPage = location.pathname === '/login';
     const isCadastroPage = location.pathname === '/cadastro';
@@ -57,15 +57,20 @@ function LayoutSistema({ children }) {
         localStorage.removeItem('@OrcaPro:token');
     }
 
-    // [UX] Escuta atualizações da foto de perfil em tempo real
+    // Carrega avatar do banco na inicialização
     useEffect(() => {
-        const handleStorage = () => setAvatarUrl(localStorage.getItem('@OrcaPro:avatar'));
-        window.addEventListener('storage', handleStorage);
-        window.addEventListener('avatarAtualizado', handleStorage);
-        return () => {
-            window.removeEventListener('storage', handleStorage);
-            window.removeEventListener('avatarAtualizado', handleStorage);
-        };
+        if (user) {
+            api.get('/me').then(({ data }) => {
+                if (data.avatar) setAvatarUrl(data.avatar);
+            }).catch(() => {});
+        }
+    }, []);
+
+    // Escuta atualizações da foto de perfil em tempo real
+    useEffect(() => {
+        const handleAvatarUpdate = (e) => setAvatarUrl(e.detail);
+        window.addEventListener('avatarAtualizado', handleAvatarUpdate);
+        return () => window.removeEventListener('avatarAtualizado', handleAvatarUpdate);
     }, []);
 
     // [UX] Fecha o menu do perfil ao clicar fora ou apertar Esc
@@ -97,7 +102,6 @@ function LayoutSistema({ children }) {
             // Segue em frente mesmo se a chamada falhar
         }
         localStorage.removeItem('@OrcaPro:user');
-        localStorage.removeItem('@OrcaPro:avatar');
         window.location.href = '/login';
     };
 

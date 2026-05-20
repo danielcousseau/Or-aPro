@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm install *)",
       "Bash(npx prisma *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\victo\\\\Documents\\\\Github\\\\OrcaPro\\\\OrcaPro\\\\backend\\\\src\\\\middlewares\" -Force)"
     ],
     "additionalDirectories": [
       "c:\\Users\\victo\\.claude\\projects\\c--Users-victo-Documents-Github-OrcaPro\\memory"

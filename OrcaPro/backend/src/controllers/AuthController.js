@@ -49,7 +49,7 @@ module.exports = {
             res.cookie('refreshToken', refreshToken, cookieOpts(7 * 24 * 60 * 60 * 1000));
 
             return res.json({
-                user: { id: user.id, usuario: user.usuario, nome: user.name, email: user.email }
+                user: { id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null }
             });
         } catch (error) {
             console.error(error);
@@ -82,10 +82,10 @@ module.exports = {
         try {
             const user = await prisma.user.findUnique({
                 where: { id: req.userId },
-                select: { id: true, usuario: true, name: true, email: true }
+                select: { id: true, usuario: true, name: true, email: true, avatar: true }
             });
             if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
-            return res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email });
+            return res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ error: 'Erro interno no servidor' });
@@ -121,13 +121,15 @@ module.exports = {
 
     async atualizarPerfil(req, res) {
         try {
-            const { nome, email } = req.body;
+            const { nome, email, avatar } = req.body;
+            const data = { name: nome, email: email || null };
+            if (avatar !== undefined) data.avatar = avatar; // null limpa, string salva, undefined não toca
             const user = await prisma.user.update({
                 where: { id: req.userId },
-                data: { name: nome, email: email || null },
-                select: { id: true, usuario: true, name: true, email: true }
+                data,
+                select: { id: true, usuario: true, name: true, email: true, avatar: true }
             });
-            return res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email });
+            return res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null });
         } catch (error) {
             if (error.code === 'P2002') {
                 return res.status(409).json({ error: 'Este e-mail já está em uso por outra conta.' });
