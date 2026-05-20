@@ -4,6 +4,8 @@ import { toast } from 'react-toastify';
 import { formatarMoeda } from '../utils/format';
 import { mascaraMoeda, desmascararMoeda } from '../utils/masks';
 
+const CATEGORIAS_PADRAO = ['Chapas', 'Fixação', 'Ferragens', 'Acabamento'];
+
 export default function Materiais() {
     const [materiais, setMateriais] = useState([]);
     const [materialEmEdicao, setMaterialEmEdicao] = useState(null);
@@ -11,6 +13,7 @@ export default function Materiais() {
     const [abaAtiva, setAbaAtiva] = useState('consulta'); // 'consulta' ou 'cadastro'
     const [termoBusca, setTermoBusca] = useState(''); // Guarda o texto da pesquisa
     const [salvando, setSalvando] = useState(false);
+    const [usandoOutrosCategoria, setUsandoOutrosCategoria] = useState(false);
 
     const [formData, setFormData] = useState({
         nome: '',
@@ -44,10 +47,23 @@ export default function Materiais() {
     const limparFormulario = () => {
         setFormData({ nome: '', categoria: '', valor: '', unidade: '' });
         setMaterialEmEdicao(null);
+        setUsandoOutrosCategoria(false);
+    };
+
+    const handleCategoriaChange = (e) => {
+        if (e.target.value === 'Outros') {
+            setUsandoOutrosCategoria(true);
+            setFormData(prev => ({ ...prev, categoria: '' }));
+        } else {
+            setUsandoOutrosCategoria(false);
+            setFormData(prev => ({ ...prev, categoria: e.target.value }));
+        }
     };
 
     const handleEditar = (material) => {
+        const isCustom = Boolean(material.categoria && !CATEGORIAS_PADRAO.includes(material.categoria));
         setMaterialEmEdicao(material);
+        setUsandoOutrosCategoria(isCustom);
         setFormData({
             nome: material.nome || '',
             categoria: material.categoria || '',
@@ -139,7 +155,22 @@ export default function Materiais() {
                                 </section>
                                 <section className="form-section">
                                     <label>Categoria</label>
-                                    <input type="text" name="categoria" value={formData.categoria} onChange={handleChange} placeholder="Ex: Chapas, Ferragens..." />
+                                    <select name="categoria" value={usandoOutrosCategoria ? 'Outros' : (formData.categoria || '')} onChange={handleCategoriaChange}>
+                                        <option value="">Selecione uma categoria...</option>
+                                        {CATEGORIAS_PADRAO.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                        <option value="Outros">Outros...</option>
+                                    </select>
+                                    {usandoOutrosCategoria && (
+                                        <input
+                                            type="text"
+                                            name="categoria"
+                                            value={formData.categoria}
+                                            onChange={handleChange}
+                                            placeholder="Descreva a categoria..."
+                                            style={{ marginTop: '8px' }}
+                                            autoFocus
+                                        />
+                                    )}
                                 </section>
                             </div>
 
