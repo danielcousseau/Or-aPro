@@ -28,6 +28,7 @@ export default function Login() {
             // O token agora chega via cookie httpOnly — só salvamos os dados do usuário
             const userData = response.data.user || { nome: usuario, usuario };
             localStorage.setItem('@OrcaPro:user', JSON.stringify(userData));
+            window.dispatchEvent(new CustomEvent('avatarAtualizado', { detail: userData.avatar || null }));
 
             navigate('/historico');
         } catch (error) {
