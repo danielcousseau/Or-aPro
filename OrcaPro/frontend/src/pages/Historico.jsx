@@ -126,9 +126,12 @@ export default function Historico() {
                                             <button
                                                 type="button"
                                                 onClick={() => toggleMateriais(orc.id)}
-                                                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
                                             >
-                                                {materiaisAbertos.has(orc.id) ? '▲' : '▼'} {orc.materiais.length} {orc.materiais.length === 1 ? 'material' : 'materiais'}
+                                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: materiaisAbertos.has(orc.id) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+                                                    <polyline points="2,5 7,9 12,5" />
+                                                </svg>
+                                                {orc.materiais.length} {orc.materiais.length === 1 ? 'material' : 'materiais'}
                                             </button>
                                         ) : (
                                             <p><strong>Materiais:</strong> nenhum</p>
