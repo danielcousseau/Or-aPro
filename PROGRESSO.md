@@ -5,12 +5,46 @@
 
 ---
 
-## Estado Atual do Projeto (2026-05-20) — atualizado sessão 6
+## Estado Atual do Projeto (2026-05-20) — atualizado sessão 7
 
 - **Frontend:** React + Vite + PWA → Vercel
 - **Backend:** Node.js + Express + Prisma → Render
 - **Banco:** PostgreSQL → Neon.tech (multi-tenant / SaaS)
 - **Status:** Funcional em produção
+
+---
+
+## Sessão 7 — 2026-05-20
+
+### PDF Download
+- Botão **"Baixar PDF"** adicionado em `ImprimirOrcamento.jsx` e `Proposta.jsx` usando `html2pdf.js` (gera o arquivo direto, sem dialog do browser)
+- `html2pdf.js` adicionado ao `frontend/package.json` — **pendente `npm install` no PC de casa**
+
+### Captcha — Cloudflare Turnstile
+- Widget Turnstile adicionado em `Cadastro.jsx` (`@marsidev/react-turnstile`)
+- Backend verifica token na API do Cloudflare em `AuthController.register`; em dev (sem `TURNSTILE_SECRET_KEY`) a verificação é pulada automaticamente
+- `@marsidev/react-turnstile` adicionado ao `frontend/package.json` — **pendente `npm install` no PC de casa**
+- **Pendente configuração de chaves:**
+  - Vercel: `VITE_TURNSTILE_SITE_KEY=<chave_pública>` (criar site em dash.cloudflare.com → Turnstile → domínio orca-pro.vercel.app)
+  - Render: `TURNSTILE_SECRET_KEY=<chave_secreta>`
+
+### Testes — Jest + Supertest
+- `backend/src/app.js` criado: Express app extraído do `server.js` para permitir import nos testes sem subir o servidor
+- `server.js` simplificado: apenas carrega env e chama `app.listen()`
+- Rate limiters desativados automaticamente quando `NODE_ENV=test`
+- `backend/jest.config.js`, `__tests__/setup.js`, `__tests__/helpers.js` criados
+- `__tests__/auth.test.js`: testa registro, login válido/inválido, /api/me com e sem cookie
+- `__tests__/crossTenant.test.js`: testa que usuário B não lê/edita/exclui dados do usuário A (clientes e materiais)
+- `jest` e `supertest` adicionados ao `backend/package.json` — **pendente `npm install` no PC de casa**
+- Para rodar: `cd OrcaPro/backend && npm test`
+
+### Índices no banco
+- `@@index([userId])` adicionado em `Cliente`, `Material` e `Orcamento` no `schema.prisma`
+- `@@index([status])` adicionado em `Orcamento`
+- **Pendente migration:** `cd OrcaPro/backend && npx prisma migrate dev --name add_indexes`
+
+### Fix materiais padrão (usuários existentes)
+- `MaterialController.listar`: lazy init agora compara por nome em vez de checar `length === 0` — injeta só os padrões que faltam, sem sobrescrever materiais customizados
 
 ---
 
