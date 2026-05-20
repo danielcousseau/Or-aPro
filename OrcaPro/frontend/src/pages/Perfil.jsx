@@ -132,7 +132,7 @@ export default function Perfil() {
                 {/* Card de E-mail (necessário para recuperação de senha) */}
                 <div className="cliente-card">
                     <h2 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '12px', marginBottom: '20px', fontSize: '1.2rem' }}>
-                        👤 Dados do Perfil
+                        Dados do Perfil
                     </h2>
                     <form onSubmit={handlePerfilSubmit}>
                         <section className="form-section" style={{ background: 'transparent', border: 'none', padding: 0, marginBottom: '16px' }}>
