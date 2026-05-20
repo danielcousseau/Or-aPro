@@ -5,12 +5,44 @@
 
 ---
 
-## Estado Atual do Projeto (2026-05-20) — atualizado sessão 7
+## Estado Atual do Projeto (2026-05-20) — atualizado sessão 8
 
 - **Frontend:** React + Vite + PWA → Vercel
 - **Backend:** Node.js + Express + Prisma → Render
 - **Banco:** PostgreSQL → Neon.tech (multi-tenant / SaaS)
 - **Status:** Funcional em produção
+
+---
+
+## Sessão 8 — 2026-05-20
+
+### Unidade de Medida — select + Outros (Materiais.jsx)
+- Campo "Unidade de Medida" substituído de `<input>` + `<datalist>` por `<select>` com 10 opções padrão: Chapa, Unidade, Metro, Metro Linear, Metro Quadrado, Caixa, Par, Rolo, Litro, Kg
+- Opção **"Outros..."** exibe campo de texto livre — mesmo padrão já usado na Categoria
+- Edição detecta automaticamente unidade customizada e abre no modo Outros com valor preenchido
+
+### Fix autenticação Safari/iOS — Bearer token
+- **Causa raiz:** Safari bloqueia cookies cross-domain via ITP (Intelligent Tracking Prevention). Frontend em `vercel.app` + backend em `render.com` = domínios diferentes = cookies `SameSite=none` ignorados pelo Safari iOS. Resultado: usuário logava, cookies não eram salvos, primeira chamada à API retornava 401 e o sistema redirecionava para login
+- **Solução:** access token armazenado em memória JS (variável de módulo em `api.js`) e enviado via header `Authorization: Bearer`. Refresh token armazenado no `localStorage` e enviado no body do `/refresh`
+- `auth.js` (middleware): lê token do header `Authorization: Bearer` primeiro, fallback para cookie — retrocompatível com browsers que aceitam cookies cross-site
+- `AuthController.login`: retorna `accessToken` e `refreshToken` também no body da resposta (além dos cookies)
+- `AuthController.refresh`: aceita `refreshToken` do body além do cookie
+- `api.js`: interceptor de request injeta o header; lógica de refresh atualizada para ler/salvar do `localStorage`
+- `Login.jsx`: salva tokens após login bem-sucedido
+- `App.jsx`: limpa `@OrcaPro:refreshToken` do localStorage no logout
+
+### Audit Log — histórico de atividade
+- **Tabela `AuditLog`** adicionada ao `schema.prisma` (userId, ação, recurso, recursoId, detalhe, criadoEm) com índices em `userId` e `criadoEm`
+- **`isAdmin`** adicionado ao model `User` (`Boolean @default(false)`)
+- **`services/audit.js`**: helper `registrar()` fire-and-forget — falha silenciosamente sem afetar a resposta
+- **Eventos registrados:** login, criar/atualizar/excluir de Cliente, Material e Orçamento, atualizarStatus de Orçamento
+- **`GET /api/audit-log`**: 100 últimos logs do próprio usuário (autenticado)
+- **`GET /api/audit-log/admin`**: 500 logs de todos os usuários (requer `isAdmin = true`)
+- **`middlewares/adminAuth.js`**: verifica flag `isAdmin` antes de liberar rotas admin
+- **`Perfil.jsx`**: card "Histórico de Atividade" com badges coloridos por ação (verde = criou, azul = atualizou, roxo = status, vermelho = excluiu, amarelo = login)
+- **`Admin.jsx`**: página `/admin` com filtro por usuário e por recurso, rota adicionada no `App.jsx`
+- **Para virar admin:** `UPDATE "User" SET "isAdmin" = true WHERE usuario = 'seu_usuario';` direto no banco
+- **Pendente migration:** `cd OrcaPro/backend && npx prisma migrate dev --name add_audit_log`
 
 ---
 
@@ -160,15 +192,15 @@
 ## Backlog (O que falta)
 
 ### Alta prioridade
-- [ ] **Registro aberto** — qualquer bot pode criar conta; considerar hCaptcha / Cloudflare Turnstile ou convite por e-mail
-- [ ] **Testes** — zero testes; prioridade: Jest + Supertest nos endpoints de auth e isolamento cross-tenant
+- [x] **Registro aberto** — Cloudflare Turnstile implementado (sessão 7); pendente configurar chaves no Vercel/Render e `npm install`
+- [x] **Testes** — Jest + Supertest criados (sessão 7); pendente `npm install` no PC de casa
 
 ### Média prioridade
-- [ ] **Índices no banco** — `Cliente.userId`, `Material.userId`, `Orcamento.userId`, `Orcamento.status`
-- [ ] **Audit log** — tabela `AuditLog` (userId, ação, recurso, timestamp)
+- [x] **Índices no banco** — adicionados no schema (sessão 7); **pendente migration:** `npx prisma migrate dev --name add_indexes`
+- [x] **Audit log** — implementado completo (sessão 8); **pendente migration:** `npx prisma migrate dev --name add_audit_log`
 
 ### Baixa prioridade
-- [ ] **PDF download** — botão de download direto em `/imprimir/:id` (`html2pdf.js` ou puppeteer no backend)
+- [x] **PDF download** — implementado com `html2pdf.js` (sessão 7); pendente `npm install`
 - [ ] **CSP** — configurar `Content-Security-Policy` explícito no Helmet
 - [ ] **Planos/billing** — freemium vs pago; Stripe ou Pagar.me
 - [ ] **Onboarding guiado** — wizard de primeiros passos para novo usuário
