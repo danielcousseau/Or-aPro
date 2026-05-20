@@ -14,7 +14,7 @@ export default function Menu() {
         <nav className="menu no-print">
             <Link to="/" className="menu-logo">
                 <img src="/icon-192.png" alt="OrçaPro" />
-                <span className="menu-logo-text"><span style={{ color: '#2C2C2C' }}>Orça</span><span style={{ color: '#8B6035' }}>Pro</span></span>
+                <span className="menu-logo-text"><span style={{ color: '#8B6035' }}>Orça</span><span style={{ color: '#2C2C2C' }}>Pro</span></span>
             </Link>
 
             <div className="menu-links">
