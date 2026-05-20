@@ -1,4 +1,24 @@
+import { useState } from 'react';
+
+const AMBIENTES_PADRAO = [
+    'Cozinha', 'Quarto', 'Sala', 'Banheiro', 'Escritório',
+    'Lavanderia', 'Varanda', 'Área de Serviço', 'Garagem'
+];
+
 export default function DadosGerais({ orcamento, clientes, onChange }) {
+    const isCustom = orcamento.ambiente && !AMBIENTES_PADRAO.includes(orcamento.ambiente);
+    const [usandoOutros, setUsandoOutros] = useState(isCustom);
+
+    const handleAmbienteChange = (e) => {
+        if (e.target.value === 'Outros') {
+            setUsandoOutros(true);
+            onChange({ target: { name: 'ambiente', value: '' } });
+        } else {
+            setUsandoOutros(false);
+            onChange(e);
+        }
+    };
+
     return (
         <div className="cliente-card highlight-primary">
             <h3>1. Dados Gerais</h3>
@@ -16,7 +36,22 @@ export default function DadosGerais({ orcamento, clientes, onChange }) {
             <div className="form-grid-1-1">
                 <section className="form-section">
                     <label>Ambiente</label>
-                    <input type="text" name="ambiente" value={orcamento.ambiente} onChange={onChange} />
+                    <select name="ambiente" value={usandoOutros ? 'Outros' : (orcamento.ambiente || '')} onChange={handleAmbienteChange}>
+                        <option value="">Selecione um ambiente...</option>
+                        {AMBIENTES_PADRAO.map(amb => <option key={amb} value={amb}>{amb}</option>)}
+                        <option value="Outros">Outros...</option>
+                    </select>
+                    {usandoOutros && (
+                        <input
+                            type="text"
+                            name="ambiente"
+                            value={orcamento.ambiente}
+                            onChange={onChange}
+                            placeholder="Descreva o ambiente..."
+                            style={{ marginTop: '8px' }}
+                            autoFocus
+                        />
+                    )}
                 </section>
                 <section className="form-section">
                     <label>Tipo de Móvel</label>

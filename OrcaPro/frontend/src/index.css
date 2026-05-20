@@ -813,6 +813,11 @@ input[type="number"] {
     grid-template-columns: repeat(2, 1fr);
 }
 
+.dashboard-grid-2 > * {
+    min-width: 0;
+    overflow: hidden;
+}
+
 @media (max-width: 900px) {
     .dashboard-grid-2 {
         grid-template-columns: 1fr;

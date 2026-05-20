@@ -144,7 +144,7 @@ export default function Historico() {
                                             </ul>
                                         )}
                                     </div>
-                                    <p><strong>Status:</strong> <span style={{ background: CORES_STATUS[orc.status] || '#95a5a6', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold' }}>{orc.status || 'Aguardando'}</span></p>
+                                    <p><strong>Status:</strong> <span style={{ background: CORES_STATUS[orc.status] || CORES_STATUS['Aguardando'], color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold' }}>{(!orc.status || orc.status === 'analise') ? 'Aguardando' : orc.status}</span></p>
                                 </div>
 
                                 <div className="card-actions">

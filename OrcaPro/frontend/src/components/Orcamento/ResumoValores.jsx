@@ -1,4 +1,32 @@
+import { useState } from 'react';
+
+const PAGAMENTOS_PADRAO = [
+    'À vista (Pix ou Dinheiro)',
+    '50% na Assinatura + 50% na Entrega',
+    '30% Entrada + 30% Produção + 40% Instalação',
+    'Cartão de Crédito (com juros da maquininha)',
+    'Boleto Bancário',
+];
+
 export default function ResumoValores({ orcamento, totais, formasPagamento, onChange }) {
+    const opcoesExtras = formasPagamento
+        .map(fp => fp.nome)
+        .filter(nome => !PAGAMENTOS_PADRAO.includes(nome));
+    const todasOpcoes = [...PAGAMENTOS_PADRAO, ...opcoesExtras];
+
+    const isCustom = Boolean(orcamento.pagamento && !todasOpcoes.includes(orcamento.pagamento));
+    const [usandoOutros, setUsandoOutros] = useState(isCustom);
+
+    const handlePagamentoChange = (e) => {
+        if (e.target.value === 'Outros') {
+            setUsandoOutros(true);
+            onChange({ target: { name: 'pagamento', value: '' } });
+        } else {
+            setUsandoOutros(false);
+            onChange(e);
+        }
+    };
+
     return (
         <>
             <div className="cliente-card">
@@ -87,16 +115,22 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
                 <div className="form-grid-3">
                     <section className="form-section">
                         <label>Forma de Pagamento</label>
-                        <input type="text" name="pagamento" list="lista-pagamentos" value={orcamento.pagamento} onChange={onChange} placeholder="Selecione ou digite..." />
-                        <datalist id="lista-pagamentos">
-                            {formasPagamento.map(fp => <option key={fp.id} value={fp.nome} />)}
-                            {/* Sugestões padrão do mercado caso o banco de dados esteja vazio */}
-                            <option value="À vista (Pix ou Dinheiro)" />
-                            <option value="50% na Assinatura + 50% na Entrega" />
-                            <option value="30% Entrada + 30% Início Produção + 40% Instalação" />
-                            <option value="Cartão de Crédito em até 12x (Com juros da maquininha)" />
-                            <option value="Boleto Bancário (Sujeito a aprovação de crédito)" />
-                        </datalist>
+                        <select name="pagamento" value={usandoOutros ? 'Outros' : (orcamento.pagamento || '')} onChange={handlePagamentoChange}>
+                            <option value="">Selecione a forma de pagamento...</option>
+                            {todasOpcoes.map(op => <option key={op} value={op}>{op}</option>)}
+                            <option value="Outros">Outros...</option>
+                        </select>
+                        {usandoOutros && (
+                            <input
+                                type="text"
+                                name="pagamento"
+                                value={orcamento.pagamento}
+                                onChange={onChange}
+                                placeholder="Descreva a forma de pagamento..."
+                                style={{ marginTop: '8px' }}
+                                autoFocus
+                            />
+                        )}
                     </section>
                     <section className="form-section">
                         <label>Prazo de Entrega</label>

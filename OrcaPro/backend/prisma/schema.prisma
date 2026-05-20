@@ -70,7 +70,7 @@ model Orcamento {
   lucroValor      Float
   lucroQtde       Float?   @default(1)
   totalFinal      Float
-  status          String   @default("analise") 
+  status          String   @default("Aguardando")
   
   tipoMovel       String?
   ambiente        String?

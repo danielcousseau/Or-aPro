@@ -51,7 +51,7 @@ export default function Dashboard() {
             
             // SEPARA OS ORÇAMENTOS POR REALIDADE COMERCIAL
             const fechados = orcamentosData.filter(orc => statusFechados.includes(orc.status));
-            const pendentes = orcamentosData.filter(orc => !orc.status || orc.status === 'Aguardando');
+            const pendentes = orcamentosData.filter(orc => !orc.status || orc.status === 'Aguardando' || orc.status === 'analise');
 
             // A MÁGICA: Só soma faturamento e lucro do que virou negócio (projetos fechados)
             const faturamento = fechados.reduce((acc, orc) => acc + Number(orc.totalFinal), 0);
@@ -104,16 +104,18 @@ export default function Dashboard() {
         return acc;
     }, {});
 
+    const ambientesOrdenados = Object.entries(ambientes).sort((a, b) => b[1] - a[1]);
+
     const dataGrafico = {
-        labels: Object.keys(ambientes),
+        labels: ambientesOrdenados.map(([k]) => k),
         datasets: [
             {
-                label: 'Quantidade de Projetos',
-                data: Object.values(ambientes),
-                backgroundColor: 'rgba(0, 86, 163, 0.8)', /* Azul OrçaPro com transparência */
-                borderColor: '#0056A3', /* Azul OrçaPro sólido */
+                label: 'Projetos',
+                data: ambientesOrdenados.map(([, v]) => v),
+                backgroundColor: 'rgba(0, 86, 163, 0.8)',
+                borderColor: '#0056A3',
                 borderWidth: 2,
-                borderRadius: 6, /* Arredondamento moderno nas barras */
+                borderRadius: 6,
             },
         ],
     };
@@ -129,7 +131,7 @@ export default function Dashboard() {
     };
 
     const statusCount = orcamentos.reduce((acc, orc) => {
-        const status = orc.status || 'Aguardando';
+        const status = (!orc.status || orc.status === 'analise') ? 'Aguardando' : orc.status;
         acc[status] = (acc[status] || 0) + 1;
         return acc;
     }, {});
@@ -185,8 +187,14 @@ export default function Dashboard() {
                 <section className="dashboard-card">
                     <h3 className="text-center">Projetos por Ambiente</h3>
                     {orcamentos.length > 0 ? (
-                        <div style={{ position: 'relative', height: '280px', width: '100%' }}>
-                            <Bar data={dataGrafico} options={{ responsive: true, maintainAspectRatio: false }} />
+                        <div style={{ position: 'relative', height: `${Math.max(200, ambientesOrdenados.length * 48)}px`, width: '100%' }}>
+                            <Bar data={dataGrafico} options={{
+                                indexAxis: 'y',
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: { x: { ticks: { precision: 0 } } }
+                            }} />
                         </div>
                     ) : (
                         <p className="text-center text-soft">Cadastre orçamentos para visualizar o gráfico.</p>
