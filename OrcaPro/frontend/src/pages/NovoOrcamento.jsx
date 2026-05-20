@@ -269,15 +269,6 @@ export default function NovoOrcamento() {
     return (
         <div>
             <h1>{id ? 'Editar Orçamento' : 'Novo Orçamento'}</h1>
-            
-            <style>{`
-                input[type=number]::-webkit-inner-spin-button, 
-                input[type=number]::-webkit-outer-spin-button { 
-                    -webkit-appearance: none; 
-                    margin: 0; 
-                }
-                input[type=number] { -moz-appearance: textfield; }
-            `}</style>
 
             <form onSubmit={salvarOrcamento}>
                 

@@ -112,33 +112,14 @@ export default function Materiais() {
 
     return (
         <div>
-            
-            <style>{`
-                input[type=number]::-webkit-inner-spin-button, 
-                input[type=number]::-webkit-outer-spin-button { 
-                    -webkit-appearance: none; 
-                    margin: 0; 
-                }
-                input[type=number] { -moz-appearance: textfield; }
-            `}</style>
-
-            {/* Navegação entre abas */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
-                <h1 style={{ margin: 0 }}>Gestão de Materiais</h1>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <button 
-                        type="button"
-                        onClick={() => { setAbaAtiva('consulta'); limparFormulario(); }} 
-                        style={{ background: abaAtiva === 'consulta' ? 'var(--primary)' : '#e0e0e0', color: abaAtiva === 'consulta' ? '#fff' : '#333', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
-                    >
-                          Consultar
+            <div className="page-header">
+                <h1>Gestão de Materiais</h1>
+                <div className="tabs">
+                    <button type="button" className={`tab-btn ${abaAtiva === 'consulta' ? 'ativo' : ''}`} onClick={() => { setAbaAtiva('consulta'); limparFormulario(); }}>
+                        Lista
                     </button>
-                    <button 
-                        type="button"
-                        onClick={() => { setAbaAtiva('cadastro'); limparFormulario(); }} 
-                        style={{ background: abaAtiva === 'cadastro' ? 'var(--primary)' : '#e0e0e0', color: abaAtiva === 'cadastro' ? '#fff' : '#333', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
-                    >
-                          Novo Material
+                    <button type="button" className={`tab-btn ${abaAtiva === 'cadastro' ? 'ativo' : ''}`} onClick={() => { setAbaAtiva('cadastro'); limparFormulario(); }}>
+                        Novo Material
                     </button>
                 </div>
             </div>
@@ -196,14 +177,13 @@ export default function Materiais() {
             {/* CONTEÚDO DA ABA DE CONSULTA */}
             {abaAtiva === 'consulta' && (
                 <section className="lista-clientes">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px', background: 'var(--panel)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                        <h2 style={{ margin: 0 }}>Cadastrados ({materiaisFiltrados.length})</h2>
-                        <input 
-                            type="text" 
-                            placeholder="Pesquisar por nome ou categoria..." 
+                    <div className="search-bar">
+                        <h2>{materiaisFiltrados.length} material{materiaisFiltrados.length !== 1 ? 'is' : ''}</h2>
+                        <input
+                            type="text"
+                            placeholder="Pesquisar por nome ou categoria..."
                             value={termoBusca}
                             onChange={(e) => setTermoBusca(e.target.value)}
-                            style={{ maxWidth: '400px', width: '100%', padding: '10px 15px', borderRadius: '4px', border: '1px solid var(--border)', outline: 'none' }}
                         />
                     </div>
 
@@ -215,7 +195,7 @@ export default function Materiais() {
                         ) : (
                             <div className="grid-cards">
                                 {materiaisFiltrados.map((material) => (
-                                <div key={material.id} className="cliente-card">
+                                <div key={material.id} className="cliente-card highlight-primary">
                                     <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem' }}>{material.nome}</h3>
                                         <p style={{ margin: '4px 0' }}><strong>Valor:</strong> {formatarMoeda(material.valor)}</p>
                                     <p style={{ margin: '4px 0' }}><strong>Categoria:</strong> {material.categoria || 'Não informada'}</p>

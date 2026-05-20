@@ -72,14 +72,14 @@ export default function Historico() {
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '25px' }}>
-                <h1 style={{ margin: 0 }}>Histórico de Orçamentos</h1>
-                <input 
-                    type="text" 
-                    placeholder="Buscar por cliente, título ou status..." 
+            <h1>Histórico de Orçamentos</h1>
+            <div className="search-bar">
+                <h2>{orcamentosFiltrados.length} orçamento{orcamentosFiltrados.length !== 1 ? 's' : ''}</h2>
+                <input
+                    type="text"
+                    placeholder="Buscar por cliente, título ou status..."
                     value={termoBusca}
                     onChange={(e) => setTermoBusca(e.target.value)}
-                    style={{ maxWidth: '350px', width: '100%', padding: '10px 15px', borderRadius: '4px', border: '1px solid var(--border)' }}
                 />
             </div>
             
@@ -89,9 +89,9 @@ export default function Historico() {
                 ) : orcamentosFiltrados.length === 0 ? (
                     <p>Nenhum orçamento gerado ainda. Crie um novo lá na aba Orçamento!</p>
                 ) : (
-                    <div style={{ display: 'grid', gap: '15px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                         {orcamentosFiltrados.map(orc => (
-                            <div key={orc.id} className="cliente-card" style={{ borderLeft: '4px solid var(--primary)', position: 'relative' }}>
+                            <div key={orc.id} className="cliente-card highlight-primary">
                                 
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
                                     <div>
@@ -118,13 +118,13 @@ export default function Historico() {
 
                                 <div className="card-actions">
                                     <button type="button" className="btn-action btn-edit" onClick={() => navigate(`/orcamento/${orc.id}`)}>
-                                        ✏️ Editar
+                                        Editar
                                     </button>
-                                    <button type="button" className="btn-action" style={{ background: '#27ae60', color: '#fff', border: '1px solid #27ae60' }} onClick={() => navigate(`/imprimir/${orc.id}`)}>
-                                        📄 Ver / Imprimir
+                                    <button type="button" className="btn-action" style={{ background: 'var(--success)', color: '#fff', border: '1px solid var(--success)' }} onClick={() => navigate(`/imprimir/${orc.id}`)}>
+                                        Ver / Imprimir
                                     </button>
                                     <button type="button" className="btn-action btn-delete" onClick={() => setOrcamentoParaExcluir(orc.id)}>
-                                        🗑️ Excluir
+                                        Excluir
                                     </button>
                                 </div>
 
