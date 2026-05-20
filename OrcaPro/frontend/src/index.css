@@ -499,10 +499,6 @@ input[type="number"] {
         flex-direction: column;
     }
 
-    button {
-        width: 100%;
-    }
-
     #resumoOrcamento p {
         flex-direction: column;
         gap: 6px;
@@ -511,31 +507,55 @@ input[type="number"] {
 
 @media (max-width: 600px) {
     h1 {
-        font-size: 1.4rem; /* Um pouco menor para não apertar as margens em celulares estreitos */
+        font-size: 1.3rem;
     }
 
+    /* Menu vira scroll horizontal — sem quebrar em múltiplas linhas */
     .menu {
         gap: 2px;
-        padding: 4px;
+        padding: 6px 10px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        top: 8px;
+    }
+    .menu::-webkit-scrollbar {
+        display: none;
+    }
+    .menu a {
+        flex-shrink: 0;
+        white-space: nowrap;
+        padding: 6px 12px;
+        font-size: 0.82rem;
     }
 
-    .menu a {
-        flex: 1 1 calc(50% - 2px);
-        text-align: center;
-        padding: 6px 4px;
-        font-size: 0.75rem;
+    .container {
+        padding: 16px 14px;
+        margin-left: 8px;
+        margin-right: 8px;
+        margin-top: 10px;
     }
 
     .form-section,
     .lista-clientes,
     .cliente-card,
     #resumoOrcamento {
-        padding: 15px;
-        border-radius: 14px;
+        padding: 14px;
+        border-radius: 12px;
+    }
+
+    /* Botões full-width só no celular, não no tablet */
+    button {
+        width: 100%;
+    }
+
+    .form-buttons {
+        flex-direction: column;
     }
 
     /* No celular, quebra os campos lado a lado para um embaixo do outro */
-    .form-grid-2-1, 
+    .form-grid-2-1,
     .form-grid-1-1,
     .form-grid-3,
     .form-grid-materiais {
@@ -554,6 +574,22 @@ input[type="number"] {
     /* No celular, garante que as listas de consulta não vazem a tela (1 coluna forçada) */
     .grid-cards {
         grid-template-columns: 1fr;
+    }
+
+    /* Modal não vaza a tela em celulares pequenos */
+    .modal-content {
+        margin: 16px;
+        padding: 20px 18px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    /* Botões do modal ficam lado a lado (cancelar + confirmar) */
+    .modal-actions {
+        flex-direction: row;
+    }
+    .modal-actions button {
+        flex: 1;
     }
 }
 .dashboard-hero {
