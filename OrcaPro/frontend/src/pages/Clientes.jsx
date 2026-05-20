@@ -154,23 +154,14 @@ export default function Clientes() {
 
     return (
         <div>
-            {/* Navegação entre abas */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
-                <h1 style={{ margin: 0 }}>Gestão de Clientes</h1>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <button 
-                        type="button"
-                        onClick={() => { setAbaAtiva('consulta'); limparFormulario(); }} 
-                        style={{ background: abaAtiva === 'consulta' ? 'var(--primary)' : '#e0e0e0', color: abaAtiva === 'consulta' ? '#fff' : '#333', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
-                    >
-                          Consultar
+            <div className="page-header">
+                <h1>Clientes</h1>
+                <div className="tabs">
+                    <button type="button" className={`tab-btn ${abaAtiva === 'consulta' ? 'ativo' : ''}`} onClick={() => { setAbaAtiva('consulta'); limparFormulario(); }}>
+                        Lista
                     </button>
-                    <button 
-                        type="button"
-                        onClick={() => { setAbaAtiva('cadastro'); limparFormulario(); }} 
-                        style={{ background: abaAtiva === 'cadastro' ? 'var(--primary)' : '#e0e0e0', color: abaAtiva === 'cadastro' ? '#fff' : '#333', padding: '8px 16px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
-                    >
-                          Novo Cliente
+                    <button type="button" className={`tab-btn ${abaAtiva === 'cadastro' ? 'ativo' : ''}`} onClick={() => { setAbaAtiva('cadastro'); limparFormulario(); }}>
+                        Novo Cliente
                     </button>
                 </div>
             </div>
@@ -184,70 +175,69 @@ export default function Clientes() {
                     
                     <form onSubmit={handleSubmit}>
                         <section className="form-section">
-                            <label>Nome Completo *</label>
-                            <input type="text" name="nome" value={formData.nome} onChange={handleChange} required />
+                            <p className="form-section-title">Informações Pessoais</p>
+                            <div className="form-grid-1-1">
+                                <div>
+                                    <label>Nome Completo *</label>
+                                    <input type="text" name="nome" value={formData.nome} onChange={handleChange} required />
+                                </div>
+                                <div>
+                                    <label>CPF / CNPJ</label>
+                                    <input type="text" name="cpfCnpj" value={formData.cpfCnpj} onChange={handleChange} />
+                                </div>
+                            </div>
+                            <div className="form-grid-1-1" style={{ marginTop: '14px' }}>
+                                <div>
+                                    <label>E-mail</label>
+                                    <input type="email" name="email" value={formData.email} onChange={handleChange} />
+                                </div>
+                                <div>
+                                    <label>Telefone *</label>
+                                    <input type="text" name="telefone" value={formData.telefone} onChange={handleChange} required />
+                                </div>
+                            </div>
                         </section>
 
                         <section className="form-section">
-                            <label>CPF / CNPJ</label>
-                            <input type="text" name="cpfCnpj" value={formData.cpfCnpj} onChange={handleChange} />
+                            <p className="form-section-title">Endereço</p>
+                            <div style={{ marginBottom: '14px' }}>
+                                <label>CEP</label>
+                                <input type="text" name="cep" value={formData.cep} onChange={handleChange} onBlur={buscarCep} placeholder="00000-000" style={{ maxWidth: '180px' }} />
+                            </div>
+                            <div className="form-grid-2-1" style={{ marginBottom: '14px' }}>
+                                <div>
+                                    <label>Rua / Logradouro</label>
+                                    <input type="text" name="rua" value={formData.rua} onChange={handleChange} />
+                                </div>
+                                <div>
+                                    <label>Número</label>
+                                    <input type="text" name="numero" value={formData.numero} onChange={handleChange} />
+                                </div>
+                            </div>
+                            <div className="form-grid-1-1">
+                                <div>
+                                    <label>Cidade</label>
+                                    <input type="text" name="cidade" value={formData.cidade} onChange={handleChange} />
+                                </div>
+                                <div>
+                                    <label>Bairro</label>
+                                    <input type="text" name="bairro" value={formData.bairro} onChange={handleChange} />
+                                </div>
+                            </div>
                         </section>
 
                         <section className="form-section">
-                            <label>E-mail</label>
-                            <input type="email" name="email" value={formData.email} onChange={handleChange} />
-                        </section>
-
-                        <section className="form-section">
-                            <label>Telefone *</label>
-                            <input type="text" name="telefone" value={formData.telefone} onChange={handleChange} required />
-                        </section>
-
-                        <section className="form-section">
-                            <label>CEP</label>
-                            <input 
-                                type="text" 
-                                name="cep" 
-                                value={formData.cep} 
-                                onChange={handleChange} 
-                                onBlur={buscarCep} /* Aciona a busca ao sair do campo */
-                                placeholder="00000-000" 
-                            />
-                        </section>
-
-                        <section className="form-section">
-                            <label>Rua / Logradouro</label>
-                            <input type="text" name="rua" value={formData.rua} onChange={handleChange} />
-                        </section>
-
-                        <section className="form-section">
-                            <label>Cidade</label>
-                            <input type="text" name="cidade" value={formData.cidade} onChange={handleChange} />
-                        </section>
-
-                        <section className="form-section">
-                            <label>Bairro</label>
-                            <input type="text" name="bairro" value={formData.bairro} onChange={handleChange} />
-                        </section>
-
-                        <section className="form-section">
-                            <label>Número</label>
-                            <input type="text" name="numero" value={formData.numero} onChange={handleChange} />
-                        </section>
-
-                        <section className="form-section">
-                            <label>Observações</label>
-                            <textarea name="observacoes" value={formData.observacoes} onChange={handleChange}></textarea>
+                            <p className="form-section-title">Observações</p>
+                            <textarea name="observacoes" value={formData.observacoes} onChange={handleChange} placeholder="Anotações sobre o cliente..."></textarea>
                         </section>
 
                         <div className="form-buttons">
                             <button type="submit" disabled={salvando} style={{ opacity: salvando ? 0.7 : 1, cursor: salvando ? 'not-allowed' : 'pointer' }}>
                                 {salvando ? 'Salvando...' : (clienteEmEdicao ? 'Atualizar Cliente' : 'Salvar Cliente')}
                             </button>
-                            {/* O botão de cancelar retorna para a aba de consulta */}
                             {clienteEmEdicao && (
                                 <button type="button" className="btn-cancel" disabled={salvando} onClick={() => { limparFormulario(); setAbaAtiva('consulta'); }}>
-                                    Cancelar Edição
+                                    Cancelar
                                 </button>
                             )}
                         </div>
@@ -259,14 +249,13 @@ export default function Clientes() {
             {abaAtiva === 'consulta' && (
                 <section className="lista-clientes">
                     {/* Barra de Pesquisa */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '20px', background: 'var(--panel)', padding: '15px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                        <h2 style={{ margin: 0 }}>Cadastrados ({clientesFiltrados.length})</h2>
-                        <input 
-                            type="text" 
-                            placeholder="Pesquisar por nome, telefone, email ou documento..." 
+                    <div className="search-bar">
+                        <h2>{clientesFiltrados.length} cliente{clientesFiltrados.length !== 1 ? 's' : ''}</h2>
+                        <input
+                            type="text"
+                            placeholder="Buscar por nome, telefone, e-mail ou documento..."
                             value={termoBusca}
                             onChange={(e) => setTermoBusca(e.target.value)}
-                            style={{ maxWidth: '400px', width: '100%', padding: '10px 15px', borderRadius: '4px', border: '1px solid var(--border)', outline: 'none' }}
                         />
                     </div>
 

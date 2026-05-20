@@ -2,8 +2,15 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 
-// Estas são as colunas do nosso quadro
 const COLUNAS = ['Aguardando', 'Aprovado', 'Produção', 'Instalação', 'Entregue'];
+
+const COR_COLUNA = {
+    'Aguardando': '#f59e0b',
+    'Aprovado':   '#3b82f6',
+    'Produção':   '#8b5cf6',
+    'Instalação': '#f97316',
+    'Entregue':   '#10b981',
+};
 
 export default function Kanban() {
     const [orcamentos, setOrcamentos] = useState([]);
@@ -24,7 +31,7 @@ export default function Kanban() {
     const mudarStatus = async (id, novoStatus) => {
         try {
             await api.patch(`/orcamentos/${id}/status`, { status: novoStatus });
-            carregarOrcamentos(); // Recarrega a tela para a nova posição do card
+            carregarOrcamentos();
         } catch (error) {
             toast.error("Erro ao atualizar status do projeto.");
         }
@@ -33,36 +40,40 @@ export default function Kanban() {
     return (
         <div>
             <h1>Quadro de Produção</h1>
-            <p style={{ color: 'var(--text-soft)', marginBottom: '30px' }}>
-                Acompanhe o andamento dos projetos e atualize os status.
-            </p>
+            <p style={{ marginBottom: '24px' }}>Acompanhe o andamento dos projetos e atualize os status.</p>
 
-            <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', paddingBottom: '20px', minHeight: '65vh' }}>
+            <div className="kanban-board">
                 {COLUNAS.map(coluna => {
-                    // Filtra os orçamentos que pertencem a esta coluna.
-                    // Se estiver sem status salvo, cai automaticamente na primeira coluna ("Aguardando").
-                    const orcamentosDaColuna = orcamentos.filter(o => 
-                        (o.status === coluna) || 
+                    const orcamentosDaColuna = orcamentos.filter(o =>
+                        (o.status === coluna) ||
                         (coluna === 'Aguardando' && (!o.status || !COLUNAS.includes(o.status)))
                     );
 
                     return (
-                        <div key={coluna} style={{ minWidth: '320px', background: '#f4f4f4', padding: '15px', borderRadius: '8px', borderTop: '4px solid var(--primary)' }}>
-                            <h3 style={{ textAlign: 'center', marginBottom: '15px', color: '#333' }}>{coluna} ({orcamentosDaColuna.length})</h3>
-                            
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                {orcamentosDaColuna.map(orc => (
-                                    <div key={orc.id} className="cliente-card" style={{ padding: '15px', background: '#fff' }}>
-                                        <h4 style={{ margin: '0 0 10px 0' }}>{orc.titulo}</h4>
-                                        <p style={{ fontSize: '0.9rem', margin: '0 0 5px 0' }}><strong>Cliente:</strong> {orc.cliente?.nome || 'N/A'}</p>
-                                        <p style={{ fontSize: '0.9rem', margin: '0 0 15px 0', color: 'var(--primary)', fontWeight: 'bold' }}>R$ {Number(orc.totalFinal).toFixed(2)}</p>
-                                        
-                                        <select value={orc.status || 'Aguardando'} onChange={(e) => mudarStatus(orc.id, e.target.value)} style={{ width: '100%', padding: '8px', cursor: 'pointer' }}>
-                                            {COLUNAS.map(c => <option key={c} value={c}>{c}</option>)}
-                                        </select>
-                                    </div>
-                                ))}
-                            </div>
+                        <div key={coluna} className="kanban-col" style={{ borderTopColor: COR_COLUNA[coluna] }}>
+                            <h3 className="kanban-col-title">
+                                {coluna}{' '}
+                                <span style={{ background: COR_COLUNA[coluna], color: '#fff', borderRadius: '999px', padding: '1px 8px', fontSize: '0.75rem' }}>
+                                    {orcamentosDaColuna.length}
+                                </span>
+                            </h3>
+
+                            {orcamentosDaColuna.length === 0 && (
+                                <p style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--text-muted)', padding: '20px 0' }}>
+                                    Nenhum projeto
+                                </p>
+                            )}
+
+                            {orcamentosDaColuna.map(orc => (
+                                <div key={orc.id} className="kanban-card">
+                                    <h4>{orc.titulo}</h4>
+                                    <p style={{ fontSize: '0.85rem', margin: '0 0 4px', color: 'var(--text-soft)' }}>{orc.cliente?.nome || 'Sem cliente'}</p>
+                                    <p className="kanban-valor">R$ {Number(orc.totalFinal).toFixed(2)}</p>
+                                    <select value={orc.status || 'Aguardando'} onChange={(e) => mudarStatus(orc.id, e.target.value)}>
+                                        {COLUNAS.map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                </div>
+                            ))}
                         </div>
                     );
                 })}
