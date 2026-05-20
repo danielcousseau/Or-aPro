@@ -166,7 +166,6 @@ export default function ImprimirOrcamento() {
                     padding: 40px;
                     border: 1px solid #ddd;
                     box-shadow: 0 0 10px rgba(0,0,0,0.1);
-                    min-height: 29.7cm;
                 }
             `}</style>
         </div>
