@@ -9,10 +9,12 @@ module.exports = {
                 orderBy: { createdAt: 'desc' }
             });
 
-            // Na primeira vez que o usuário abre a tela sem nenhum material, inicializa os padrões
-            if (materiais.length === 0) {
+            // Injeta materiais padrão que ainda não existem para este usuário (por nome)
+            const nomesExistentes = new Set(materiais.map(m => m.nome));
+            const faltando = MATERIAIS_PADRAO.filter(m => !nomesExistentes.has(m.nome));
+            if (faltando.length > 0) {
                 await prisma.material.createMany({
-                    data: MATERIAIS_PADRAO.map(m => ({ ...m, userId: req.userId }))
+                    data: faltando.map(m => ({ ...m, userId: req.userId }))
                 });
                 materiais = await prisma.material.findMany({
                     where: { userId: req.userId },
