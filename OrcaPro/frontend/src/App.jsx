@@ -151,7 +151,7 @@ function LayoutSistema({ children }) {
                                         </p>
                                         <hr style={{ margin: '12px 0', borderTop: '1px solid var(--border)' }} />
                                         <button onClick={() => { setPerfilAberto(false); navigate('/perfil'); }} className="btn-edit" style={{ width: '100%', minHeight: 'auto', padding: '10px', fontSize: '0.85rem', marginBottom: '8px' }}>
-                                            👤 Editar Perfil
+                                            Editar Perfil
                                         </button>
                                         <button onClick={handleLogout} className="btn-delete" style={{ width: '100%', minHeight: 'auto', padding: '10px', fontSize: '0.85rem' }}>
                                             Sair do Sistema
