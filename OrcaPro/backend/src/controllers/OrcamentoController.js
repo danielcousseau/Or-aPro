@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 const jwt = require('jsonwebtoken'); // [SecOps] JWT para gerar links públicos e seguros
 
 module.exports = {
@@ -24,10 +23,18 @@ module.exports = {
     async criar(req, res) {
         try {
             const {
-                titulo, clienteId, tipoMaoDeObra, maoDeObraValor, maoDeObraQtde, 
-                tipoLucro, lucroValor, lucroQtde, totalFinal, tipoMovel, ambiente, medidas, 
+                titulo, clienteId, tipoMaoDeObra, maoDeObraValor, maoDeObraQtde,
+                tipoLucro, lucroValor, lucroQtde, totalFinal, tipoMovel, ambiente, medidas,
                 prazo, pagamento, validade, observacoes, materiais
             } = req.body;
+
+            // Garante que o clienteId pertence a este usuário — impede associação cross-tenant
+            const clienteDoUsuario = await prisma.cliente.findFirst({
+                where: { id: clienteId, userId: req.userId }
+            });
+            if (!clienteDoUsuario) {
+                return res.status(403).json({ error: 'Cliente não encontrado.' });
+            }
 
             const novoOrcamento = await prisma.orcamento.create({
                 data: {
@@ -64,13 +71,21 @@ module.exports = {
         try {
             const { id } = req.params;
             const {
-                titulo, clienteId, tipoMaoDeObra, maoDeObraValor, maoDeObraQtde, 
-                tipoLucro, lucroValor, lucroQtde, totalFinal, tipoMovel, ambiente, medidas, 
+                titulo, clienteId, tipoMaoDeObra, maoDeObraValor, maoDeObraQtde,
+                tipoLucro, lucroValor, lucroQtde, totalFinal, tipoMovel, ambiente, medidas,
                 prazo, pagamento, validade, observacoes, materiais
             } = req.body;
 
             const pertence = await prisma.orcamento.findFirst({ where: { id: Number(id), userId: req.userId } });
             if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
+
+            // Garante que o novo clienteId também pertence a este usuário
+            const clienteDoUsuario = await prisma.cliente.findFirst({
+                where: { id: clienteId, userId: req.userId }
+            });
+            if (!clienteDoUsuario) {
+                return res.status(403).json({ error: 'Cliente não encontrado.' });
+            }
 
             const orcamentoAtualizado = await prisma.orcamento.update({
                 where: { id: Number(id) },

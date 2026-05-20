@@ -1,60 +1,81 @@
 require('dotenv').config();
+
+const REQUIRED_ENV = ['DATABASE_URL', 'JWT_SECRET'];
+const missingEnv = REQUIRED_ENV.filter(key => !process.env[key]);
+if (missingEnv.length > 0) {
+    console.error(`FATAL: Variáveis de ambiente não definidas: ${missingEnv.join(', ')}`);
+    process.exit(1);
+}
+
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet'); // [SecOps] Proteção avançada de cabeçalhos HTTP
-const rateLimit = require('express-rate-limit'); // [SecOps] Bloqueio contra ataques de repetição
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 app.set('trust proxy', 1);
 
-// [SecOps] Protegendo o CORS. 'origin: *' permite que qualquer site tente se comunicar com sua API.
-// É vital restringir isso para o domínio exato do seu frontend para evitar ataques cruzados.
 const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
 app.use(cors({
     origin: allowedOrigin,
-    optionsSuccessStatus: 200 // Algumas versões antigas de navegadores engasgam com 204
+    credentials: true, // Obrigatório para o browser enviar cookies cross-origin
+    optionsSuccessStatus: 200,
 }));
 
-// [SecOps] Oculta informações do servidor e previne ataques XSS e Sniffing
 app.use(helmet());
-
+app.use(cookieParser()); // Popula req.cookies para leitura dos tokens httpOnly
 app.use(express.json());
 
-// [SecOps] Limitador de requisições. Se um IP fizer mais de 300 chamadas em 15 min, é bloqueado.
-// Impede que robôs derrubem o servidor (DDoS) ou façam varreduras de falhas.
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // Janela de 15 minutos
-    max: 300, 
+    windowMs: 15 * 60 * 1000,
+    max: 300,
     message: { error: 'Atividade suspeita detectada. Muitas requisições feitas por este IP. Tente novamente mais tarde.' },
     standardHeaders: true,
     legacyHeaders: false,
 });
-
-// Aplica a proteção em todas as rotas da API
 app.use('/api', limiter);
 
-// Importando as Rotas
-const clienteRoutes = require('./routes/clienteRoutes');
-const materialRoutes = require('./routes/materialRoutes');
-const orcamentoRoutes = require('./routes/orcamentoRoutes'); // <-- ADICIONE ISSO
-const AuthController = require('./controllers/AuthController');
-
-// Rota de Teste
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'API do OrcaPro rodando perfeitamente! 🚀' });
+// Rate limit agressivo para login/registro — 10 tentativas por 15 min por IP
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { error: 'Muitas tentativas. Tente novamente em 15 minutos.' },
+    standardHeaders: true,
+    legacyHeaders: false,
 });
 
-// Usando as Rotas
-// Rota de Login (Pública) - Tem que vir antes das rotas fechadas!
-app.post('/api/login', AuthController.login);
-app.post('/api/registrar', AuthController.register); // [SaaS] Rota pública para criar novas contas
+const clienteRoutes = require('./routes/clienteRoutes');
+const materialRoutes = require('./routes/materialRoutes');
+const orcamentoRoutes = require('./routes/orcamentoRoutes');
+const AuthController = require('./controllers/AuthController');
+const authMiddleware = require('./middlewares/auth');
+const errorHandler = require('./middlewares/errorHandler');
+
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', message: 'API do OrcaPro rodando!' });
+});
+
+// Rotas públicas de autenticação
+app.post('/api/login', authLimiter, AuthController.login);
+app.post('/api/registrar', authLimiter, AuthController.register);
+app.post('/api/refresh', AuthController.refresh);
+app.post('/api/forgot-password', authLimiter, AuthController.forgotPassword);
+app.post('/api/reset-password', AuthController.resetPassword);
+
+// Rotas privadas de perfil
+app.get('/api/me', authMiddleware, AuthController.me);
+app.post('/api/logout', authMiddleware, AuthController.logout);
+app.put('/api/usuarios/perfil', authMiddleware, AuthController.atualizarPerfil);
+app.put('/api/usuarios/senha', authMiddleware, AuthController.alterarSenha);
 
 app.use('/api/clientes', clienteRoutes);
 app.use('/api/materiais', materialRoutes);
-app.use('/api/orcamentos', orcamentoRoutes); // <-- E ADICIONE ISSO AQUI
+app.use('/api/orcamentos', orcamentoRoutes);
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3333;
-
 app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT} 🚀`);
+    console.log(`Servidor rodando na porta ${PORT}`);
 });

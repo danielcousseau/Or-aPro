@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-// import api from '../services/api'; // Conectaremos ao backend no próximo passo
+import api from '../services/api';
 
 export default function Perfil() {
     const [user, setUser] = useState({});
+    const [nome, setNome] = useState('');
+    const [email, setEmail] = useState('');
+    const [salvandoPerfil, setSalvandoPerfil] = useState(false);
     const [fotoPreview, setFotoPreview] = useState(null);
     const [senhaAtual, setSenhaAtual] = useState('');
     const [novaSenha, setNovaSenha] = useState('');
@@ -12,8 +15,13 @@ export default function Perfil() {
 
     useEffect(() => {
         const userStorage = localStorage.getItem('@OrcaPro:user');
-        if (userStorage) setUser(JSON.parse(userStorage));
-        
+        if (userStorage) {
+            const parsed = JSON.parse(userStorage);
+            setUser(parsed);
+            setNome(parsed.nome || '');
+            setEmail(parsed.email || '');
+        }
+
         const avatar = localStorage.getItem('@OrcaPro:avatar');
         if (avatar) setFotoPreview(avatar);
     }, []);
@@ -40,9 +48,26 @@ export default function Perfil() {
         }
     };
 
+    const handlePerfilSubmit = async (e) => {
+        e.preventDefault();
+        setSalvandoPerfil(true);
+        try {
+            const response = await api.put('/usuarios/perfil', { nome, email });
+            const updated = { ...user, email: response.data.email, nome: response.data.nome };
+            setUser(updated);
+            setNome(response.data.nome || '');
+            localStorage.setItem('@OrcaPro:user', JSON.stringify(updated));
+            toast.success('Perfil atualizado com sucesso!');
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Erro ao atualizar perfil.');
+        } finally {
+            setSalvandoPerfil(false);
+        }
+    };
+
     const handleSenhaSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (novaSenha !== confirmarSenha) {
             toast.error('A nova senha e a confirmação não coincidem.');
             return;
@@ -50,19 +75,14 @@ export default function Perfil() {
 
         setSalvandoSenha(true);
         try {
-            // NOTA: A interface de alteração de senha está pronta!
-            // No próximo passo, vamos criar a rota no backend para salvar no banco.
-            // await api.put('/usuarios/senha', { senhaAtual, novaSenha });
-            
-            setTimeout(() => {
-                toast.success('Senha atualizada com sucesso!');
-                setSenhaAtual('');
-                setNovaSenha('');
-                setConfirmarSenha('');
-                setSalvandoSenha(false);
-            }, 1000);
+            await api.put('/usuarios/senha', { senhaAtual, novaSenha });
+            toast.success('Senha atualizada com sucesso!');
+            setSenhaAtual('');
+            setNovaSenha('');
+            setConfirmarSenha('');
         } catch (error) {
-            toast.error('Erro ao atualizar senha. Verifique sua senha atual.');
+            toast.error(error.response?.data?.error || 'Erro ao atualizar senha. Verifique sua senha atual.');
+        } finally {
             setSalvandoSenha(false);
         }
     };
@@ -106,7 +126,43 @@ export default function Perfil() {
                     </p>
                 </div>
 
-                {/* Coluna da Senha */}
+                {/* Coluna do E-mail e Senha */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+                {/* Card de E-mail (necessário para recuperação de senha) */}
+                <div className="cliente-card">
+                    <h2 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '12px', marginBottom: '20px', fontSize: '1.2rem' }}>
+                        👤 Dados do Perfil
+                    </h2>
+                    <form onSubmit={handlePerfilSubmit}>
+                        <section className="form-section" style={{ background: 'transparent', border: 'none', padding: 0, marginBottom: '16px' }}>
+                            <label>Nome</label>
+                            <input
+                                type="text"
+                                value={nome}
+                                onChange={(e) => setNome(e.target.value)}
+                                placeholder="Seu nome completo"
+                            />
+                        </section>
+                        <section className="form-section" style={{ background: 'transparent', border: 'none', padding: 0, marginBottom: '16px' }}>
+                            <label>E-mail de Recuperação</label>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="seu@email.com"
+                            />
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-soft)', marginTop: '6px' }}>
+                                Usado apenas para recuperação de senha. Não será exibido a clientes.
+                            </p>
+                        </section>
+                        <button type="submit" disabled={salvandoPerfil} style={{ width: '100%', opacity: salvandoPerfil ? 0.7 : 1, cursor: salvandoPerfil ? 'not-allowed' : 'pointer' }}>
+                            {salvandoPerfil ? 'Salvando...' : 'Salvar Perfil'}
+                        </button>
+                    </form>
+                </div>
+
+                {/* Card de Senha */}
                 <div className="cliente-card">
                     <h2 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '12px', marginBottom: '20px', fontSize: '1.2rem' }}>
                         🔐 Segurança e Senha
@@ -130,7 +186,9 @@ export default function Perfil() {
                         </button>
                     </form>
                 </div>
-            </div>
+
+                </div>{/* fecha wrapper email+senha */}
+            </div>{/* fecha form-grid-1-1 */}
         </div>
     );
 }

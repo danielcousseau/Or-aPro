@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import api from './services/api';
 import Menu from './components/Menu';
 import Clientes from './pages/Clientes';
 import Dashboard from './pages/Dashboard';
@@ -11,15 +12,18 @@ import Kanban from './pages/Kanban';
 import Login from './pages/Login';
 import Cadastro from './pages/Cadastro';
 import Perfil from './pages/Perfil';
-import Proposta from './pages/Proposta'; // [Feature] Importa a tela pública do cliente
+import Proposta from './pages/Proposta';
+import EsqueciSenha from './pages/EsqueciSenha';
+import RedefinirSenha from './pages/RedefinirSenha';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-// 1. Guarda de Segurança: Protege as rotas verificando se o Token existe
+// Guarda de rota: verifica se há dados de usuário em localStorage.
+// O cookie httpOnly (que contém o token real) é validado pelo backend a cada chamada —
+// se expirar, o interceptor do axios tenta refresh e, em último caso, redireciona pro login.
 function RotaProtegida({ children }) {
-    const token = localStorage.getItem('@OrcaPro:token');
-    if (!token) {
-        // Se não tem login/token, joga o invasor para a tela de Login
+    const user = localStorage.getItem('@OrcaPro:user');
+    if (!user) {
         return <Navigate to="/login" replace />;
     }
     return children;
@@ -39,6 +43,7 @@ function LayoutSistema({ children }) {
     const isPrintPage = location.pathname.startsWith('/imprimir/');
     // Verifica se é a tela pública da proposta (sem menu do sistema)
     const isPropostaPage = location.pathname.startsWith('/proposta/');
+    const isAuthAuxPage = location.pathname === '/esqueci-senha' || location.pathname === '/redefinir-senha';
     // Puxa os dados do usuário do localStorage (se existirem)
     const userStorage = localStorage.getItem('@OrcaPro:user');
     
@@ -85,16 +90,20 @@ function LayoutSistema({ children }) {
         };
     }, [perfilAberto]);
 
-    const handleLogout = () => {
-        localStorage.removeItem('@OrcaPro:token'); // Apaga o crachá
-        localStorage.removeItem('@OrcaPro:user'); // Apaga os dados do usuário
-        window.location.href = '/login'; // Volta pro login e recarrega a página
+    const handleLogout = async () => {
+        try {
+            await api.post('/logout'); // Apaga os cookies httpOnly no servidor
+        } catch {
+            // Segue em frente mesmo se a chamada falhar
+        }
+        localStorage.removeItem('@OrcaPro:user');
+        localStorage.removeItem('@OrcaPro:avatar');
+        window.location.href = '/login';
     };
 
     return (
         <>
-            {/* O Layout (Menu superior) não deve aparecer no Login, na Impressão, nem na Proposta Pública */}
-            {!isLoginPage && !isCadastroPage && !isPrintPage && !isPropostaPage && (
+            {!isLoginPage && !isCadastroPage && !isPrintPage && !isPropostaPage && !isAuthAuxPage && (
                 <>
                     {/* Topbar do Usuário (Elegante e Harmônica) */}
                     <div style={{ 
@@ -156,7 +165,7 @@ function LayoutSistema({ children }) {
                     <Menu />
                 </>
             )}
-            <main className={!isLoginPage && !isCadastroPage && !isPrintPage && !isPropostaPage ? "container" : ""}>
+            <main className={!isLoginPage && !isCadastroPage && !isPrintPage && !isPropostaPage && !isAuthAuxPage ? "container" : ""}>
                 {children}
             </main>
         </>
@@ -169,10 +178,12 @@ export default function App() {
             <BrowserRouter>
                 <LayoutSistema>
                     <Routes>
-                        {/* Rota Pública (Aba de Autenticação) */}
+                        {/* Rotas Públicas */}
                         <Route path="/login" element={<Login />} />
-                    <Route path="/cadastro" element={<Cadastro />} />
-                        <Route path="/proposta/:token" element={<Proposta />} /> {/* Rota Pública do Cliente */}
+                        <Route path="/cadastro" element={<Cadastro />} />
+                        <Route path="/proposta/:token" element={<Proposta />} />
+                        <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+                        <Route path="/redefinir-senha" element={<RedefinirSenha />} />
                         
                         {/* Rotas Privadas (Blindadas pelo RotaProtegida) */}
                         <Route path="/" element={<RotaProtegida><Dashboard /></RotaProtegida>} />

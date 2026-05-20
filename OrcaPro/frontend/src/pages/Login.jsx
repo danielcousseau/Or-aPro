@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 
@@ -16,34 +16,20 @@ export default function Login() {
         setErro(''); // Limpa os erros anteriores
         setCarregando(true);
         
-        // [SecOps] Higiene de sessão: garante que não há tokens velhos antes de autenticar
-        localStorage.removeItem('@OrcaPro:token');
+        // Limpa dados de sessão anterior antes de autenticar
         localStorage.removeItem('@OrcaPro:user');
-        
-        try {
-            // [Clean Code] O trim() salva a vida de usuários mobile que colocam espaço acidental no fim do nome
-            const response = await api.post('/login', { 
-                usuario: usuario.trim(), 
-                senha 
-            });
-            
-            // [SecOps] Armadilha para Falsos Positivos
-            if (!response.data || !response.data.token) {
-                setErro(response.data?.error || response.data?.message || 'O servidor não gerou o token de acesso.');
-                return;
-            }
 
-            // [SecOps] Blindagem contra dados indefinidos da API
-            const token = response.data.token;
-            const userData = response.data.user || {
-                nome: response.data.nome || response.data.name || usuario,
-                usuario: usuario
-            };
-            localStorage.setItem('@OrcaPro:token', token);
+        try {
+            const response = await api.post('/login', {
+                usuario: usuario.trim(),
+                senha
+            });
+
+            // O token agora chega via cookie httpOnly — só salvamos os dados do usuário
+            const userData = response.data.user || { nome: usuario, usuario };
             localStorage.setItem('@OrcaPro:user', JSON.stringify(userData));
-            
-            // Redireciona para o Histórico (ou para a página que preferir)
-            navigate('/historico'); 
+
+            navigate('/historico');
         } catch (error) {
             const mensagemErro = error.response?.data?.error || 'Usuário ou senha inválidos. Tente novamente.';
             setErro(mensagemErro);
@@ -89,9 +75,9 @@ export default function Login() {
                     </section>
                     
                     <div style={{ textAlign: 'right', marginTop: '-10px', marginBottom: '15px' }}>
-                        <button type="button" className="btn-link" onClick={() => toast.info('Para redefinir sua senha, entre em contato com o administrador do sistema.')} style={{ fontSize: '0.85rem' }}>
+                        <Link to="/esqueci-senha" className="btn-link" style={{ fontSize: '0.85rem' }}>
                             Esqueceu a senha?
-                        </button>
+                        </Link>
                     </div>
 
                     <button 
