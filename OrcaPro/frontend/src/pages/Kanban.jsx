@@ -14,6 +14,7 @@ const COR_COLUNA = {
 
 export default function Kanban() {
     const [orcamentos, setOrcamentos] = useState([]);
+    const [termoBusca, setTermoBusca] = useState('');
 
     useEffect(() => {
         carregarOrcamentos();
@@ -37,14 +38,29 @@ export default function Kanban() {
         }
     };
 
+    const orcamentosFiltrados = termoBusca
+        ? orcamentos.filter(o =>
+            o.titulo?.toLowerCase().includes(termoBusca.toLowerCase()) ||
+            o.cliente?.nome?.toLowerCase().includes(termoBusca.toLowerCase())
+          )
+        : orcamentos;
+
     return (
         <div>
             <h1>Quadro de Produção</h1>
-            <p style={{ marginBottom: '24px' }}>Acompanhe o andamento dos projetos e atualize os status.</p>
+            <div className="search-bar" style={{ marginBottom: '24px' }}>
+                <p style={{ margin: 0 }}>Acompanhe o andamento dos projetos e atualize os status.</p>
+                <input
+                    type="text"
+                    placeholder="Buscar por título ou cliente..."
+                    value={termoBusca}
+                    onChange={(e) => setTermoBusca(e.target.value)}
+                />
+            </div>
 
             <div className="kanban-board">
                 {COLUNAS.map(coluna => {
-                    const orcamentosDaColuna = orcamentos.filter(o =>
+                    const orcamentosDaColuna = orcamentosFiltrados.filter(o =>
                         (o.status === coluna) ||
                         (coluna === 'Aguardando' && (!o.status || !COLUNAS.includes(o.status)))
                     );
