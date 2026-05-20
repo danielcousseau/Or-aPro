@@ -209,7 +209,7 @@ export default function Materiais() {
             {abaAtiva === 'consulta' && (
                 <section className="lista-clientes">
                     <div className="search-bar">
-                        <h2>{materiaisFiltrados.length} material{materiaisFiltrados.length !== 1 ? 'is' : ''}</h2>
+                        <h2>{materiaisFiltrados.length} {materiaisFiltrados.length !== 1 ? 'materiais' : 'material'}</h2>
                         <input
                             type="text"
                             placeholder="Pesquisar por nome ou categoria..."
