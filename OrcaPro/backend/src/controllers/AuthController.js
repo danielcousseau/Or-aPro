@@ -49,8 +49,11 @@ module.exports = {
             res.cookie('token', accessToken, cookieOpts(15 * 60 * 1000));
             res.cookie('refreshToken', refreshToken, cookieOpts(7 * 24 * 60 * 60 * 1000));
 
+            // Tokens também no body: necessário para Safari/iOS (ITP bloqueia cookies cross-domain)
             return res.json({
-                user: { id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null }
+                user: { id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null },
+                accessToken,
+                refreshToken,
             });
         } catch (error) {
             console.error(error);
@@ -59,7 +62,8 @@ module.exports = {
     },
 
     async refresh(req, res) {
-        const refreshToken = req.cookies?.refreshToken;
+        // Aceita token do body (Safari/iOS) ou do cookie (outros browsers)
+        const refreshToken = req.body?.refreshToken || req.cookies?.refreshToken;
         if (!refreshToken) {
             return res.status(401).json({ error: 'Sessão expirada. Faça login novamente.' });
         }
@@ -71,7 +75,7 @@ module.exports = {
             const newAccessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
             res.cookie('token', newAccessToken, cookieOpts(15 * 60 * 1000));
 
-            return res.json({ ok: true });
+            return res.json({ ok: true, accessToken: newAccessToken });
         } catch {
             res.clearCookie('token');
             res.clearCookie('refreshToken');

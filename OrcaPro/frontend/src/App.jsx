@@ -109,6 +109,7 @@ function LayoutSistema({ children }) {
             // Segue em frente mesmo se a chamada falhar
         }
         localStorage.removeItem('@OrcaPro:user');
+        localStorage.removeItem('@OrcaPro:refreshToken');
         window.location.href = '/login';
     };
 

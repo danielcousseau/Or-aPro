@@ -2,10 +2,24 @@ import axios from 'axios';
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3333/api',
-    withCredentials: true, // Envia cookies httpOnly automaticamente em todas as requisições
+    withCredentials: true,
 });
 
-// Controla requisições simultâneas durante um refresh em andamento
+// Access token fica em memória (nunca no DOM/localStorage — reduz superfície XSS)
+let accessToken = null;
+
+export function setAccessToken(token) {
+    accessToken = token;
+}
+
+// Injeta o header em toda requisição quando o token estiver disponível
+api.interceptors.request.use(config => {
+    if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+});
+
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -18,12 +32,9 @@ api.interceptors.response.use(
     response => response,
     async error => {
         const originalRequest = error.config;
-
-        // Não tenta refresh se o erro veio do próprio /refresh ou /login
         const isAuthEndpoint = originalRequest.url === '/refresh' || originalRequest.url === '/login';
 
         if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
-            // Fila as requisições que chegaram durante um refresh já em andamento
             if (isRefreshing) {
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
@@ -36,12 +47,17 @@ api.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                await api.post('/refresh');
+                // Envia refreshToken pelo body (funciona no Safari/iOS que bloqueia cookies cross-domain)
+                const storedRefresh = localStorage.getItem('@OrcaPro:refreshToken');
+                const response = await api.post('/refresh', { refreshToken: storedRefresh });
+                accessToken = response.data.accessToken;
                 processQueue(null);
-                return api(originalRequest); // Repete a requisição original com o novo access token
+                return api(originalRequest);
             } catch (refreshError) {
                 processQueue(refreshError);
+                accessToken = null;
                 localStorage.removeItem('@OrcaPro:user');
+                localStorage.removeItem('@OrcaPro:refreshToken');
                 window.location.href = '/login';
                 return Promise.reject(refreshError);
             } finally {

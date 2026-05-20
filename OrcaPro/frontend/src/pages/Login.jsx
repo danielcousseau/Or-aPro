@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import api from '../services/api';
+import api, { setAccessToken } from '../services/api';
 import { toast } from 'react-toastify';
 
 export default function Login() {
@@ -25,8 +25,11 @@ export default function Login() {
                 senha
             });
 
-            // O token agora chega via cookie httpOnly — só salvamos os dados do usuário
             const userData = response.data.user || { nome: usuario, usuario };
+            // Armazena access token em memória e refresh token no localStorage
+            // (contorna o bloqueio de cookies cross-domain do Safari/iOS)
+            setAccessToken(response.data.accessToken);
+            localStorage.setItem('@OrcaPro:refreshToken', response.data.refreshToken);
             localStorage.setItem('@OrcaPro:user', JSON.stringify(userData));
             window.dispatchEvent(new CustomEvent('avatarAtualizado', { detail: userData.avatar || null }));
 

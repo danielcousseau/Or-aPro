@@ -7,8 +7,11 @@ module.exports = (req, res, next) => {
         return res.status(500).json({ error: 'Erro interno de configuração do servidor.' });
     }
 
-    // Lê o access token do cookie httpOnly (não acessível por JavaScript — protege contra XSS)
-    const token = req.cookies?.token;
+    // Aceita Authorization: Bearer <token> (cross-origin, funciona no Safari/iOS)
+    // ou cookie httpOnly como fallback (browsers que aceitam cookies cross-site)
+    const authHeader = req.headers.authorization;
+    const token = (authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null)
+        ?? req.cookies?.token;
 
     if (!token) {
         return res.status(401).json({ error: 'Não autenticado.' });
