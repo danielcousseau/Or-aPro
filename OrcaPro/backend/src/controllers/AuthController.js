@@ -100,7 +100,7 @@ module.exports = {
 
     async register(req, res) {
         try {
-            const { nome, usuario, senha } = req.body;
+            const { nome, usuario, senha, email } = req.body;
 
             const userExists = await prisma.user.findUnique({ where: { usuario } });
             if (userExists) {
@@ -109,7 +109,7 @@ module.exports = {
 
             const hashPassword = await bcrypt.hash(senha, 10);
             await prisma.user.create({
-                data: { name: nome, usuario, password: hashPassword }
+                data: { name: nome, usuario, password: hashPassword, email: email || null }
             });
 
             return res.status(201).json({ message: 'Conta criada com sucesso!' });

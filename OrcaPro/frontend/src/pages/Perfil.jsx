@@ -145,7 +145,7 @@ export default function Perfil() {
                             />
                         </section>
                         <section className="form-section" style={{ background: 'transparent', border: 'none', padding: 0, marginBottom: '16px' }}>
-                            <label>E-mail de Recuperação</label>
+                            <label>E-mail</label>
                             <input
                                 type="email"
                                 value={email}
@@ -153,7 +153,7 @@ export default function Perfil() {
                                 placeholder="seu@email.com"
                             />
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-soft)', marginTop: '6px' }}>
-                                Usado apenas para recuperação de senha. Não será exibido a clientes.
+                                Usado para recuperação de senha. Não será exibido a clientes.
                             </p>
                         </section>
                         <button type="submit" disabled={salvandoPerfil} style={{ width: '100%', opacity: salvandoPerfil ? 0.7 : 1, cursor: salvandoPerfil ? 'not-allowed' : 'pointer' }}>

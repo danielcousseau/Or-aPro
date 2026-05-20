@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 export default function Cadastro() {
     const [nome, setNome] = useState('');
     const [usuario, setUsuario] = useState('');
+    const [email, setEmail] = useState('');
     const [senha, setSenha] = useState('');
     const [confirmarSenha, setConfirmarSenha] = useState('');
     const [carregando, setCarregando] = useState(false);
@@ -30,6 +31,7 @@ export default function Cadastro() {
             await api.post('/registrar', {
                 nome: nome.trim(),
                 usuario: usuario.trim(),
+                email: email.trim() || undefined,
                 senha
             });
 
@@ -61,6 +63,13 @@ export default function Cadastro() {
                     <section className="form-section">
                         <label>Nome de Usuário (Login)</label>
                         <input type="text" value={usuario} onChange={(e) => setUsuario(e.target.value)} placeholder="Ex: silva.moveis" required />
+                    </section>
+                    <section className="form-section">
+                        <label>E-mail</label>
+                        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" />
+                        <p style={{ fontSize: '0.75rem', color: 'var(--text-soft)', marginTop: '6px' }}>
+                            Usado para recuperação de senha caso esqueça o acesso.
+                        </p>
                     </section>
                     <section className="form-section">
                         <label>Senha</label>
