@@ -112,7 +112,18 @@ export default function Historico() {
                                     <p><strong>Telefone:</strong> {orc.cliente?.telefone || 'Não informado'}</p>
                                     <p><strong>Móvel:</strong> {orc.tipoMovel || '-'}</p>
                                     <p><strong>Ambiente:</strong> {orc.ambiente || '-'}</p>
-                                    <p><strong>Materiais:</strong> {orc.materiais?.length || 0} itens</p>
+                                    <div>
+                                        <p style={{ marginBottom: orc.materiais?.length ? '4px' : 0 }}>
+                                            <strong>Materiais:</strong> {orc.materiais?.length || 0} {orc.materiais?.length === 1 ? 'item' : 'itens'}
+                                        </p>
+                                        {orc.materiais?.length > 0 && (
+                                            <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '0.82rem', color: 'var(--text-soft)', lineHeight: '1.6' }}>
+                                                {orc.materiais.map(m => (
+                                                    <li key={m.id}>{m.quantidade}× {m.nome}</li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
                                     <p><strong>Status:</strong> <span style={{ background: CORES_STATUS[orc.status] || '#95a5a6', color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold' }}>{orc.status || 'Aguardando'}</span></p>
                                 </div>
 
