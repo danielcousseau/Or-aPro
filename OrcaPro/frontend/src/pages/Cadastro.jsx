@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Turnstile } from '@marsidev/react-turnstile';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 
@@ -13,6 +14,8 @@ export default function Cadastro() {
     const [mostrarSenha, setMostrarSenha] = useState(false);
     const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
     const [erro, setErro] = useState('');
+    const [turnstileToken, setTurnstileToken] = useState('');
+    const turnstileRef = useRef(null);
     const navigate = useNavigate();
 
     const handleCadastro = async (e) => {
@@ -20,9 +23,14 @@ export default function Cadastro() {
         setErro('');
         setCarregando(true);
 
-        // [UX/SecOps] Impede o cadastro se as senhas não forem idênticas
         if (senha !== confirmarSenha) {
             setErro('As senhas não coincidem. Verifique e tente novamente.');
+            setCarregando(false);
+            return;
+        }
+
+        if (!turnstileToken) {
+            setErro('Complete o desafio de segurança antes de continuar.');
             setCarregando(false);
             return;
         }
@@ -32,13 +40,16 @@ export default function Cadastro() {
                 nome: nome.trim(),
                 usuario: usuario.trim(),
                 email: email.trim() || undefined,
-                senha
+                senha,
+                turnstileToken
             });
 
             toast.success('Conta criada com sucesso! Você já pode fazer login.');
             navigate('/login');
         } catch (error) {
             setErro(error.response?.data?.error || 'Erro ao criar conta. Tente novamente.');
+            turnstileRef.current?.reset();
+            setTurnstileToken('');
         } finally {
             setCarregando(false);
         }
@@ -97,6 +108,16 @@ export default function Cadastro() {
                             </button>
                         </div>
                     </section>
+                    <div style={{ marginTop: '15px', display: 'flex', justifyContent: 'center' }}>
+                        <Turnstile
+                            ref={turnstileRef}
+                            siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                            onSuccess={setTurnstileToken}
+                            onError={() => setTurnstileToken('')}
+                            onExpire={() => setTurnstileToken('')}
+                            options={{ theme: 'light', language: 'pt-BR' }}
+                        />
+                    </div>
                     <button type="submit" disabled={carregando} style={{ width: '100%', marginTop: '15px', padding: '12px', opacity: carregando ? 0.7 : 1, cursor: carregando ? 'not-allowed' : 'pointer' }}>
                         {carregando ? 'Criando conta...' : 'Registrar'}
                     </button>

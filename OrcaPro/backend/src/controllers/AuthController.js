@@ -101,7 +101,21 @@ module.exports = {
 
     async register(req, res) {
         try {
-            const { nome, usuario, senha, email } = req.body;
+            const { nome, usuario, senha, email, turnstileToken } = req.body;
+
+            // Verifica Turnstile apenas em produção (TURNSTILE_SECRET_KEY não definida em dev)
+            const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+            if (turnstileSecret) {
+                const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ secret: turnstileSecret, response: turnstileToken })
+                });
+                const verifyData = await verifyRes.json();
+                if (!verifyData.success) {
+                    return res.status(400).json({ error: 'Verificação de segurança falhou. Tente novamente.' });
+                }
+            }
 
             const userExists = await prisma.user.findUnique({ where: { usuario } });
             if (userExists) {

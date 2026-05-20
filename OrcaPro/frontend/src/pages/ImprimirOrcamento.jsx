@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { formatarMoeda } from '../utils/format';
@@ -10,6 +10,8 @@ export default function ImprimirOrcamento() {
     const [orc, setOrc] = useState(null);
     const [erro, setErro] = useState(false);
     const [numeroLocal, setNumeroLocal] = useState('');
+    const [gerando, setGerando] = useState(false);
+    const printRef = useRef(null);
 
     useEffect(() => {
         // Busca o orçamento atual e a lista de todos os orçamentos do usuário simultaneamente
@@ -47,6 +49,23 @@ export default function ImprimirOrcamento() {
     if (erro) return <p style={{ padding: '20px', color: '#e74c3c' }}>Erro ao carregar o orçamento. Verifique se ele existe ou se tem permissões de acesso.</p>;
     if (!orc) return <p style={{ padding: '20px' }}>Carregando orçamento...</p>;
 
+    const baixarPDF = async () => {
+        setGerando(true);
+        try {
+            const html2pdf = (await import('html2pdf.js')).default;
+            const nomeCliente = orc.cliente.nome.replace(/\s+/g, '_');
+            await html2pdf().set({
+                margin: 10,
+                filename: `Orcamento_${numeroLocal || orc.id}_${nomeCliente}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(printRef.current).save();
+        } finally {
+            setGerando(false);
+        }
+    };
+
     // [UX] Função para formatar a mensagem e abrir o WhatsApp com o Link Seguro
     const enviarWhatsApp = async () => {
         if (!orc.cliente.telefone) {
@@ -82,12 +101,13 @@ export default function ImprimirOrcamento() {
         <div className="print-container">
             {/* Botões que somem na hora de imprimir */}
             <div className="no-print" style={{ marginBottom: '20px', display: 'flex', gap: '10px', padding: '20px' }}>
-                <button onClick={() => window.print()} style={{ background: '#27ae60' }}>🖨️ Imprimir / Salvar PDF</button>
+                <button onClick={() => window.print()} style={{ background: '#27ae60' }}>🖨️ Imprimir</button>
+                <button onClick={baixarPDF} disabled={gerando} style={{ background: '#2980b9' }}>{gerando ? 'Gerando...' : 'Baixar PDF'}</button>
                 <button onClick={enviarWhatsApp} style={{ background: '#25D366', color: '#fff' }}>💬 Enviar WhatsApp</button>
                 <button onClick={() => navigate('/historico')} style={{ background: '#7f8c8d' }}>Voltar</button>
             </div>
 
-            <div className="print-page">
+            <div className="print-page" ref={printRef}>
                 <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #333', paddingBottom: '10px' }}>
                     <div>
                         <img src="/logo-orcapro.png" alt="Logo da Empresa" style={{ maxWidth: '250px', height: 'auto' }} />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../services/api';
 import { formatarMoeda } from '../utils/format';
@@ -7,6 +7,8 @@ export default function Proposta() {
     const { token } = useParams();
     const [orcamento, setOrcamento] = useState(null);
     const [erro, setErro] = useState('');
+    const [gerando, setGerando] = useState(false);
+    const contentRef = useRef(null);
 
     useEffect(() => {
         api.get(`/orcamentos/proposta/${token}`)
@@ -26,11 +28,28 @@ export default function Proposta() {
         );
     }
 
+    const baixarPDF = async () => {
+        setGerando(true);
+        try {
+            const html2pdf = (await import('html2pdf.js')).default;
+            const titulo = orcamento.titulo?.replace(/\s+/g, '_') || 'Proposta';
+            await html2pdf().set({
+                margin: 10,
+                filename: `Proposta_${titulo}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(contentRef.current).save();
+        } finally {
+            setGerando(false);
+        }
+    };
+
     if (!orcamento) return <p style={{ textAlign: 'center', marginTop: '50px' }}>Carregando proposta segura...</p>;
 
     return (
         <div style={{ background: '#f9f9f9', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
-            <div style={{ maxWidth: '800px', margin: '0 auto', background: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}>
+            <div ref={contentRef} style={{ maxWidth: '800px', margin: '0 auto', background: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}>
                 
                 <div style={{ textAlign: 'center', marginBottom: '30px', borderBottom: '2px solid #f0f0f0', paddingBottom: '20px' }}>
                     <img src="/logo-orcapro.png" alt="Logo" style={{ maxHeight: '60px', marginBottom: '15px' }} />
@@ -66,9 +85,12 @@ export default function Proposta() {
                     <p style={{ color: '#999', fontSize: '0.8rem', marginTop: '10px' }}>Esta proposta é válida por {orcamento.validade || '7 dias'}.</p>
                 </div>
 
-                <div style={{ textAlign: 'center', marginTop: '40px' }} className="no-print">
+                <div style={{ textAlign: 'center', marginTop: '40px', display: 'flex', gap: '12px', justifyContent: 'center' }} className="no-print">
                     <button onClick={() => window.print()} style={{ background: '#27ae60', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '6px', fontSize: '1rem', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(39, 174, 96, 0.3)' }}>
-                        🖨️ Salvar como PDF
+                        🖨️ Imprimir
+                    </button>
+                    <button onClick={baixarPDF} disabled={gerando} style={{ background: '#2980b9', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '6px', fontSize: '1rem', cursor: 'pointer', fontWeight: 'bold', opacity: gerando ? 0.7 : 1 }}>
+                        {gerando ? 'Gerando...' : 'Baixar PDF'}
                     </button>
                 </div>
             </div>
