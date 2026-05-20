@@ -5,12 +5,40 @@
 
 ---
 
-## Estado Atual do Projeto (2026-05-20) — atualizado sessão 5
+## Estado Atual do Projeto (2026-05-20) — atualizado sessão 6
 
 - **Frontend:** React + Vite + PWA → Vercel
 - **Backend:** Node.js + Express + Prisma → Render
 - **Banco:** PostgreSQL → Neon.tech (multi-tenant / SaaS)
 - **Status:** Funcional em produção
+
+---
+
+## Sessão 6 — 2026-05-20
+
+### Dashboard
+- **Gráfico de Ambiente** convertido para barras horizontais com altura dinâmica (48px/ambiente, mín. 200px), ordenado do mais ao menos frequente — escala melhor com muitos ambientes
+- **Overflow corrigido** em `dashboard-grid-2`: adicionado `min-width: 0; overflow: hidden` nos filhos do grid
+- **Status "analise" unificado com "Aguardando"** em todo o sistema: `Dashboard.jsx` (pendentes + gráfico de status) e `Historico.jsx` (badge) normalizam o valor legado
+- `schema.prisma`: default do campo `status` alterado de `"analise"` para `"Aguardando"`
+- Migration `20260520000000_fix_status_default`: altera o DEFAULT no banco e converte registros antigos via `UPDATE`
+
+### Campos padronizados (select + Outros)
+- **Ambiente** (`DadosGerais.jsx`): substituído `<input type="text">` por `<select>` com 9 opções padrão (Cozinha, Quarto, Sala, Banheiro, Escritório, Lavanderia, Varanda, Área de Serviço, Garagem) + "Outros..." com campo de texto livre. Valores antigos fora da lista são detectados automaticamente e abrem no modo "Outros"
+- **Forma de Pagamento** (`ResumoValores.jsx`): substituído `<input list="datalist">` por `<select>` com 5 opções padrão + opções extras do banco de dados (sem duplicatas) + "Outros..." com campo de texto
+- **Categoria de Material** (`Materiais.jsx`): mesmo padrão, com categorias Chapas / Fixação / Ferragens / Acabamento + "Outros..."
+
+### Precificação
+- **Placeholder dinâmico**: campo de valor da Mão de Obra e do Lucro agora exibe sugestão contextual conforme o tipo selecionado (`Ex: 15 (%)`, `R$ 0,00`, `Ex: 1.5 (×)`, `R$ 0,00 / dia`, etc.)
+
+### UX — Pequenos fixes
+- **Hover do toggle de materiais** (`Historico.jsx`): botão recebia `transform + box-shadow + filter` do `button:hover` global. Adicionada classe `.btn-ghost` no CSS que neutraliza esses efeitos para botões sem estilo visual
+
+### Materiais padrão de marcenaria
+- **31 materiais** criados com categorias e preços de mercado: MDF 18mm (branco/cor/amadeirado), Fundo 6mm, 9 parafusos, 3 dobradiças, 8 corrediças (20–55cm), Sapata, 4 lâminas de borda e Cola
+- `materiaisPadrao.js`: lista única exportada em `backend/src/constants/`, compartilhada entre seed e AuthController
+- **Lazy init** em `MaterialController.listar`: na primeira chamada com lista vazia, cria os materiais padrão automaticamente para aquele usuário — sem overhead no startup, funciona para usuários existentes e novos
+- **Novo registro** (`AuthController.register`): materiais padrão criados imediatamente ao criar conta
 
 ---
 
