@@ -7,8 +7,12 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate', // Atualiza o app no celular do usuário sozinho quando você lançar novidades
+      registerType: 'autoUpdate',
       includeAssets: ['logo-orcapro.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'],
+      workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
+      },
       manifest: {
         name: 'OrçaPro - Gestão de Marcenaria',
         short_name: 'OrçaPro',
