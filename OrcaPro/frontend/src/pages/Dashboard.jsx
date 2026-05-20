@@ -182,10 +182,10 @@ export default function Dashboard() {
 
             {/* SESSÃO DE GRÁFICOS LADO A LADO */}
             <div className="dashboard-grid-2">
-                <section className="dashboard-card chart-section">
+                <section className="dashboard-card">
                     <h3 className="text-center">Projetos por Ambiente</h3>
                     {orcamentos.length > 0 ? (
-                        <div style={{ position: 'relative', height: '300px', width: '100%' }}>
+                        <div style={{ position: 'relative', height: '280px', width: '100%' }}>
                             <Bar data={dataGrafico} options={{ responsive: true, maintainAspectRatio: false }} />
                         </div>
                     ) : (
@@ -193,10 +193,10 @@ export default function Dashboard() {
                     )}
                 </section>
 
-                <section className="dashboard-card chart-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <section className="dashboard-card">
                     <h3 className="text-center">Status dos Orçamentos</h3>
                     {orcamentos.length > 0 ? (
-                        <div style={{ position: 'relative', height: '300px', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                        <div style={{ position: 'relative', height: '280px', width: '100%', maxWidth: '320px', margin: '0 auto' }}>
                             <Doughnut data={dataStatusGrafico} options={{ responsive: true, maintainAspectRatio: false }} />
                         </div>
                     ) : (

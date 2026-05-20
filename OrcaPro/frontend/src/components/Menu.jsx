@@ -13,7 +13,8 @@ export default function Menu() {
     return (
         <nav className="menu no-print">
             <Link to="/" className="menu-logo">
-                <img src="/logo-orcapro.png" alt="OrçaPro" />
+                <img src="/icon-192.png" alt="OrçaPro" />
+                <span className="menu-logo-text">OrçaPro</span>
             </Link>
 
             <div className="menu-links">

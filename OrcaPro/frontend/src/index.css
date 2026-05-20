@@ -72,6 +72,7 @@ html {
     flex-shrink: 0;
     display: flex;
     align-items: center;
+    gap: 8px;
     padding: 0 14px 0 0;
     margin-right: 4px;
     background: transparent;
@@ -80,9 +81,18 @@ html {
     box-shadow: none;
 }
 .menu-logo img {
-    height: 44px;
-    max-width: 160px;
+    height: 36px;
+    width: 36px;
     object-fit: contain;
+    border-radius: var(--radius-sm);
+}
+.menu-logo-text {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text-main);
+    letter-spacing: 0.3px;
+    white-space: nowrap;
 }
 .menu-logo:hover {
     transform: none;
@@ -607,7 +617,8 @@ input[type="number"] {
         grid-template-columns: 1fr;
     }
 
-    .menu-logo img { height: 30px; max-width: 110px; }
+    .menu-logo img { height: 32px; width: 32px; }
+    .menu-logo-text { display: none; }
 
     /* Modal não vaza a tela em celulares pequenos */
     .modal-content {
@@ -802,11 +813,6 @@ input[type="number"] {
     grid-template-columns: repeat(2, 1fr);
 }
 
-.dashboard-card canvas {
-    max-height: 280px;
-    margin-top: 10px;
-}
-
 @media (max-width: 900px) {
     .dashboard-grid-2 {
         grid-template-columns: 1fr;
@@ -962,11 +968,3 @@ input[type="number"] {
     border-left: 4px solid var(--success);
 }
 
-.chart-section {
-    max-width: 800px;
-    margin: 18px auto 0;
-}
-
-.chart-section h3 {
-    margin-bottom: 24px;
-}
