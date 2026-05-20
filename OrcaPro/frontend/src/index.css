@@ -328,15 +328,17 @@ a:focus {
 }
 .input-wrapper input {
     width: 100%;
-    padding-right: 50px !important; /* Aumentado para o novo tamanho do botão */
+    padding-right: 54px !important; /* Espaço generoso para a senha não bater no ícone */
 }
 .btn-eye {
     position: absolute;
-    right: 4px; /* Posiciona o olhinho precisamente no canto */
-    top: 50%;
-    transform: translateY(-50%);
-    width: 44px; /* Aumentamos a hitbox para acomodar o ícone maior */
-    height: 44px;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 50px; /* Hitbox (área de clique) gigante de 50px */
+    height: 100%; /* Acompanha automaticamente a altura do input */
+    padding: 0 !important; /* [Correção] O padding nativo estava deformando o botão! */
+    margin: 0 !important;
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
@@ -347,11 +349,14 @@ a:focus {
     z-index: 2;
     cursor: pointer;
 }
-.btn-eye:hover, .btn-eye:active {
-    transform: translateY(-50%) !important;
+
+.btn-eye:hover, 
+.btn-eye:active,
+.btn-eye:focus {
     box-shadow: none !important;
     color: var(--primary) !important;
     background: transparent !important;
+    transform: none !important; /* Remove oscilações indesejadas ao clicar */
 }
 
 .cliente-card {
