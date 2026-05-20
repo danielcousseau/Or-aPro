@@ -5,12 +5,31 @@
 
 ---
 
-## Estado Atual do Projeto (2026-05-20)
+## Estado Atual do Projeto (2026-05-20) — atualizado sessão 5
 
 - **Frontend:** React + Vite + PWA → Vercel
 - **Backend:** Node.js + Express + Prisma → Render
 - **Banco:** PostgreSQL → Neon.tech (multi-tenant / SaaS)
 - **Status:** Funcional em produção
+
+---
+
+## Sessão 5 — 2026-05-20
+
+### Bugs corrigidos
+
+- **Avatar de outro usuário aparecendo em conta nova** (`Login.jsx`): ao fazer login, dispara o evento `avatarAtualizado` com o avatar do usuário recém-autenticado. Sem isso, o estado React do `LayoutSistema` ficava com o avatar da sessão anterior quando a troca de conta ocorria sem reload de página.
+
+- **Avatar não carregava instantaneamente** (`App.jsx` + `Perfil.jsx`): `avatarUrl` passou a ser inicializado com lazy initializer lendo direto do `localStorage` (instantâneo), em vez de `null` + esperar `api.get('/me')`. `Perfil.jsx` atualizado para persistir o avatar no `localStorage` ao trocar ou remover a foto, mantendo a sincronia.
+
+- **Quantidade de dias/horas resetava para 1 ao salvar** (`orcamentoSchema.js`): `maoDeObraQtde` e `lucroQtde` não estavam declarados no schema Zod. O `parseAsync` descartava esses campos (comportamento padrão do Zod com campos desconhecidos), fazendo o Prisma usar o `@default(1)` do banco em todo save/update. Ambos os campos adicionados ao schema.
+
+### Melhoria — Histórico de Orçamentos (`Historico.jsx`)
+
+- Materiais do orçamento agora exibidos via toggle "ver materiais" nos cards do histórico
+- Chevron SVG com rotação suave (0.2s) indica aberto/fechado; sem artefatos de renderização
+- Lista exibe: quantidade × nome — valor unitário de cada item
+- Estado de abertura por `Set` de IDs: cada card expande/recolhe independentemente
 
 ---
 
