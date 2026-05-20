@@ -8,9 +8,10 @@ import { formatarMoeda } from '../utils/format';
 export default function Historico() {
     const [orcamentos, setOrcamentos] = useState([]);
     const [orcamentoParaExcluir, setOrcamentoParaExcluir] = useState(null);
-    const [termoBusca, setTermoBusca] = useState(''); // [UX] Estado para a barra de pesquisa
-    const [carregando, setCarregando] = useState(true); // [UX] Evita o "flash" de lista vazia
+    const [termoBusca, setTermoBusca] = useState('');
+    const [carregando, setCarregando] = useState(true);
     const [excluindo, setExcluindo] = useState(false);
+    const [materiaisAbertos, setMateriaisAbertos] = useState(new Set());
     
     // [Clean Code] Importando a mesma paleta de cores usada no Dashboard para criar identidade visual
     const CORES_STATUS = {
@@ -58,6 +59,14 @@ export default function Historico() {
         } finally {
             setExcluindo(false);
         }
+    };
+
+    const toggleMateriais = (id) => {
+        setMateriaisAbertos(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
     };
 
     // [Clean Code] Lógica para filtrar a lista antes de renderizar
@@ -113,13 +122,21 @@ export default function Historico() {
                                     <p><strong>Móvel:</strong> {orc.tipoMovel || '-'}</p>
                                     <p><strong>Ambiente:</strong> {orc.ambiente || '-'}</p>
                                     <div>
-                                        <p style={{ marginBottom: orc.materiais?.length ? '4px' : 0 }}>
-                                            <strong>Materiais:</strong> {orc.materiais?.length || 0} {orc.materiais?.length === 1 ? 'item' : 'itens'}
-                                        </p>
-                                        {orc.materiais?.length > 0 && (
-                                            <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '0.82rem', color: 'var(--text-soft)', lineHeight: '1.6' }}>
+                                        {orc.materiais?.length > 0 ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleMateriais(orc.id)}
+                                                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                            >
+                                                {materiaisAbertos.has(orc.id) ? '▲' : '▼'} {orc.materiais.length} {orc.materiais.length === 1 ? 'material' : 'materiais'}
+                                            </button>
+                                        ) : (
+                                            <p><strong>Materiais:</strong> nenhum</p>
+                                        )}
+                                        {materiaisAbertos.has(orc.id) && (
+                                            <ul style={{ margin: '6px 0 0 0', paddingLeft: '16px', fontSize: '0.85rem', color: 'var(--text-soft)', lineHeight: '1.7' }}>
                                                 {orc.materiais.map(m => (
-                                                    <li key={m.id}>{m.quantidade}× {m.nome}</li>
+                                                    <li key={m.id}>{m.quantidade}× {m.nome} — {formatarMoeda(m.valor)}</li>
                                                 ))}
                                             </ul>
                                         )}
