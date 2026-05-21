@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Testes do Backend
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: OrcaPro/backend/package-lock.json
+
+      - name: Instalar dependências
+        working-directory: OrcaPro/backend
+        run: npm ci
+
+      - name: Gerar Prisma Client
+        working-directory: OrcaPro/backend
+        run: npx prisma generate
+
+      - name: Rodar testes
+        working-directory: OrcaPro/backend
+        run: npm test
