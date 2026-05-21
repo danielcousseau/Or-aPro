@@ -42,6 +42,8 @@ module.exports = {
             const pertence = await prisma.cliente.findFirst({ where: { id: Number(id), userId: req.userId }});
             if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
 
+            console.log('[DEBUG] telegramChatId recebido:', dados.telegramChatId);
+
             const clienteAtualizado = await prisma.cliente.update({
                 where: { id: Number(id) },
                 data: {
@@ -59,6 +61,7 @@ module.exports = {
                 }
             });
 
+            console.log('[DEBUG] telegramChatId salvo:', clienteAtualizado.telegramChatId);
             await registrar(req.userId, 'atualizou', 'Cliente', clienteAtualizado.id, clienteAtualizado.nome);
             return res.json(clienteAtualizado);
         } catch (error) {
