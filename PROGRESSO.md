@@ -5,12 +5,37 @@
 
 ---
 
-## Estado Atual do Projeto (2026-05-20) — atualizado sessão 8
+## Estado Atual do Projeto (2026-05-20) — atualizado sessão 9
 
 - **Frontend:** React + Vite + PWA → Vercel
 - **Backend:** Node.js + Express + Prisma → Render
 - **Banco:** PostgreSQL → Neon.tech (multi-tenant / SaaS)
 - **Status:** Funcional em produção
+
+---
+
+## Sessão 9 — 2026-05-20
+
+### Infraestrutura
+- **`prisma db push`** — aplicou índices (`@@index([userId])`, `@@index([status])`) e tabela `AuditLog` no banco via direct URL
+- **`directUrl`** adicionado ao `schema.prisma` — resolve erro P1001 ao rodar migrations locais com pooler URL
+- **CI/CD — GitHub Actions** (`.github/workflows/ci.yml`): roda `npm test` a cada push na main; Node.js 22 (LTS); secrets `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET` configurados no GitHub
+- **Fix helpers de teste** — `limparUsuarioTeste` agora deleta `AuditLog` antes do `User` (FK constraint)
+
+### Segurança / Frontend
+- **CSP no Vercel** (`vercel.json`): `Content-Security-Policy` + `X-Content-Type-Options` + `Referrer-Policy` + `Permissions-Policy`; iterações para liberar `unsafe-eval` (html2pdf), Google Fonts e `*.cloudflare.com` (Turnstile)
+- **Cloudflare Turnstile** — chaves reais configuradas (`VITE_TURNSTILE_SITE_KEY` no Vercel, `TURNSTILE_SECRET_KEY` no Render); domínio corrigido para `orca-pro-seven.vercel.app`
+- **Fix overflow valor proposta** — `fontSize: clamp(1.4rem, 6vw, 2.5rem)` em `Proposta.jsx` (Redmi 12C)
+- **Fix PDF folha em branco** — `pagebreak: { mode: 'avoid-all' }`, `scrollY: 0` e remoção de `min-height: 29.7cm` em `ImprimirOrcamento.jsx`
+- **Busca no Kanban** — campo de busca por título e cliente no Quadro de Produção
+
+### Feature — Notificações Telegram (em progresso, não commitado)
+- Bot criado via @BotFather
+- `backend/src/services/telegram.js`: `enviarMensagem`, `notificarMudancaStatus`, `buscarPendentes`
+- `telegramChatId String?` adicionado ao modelo `Cliente` no schema + `prisma db push`
+- `OrcamentoController.atualizarStatus` dispara notificação automática ao mudar status
+- `GET /api/telegram/pendentes` — endpoint para o marceneiro buscar chat_ids dos clientes
+- `Clientes.jsx` — campo "Chat ID do Telegram" + indicador visual no card
 
 ---
 
@@ -192,18 +217,20 @@
 ## Backlog (O que falta)
 
 ### Alta prioridade
-- [x] **Registro aberto** — Cloudflare Turnstile implementado (sessão 7); pendente configurar chaves no Vercel/Render e `npm install`
-- [x] **Testes** — Jest + Supertest criados (sessão 7); pendente `npm install` no PC de casa
+- [x] **Registro aberto** — Cloudflare Turnstile ativo em produção (sessão 9)
+- [x] **Testes** — Jest + Supertest rodando no CI (sessão 9)
+- [x] **CI/CD** — GitHub Actions configurado (sessão 9)
+- [x] **CSP** — Content-Security-Policy configurado no Vercel (sessão 9)
 
 ### Média prioridade
-- [x] **Índices no banco** — adicionados no schema (sessão 7); **pendente migration:** `npx prisma migrate dev --name add_indexes`
-- [x] **Audit log** — implementado completo (sessão 8); **pendente migration:** `npx prisma migrate dev --name add_audit_log`
+- [x] **Índices no banco** — aplicados via `prisma db push` (sessão 9)
+- [x] **Audit log** — implementado e aplicado no banco (sessão 9)
+- [ ] **Notificações Telegram** — implementado localmente (sessão 9); pendente commit + `TELEGRAM_BOT_TOKEN` no Render
+- [ ] **Spec-driven development** — estrutura de specs criada (sessão 9); specs das próximas features devem ser escritas antes da implementação
 
 ### Baixa prioridade
-- [x] **PDF download** — implementado com `html2pdf.js` (sessão 7); pendente `npm install`
-- [ ] **CSP** — configurar `Content-Security-Policy` explícito no Helmet
+- [x] **PDF download** — funcionando em produção (sessão 9)
 - [ ] **Planos/billing** — freemium vs pago; Stripe ou Pagar.me
 - [ ] **Onboarding guiado** — wizard de primeiros passos para novo usuário
-- [ ] **Notificações push** — service worker existe mas sem push notifications
-- [ ] **CI/CD** — GitHub Actions (lint + testes antes do merge)
+- [ ] **Notificações push PWA** — service worker existe mas sem push notifications
 - [ ] **TypeScript** — migração gradual, começar pelos controllers

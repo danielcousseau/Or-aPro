@@ -38,9 +38,10 @@ model Cliente {
   rua         String?
   numero      String?
   cep         String?
-  observacoes String?
-  createdAt   DateTime @default(now())
-  orcamentos  Orcamento[]
+  observacoes    String?
+  telegramChatId String?
+  createdAt      DateTime @default(now())
+  orcamentos     Orcamento[]
 
   // Etiqueta de dono (SaaS)
   userId      Int

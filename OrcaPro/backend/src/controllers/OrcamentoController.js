@@ -1,6 +1,7 @@
 const prisma = require('../lib/prisma');
 const jwt = require('jsonwebtoken');
-const { registrar } = require('../services/audit'); // [SecOps] JWT para gerar links públicos e seguros
+const { registrar } = require('../services/audit');
+const { notificarMudancaStatus } = require('../services/telegram');
 
 module.exports = {
     async listar(req, res) {
@@ -162,16 +163,20 @@ module.exports = {
         try {
             const { id } = req.params;
             const { status } = req.body;
-            
-            // [SaaS] Valida se o orçamento pertence ao usuário antes de alterar o status
-            const pertence = await prisma.orcamento.findFirst({ where: { id: Number(id), userId: req.userId } });
+
+            const pertence = await prisma.orcamento.findFirst({
+                where: { id: Number(id), userId: req.userId },
+                include: { cliente: true }
+            });
             if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
 
             const orcamentoAtualizado = await prisma.orcamento.update({
                 where: { id: Number(id) },
                 data: { status }
             });
+
             await registrar(req.userId, 'atualizou status', 'Orçamento', orcamentoAtualizado.id, `${orcamentoAtualizado.titulo} → ${status}`);
+            notificarMudancaStatus(pertence.cliente, pertence.titulo, status).catch(() => {});
             return res.json(orcamentoAtualizado);
         } catch (error) {
             console.error(error);

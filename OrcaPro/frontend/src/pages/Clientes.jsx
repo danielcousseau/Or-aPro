@@ -23,7 +23,8 @@ export default function Clientes() {
         bairro: '',
         numero: '',
         cep: '',
-        observacoes: ''
+        observacoes: '',
+        telegramChatId: ''
     });
 
     useEffect(() => {
@@ -55,8 +56,8 @@ export default function Clientes() {
     const limparFormulario = () => {
         setFormData({
             nome: '', cpfCnpj: '', email: '', telefone: '',
-            rua: '', cidade: '', bairro: '', numero: '', 
-            cep: '', observacoes: ''
+            rua: '', cidade: '', bairro: '', numero: '',
+            cep: '', observacoes: '', telegramChatId: ''
         });
         setClienteEmEdicao(null);
     };
@@ -73,7 +74,8 @@ export default function Clientes() {
             bairro: cliente.bairro || '',
             numero: cliente.numero || '',
             cep: cliente.cep || '',
-            observacoes: cliente.observacoes || ''
+            observacoes: cliente.observacoes || '',
+            telegramChatId: cliente.telegramChatId || ''
         });
         setAbaAtiva('cadastro'); // Muda para a aba de cadastro automaticamente ao editar
         window.scrollTo(0, 0); // Rola para o topo para o usuário ver o formulário preenchido
@@ -231,6 +233,17 @@ export default function Clientes() {
                             <textarea name="observacoes" value={formData.observacoes} onChange={handleChange} placeholder="Anotações sobre o cliente..."></textarea>
                         </section>
 
+                        <section className="form-section">
+                            <p className="form-section-title">Notificações Telegram</p>
+                            <div>
+                                <label>Chat ID do Telegram</label>
+                                <input type="text" name="telegramChatId" value={formData.telegramChatId} onChange={handleChange} placeholder="Ex: 123456789" style={{ maxWidth: '220px' }} />
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-soft)', marginTop: '6px' }}>
+                                    O cliente deve mandar qualquer mensagem para o bot. Depois acesse <strong>Configurações → Pendentes Telegram</strong> para ver o Chat ID dele.
+                                </p>
+                            </div>
+                        </section>
+
                         <div className="form-buttons">
                             <button type="submit" disabled={salvando} style={{ opacity: salvando ? 0.7 : 1, cursor: salvando ? 'not-allowed' : 'pointer' }}>
                                 {salvando ? 'Salvando...' : (clienteEmEdicao ? 'Atualizar Cliente' : 'Salvar Cliente')}
@@ -282,6 +295,9 @@ export default function Clientes() {
                                         <p style={{ margin: 0 }}><strong>CEP:</strong> {cliente.cep || "Não informado"}</p>
                                     </div>
 
+                                    {cliente.telegramChatId && (
+                                        <p style={{ color: '#0088cc', fontSize: '0.9rem' }}>✈️ Telegram ativo — receberá notificações de status</p>
+                                    )}
                                     {cliente.observacoes && <p><strong>Obs:</strong> {cliente.observacoes}</p>}
                                     
                                     {/* Botões de Ação */}

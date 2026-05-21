@@ -69,6 +69,12 @@ app.use('/api/materiais', materialRoutes);
 app.use('/api/orcamentos', orcamentoRoutes);
 app.use('/api/audit-log', auditRoutes);
 
+const { buscarPendentes } = require('./services/telegram');
+app.get('/api/telegram/pendentes', authMiddleware, async (req, res) => {
+    const mensagens = await buscarPendentes();
+    res.json(mensagens);
+});
+
 app.use(errorHandler);
 
 module.exports = app;
