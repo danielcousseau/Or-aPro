@@ -187,11 +187,12 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
                                     autoFocus
                                 />
                                 {orcamento.pagamento?.trim() && (
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '0.9rem', cursor: 'pointer', color: 'var(--text-soft)' }}>
+                                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '8px', fontSize: '0.9rem', cursor: 'pointer', color: 'var(--text-soft)' }}>
                                         <input
                                             type="checkbox"
                                             checked={salvarComoFixo}
                                             onChange={handleSalvarComoFixo}
+                                            style={{ width: '16px', height: '16px', marginTop: '2px', flexShrink: 0, cursor: 'pointer' }}
                                         />
                                         Salvar "{orcamento.pagamento}" como opção fixa
                                     </label>
