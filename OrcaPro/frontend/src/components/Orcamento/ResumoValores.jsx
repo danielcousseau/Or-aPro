@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../../services/api';
+import { toast } from 'react-toastify';
 
 const PAGAMENTOS_PADRAO = [
     'À vista (Pix ou Dinheiro)',
@@ -19,21 +21,64 @@ const PLACEHOLDER_VALOR = {
 };
 
 export default function ResumoValores({ orcamento, totais, formasPagamento, onChange }) {
+    const [opcoesCustomizadas, setOpcoesCustomizadas] = useState([]);
+
+    useEffect(() => {
+        api.get('/opcoes-customizadas?tipo=pagamento')
+            .then(r => setOpcoesCustomizadas(r.data.map(o => o.nome)))
+            .catch(() => {});
+    }, []);
+
     const opcoesExtras = formasPagamento
         .map(fp => fp.nome)
         .filter(nome => !PAGAMENTOS_PADRAO.includes(nome));
-    const todasOpcoes = [...PAGAMENTOS_PADRAO, ...opcoesExtras];
+    const todasOpcoes = [
+        ...PAGAMENTOS_PADRAO,
+        ...opcoesExtras,
+        ...opcoesCustomizadas.filter(o => !PAGAMENTOS_PADRAO.includes(o) && !opcoesExtras.includes(o))
+    ];
 
     const isCustom = Boolean(orcamento.pagamento && !todasOpcoes.includes(orcamento.pagamento));
     const [usandoOutros, setUsandoOutros] = useState(isCustom);
+    const [salvarComoFixo, setSalvarComoFixo] = useState(false);
+
+    // Corrige o modo após carregar opções customizadas (ex: ao editar um orçamento)
+    useEffect(() => {
+        if (opcoesCustomizadas.length > 0 && orcamento.pagamento) {
+            const all = [...PAGAMENTOS_PADRAO, ...opcoesCustomizadas];
+            if (all.includes(orcamento.pagamento)) setUsandoOutros(false);
+        }
+    }, [opcoesCustomizadas, orcamento.pagamento]);
 
     const handlePagamentoChange = (e) => {
         if (e.target.value === 'Outros') {
             setUsandoOutros(true);
+            setSalvarComoFixo(false);
             onChange({ target: { name: 'pagamento', value: '' } });
         } else {
             setUsandoOutros(false);
+            setSalvarComoFixo(false);
             onChange(e);
+        }
+    };
+
+    const handleTextoChange = (e) => {
+        setSalvarComoFixo(false);
+        onChange(e);
+    };
+
+    const handleSalvarComoFixo = async (e) => {
+        const checked = e.target.checked;
+        setSalvarComoFixo(checked);
+        if (checked && orcamento.pagamento?.trim()) {
+            try {
+                await api.post('/opcoes-customizadas', { tipo: 'pagamento', nome: orcamento.pagamento.trim() });
+                setOpcoesCustomizadas(prev => [...new Set([...prev, orcamento.pagamento.trim()])]);
+                toast.success(`"${orcamento.pagamento}" salvo como opção fixa!`);
+            } catch {
+                setSalvarComoFixo(false);
+                toast.error('Erro ao salvar opção.');
+            }
         }
     };
 
@@ -59,12 +104,12 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
                         {['diaria', 'hora', 'metro_linear', 'metro_quadrado'].includes(orcamento.tipoMaoDeObra) && (
                             <div style={{ marginTop: '10px' }}>
                                 <label style={{ fontSize: '0.9rem', color: 'var(--text-soft)' }}>Quantidade (Dias / Horas / Metros)</label>
-                                <input 
-                                    type="number" 
-                                    name="maoDeObraQtde" 
-                                    value={orcamento.maoDeObraQtde || ''} 
-                                    onChange={onChange} 
-                                    placeholder="Ex: 5" 
+                                <input
+                                    type="number"
+                                    name="maoDeObraQtde"
+                                    value={orcamento.maoDeObraQtde || ''}
+                                    onChange={onChange}
+                                    placeholder="Ex: 5"
                                     min="1"
                                     onFocus={(e) => e.target.select()}
                                 />
@@ -86,12 +131,12 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
                         {['diaria', 'hora'].includes(orcamento.tipoLucro) && (
                             <div style={{ marginTop: '10px' }}>
                                 <label style={{ fontSize: '0.9rem', color: 'var(--text-soft)' }}>Quantidade (Dias / Horas)</label>
-                                <input 
-                                    type="number" 
-                                    name="lucroQtde" 
-                                    value={orcamento.lucroQtde || ''} 
-                                    onChange={onChange} 
-                                    placeholder="Ex: 5" 
+                                <input
+                                    type="number"
+                                    name="lucroQtde"
+                                    value={orcamento.lucroQtde || ''}
+                                    onChange={onChange}
+                                    placeholder="Ex: 5"
                                     min="1"
                                     onFocus={(e) => e.target.select()}
                                 />
@@ -128,18 +173,30 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
                         <select name="pagamento" value={usandoOutros ? 'Outros' : (orcamento.pagamento || '')} onChange={handlePagamentoChange}>
                             <option value="">Selecione a forma de pagamento...</option>
                             {todasOpcoes.map(op => <option key={op} value={op}>{op}</option>)}
-                            <option value="Outros">Outros...</option>
+                            <option value="Outros">[ + ] Outro (Digitar manualmente)</option>
                         </select>
                         {usandoOutros && (
-                            <input
-                                type="text"
-                                name="pagamento"
-                                value={orcamento.pagamento}
-                                onChange={onChange}
-                                placeholder="Descreva a forma de pagamento..."
-                                style={{ marginTop: '8px' }}
-                                autoFocus
-                            />
+                            <>
+                                <input
+                                    type="text"
+                                    name="pagamento"
+                                    value={orcamento.pagamento}
+                                    onChange={handleTextoChange}
+                                    placeholder="Descreva a forma de pagamento..."
+                                    style={{ marginTop: '8px' }}
+                                    autoFocus
+                                />
+                                {orcamento.pagamento?.trim() && (
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '0.9rem', cursor: 'pointer', color: 'var(--text-soft)' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={salvarComoFixo}
+                                            onChange={handleSalvarComoFixo}
+                                        />
+                                        Salvar "{orcamento.pagamento}" como opção fixa
+                                    </label>
+                                )}
+                            </>
                         )}
                     </section>
                     <section className="form-section">

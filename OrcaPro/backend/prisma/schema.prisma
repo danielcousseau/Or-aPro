@@ -21,10 +21,11 @@ model User {
   createdAt DateTime @default(now())
 
   // Relacionamentos: O que pertence a este usuário
-  clientes   Cliente[]
-  materiais  Material[]
-  orcamentos Orcamento[]
-  auditLogs  AuditLog[]
+  clientes           Cliente[]
+  materiais          Material[]
+  orcamentos         Orcamento[]
+  auditLogs          AuditLog[]
+  opcoesCustomizadas OpcaoCustomizada[]
 }
 
 model Cliente {
@@ -107,6 +108,18 @@ model OrcamentoMaterial {
   nome        String
   valor       Float
   quantidade  Float
+}
+
+model OpcaoCustomizada {
+  id        Int      @id @default(autoincrement())
+  tipo      String   // "ambiente" | "pagamento" | "material_categoria" | "material_unidade"
+  nome      String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([tipo, nome, userId])
+  @@index([userId])
 }
 
 model AuditLog {

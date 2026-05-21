@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../../services/api';
+import { toast } from 'react-toastify';
 
 const AMBIENTES_PADRAO = [
     'Cozinha', 'Quarto', 'Sala', 'Banheiro', 'Escritório',
@@ -6,16 +8,57 @@ const AMBIENTES_PADRAO = [
 ];
 
 export default function DadosGerais({ orcamento, clientes, onChange }) {
+    const [opcoesCustomizadas, setOpcoesCustomizadas] = useState([]);
+
+    useEffect(() => {
+        api.get('/opcoes-customizadas?tipo=ambiente')
+            .then(r => setOpcoesCustomizadas(r.data.map(o => o.nome)))
+            .catch(() => {});
+    }, []);
+
+    const todasOpcoes = [...AMBIENTES_PADRAO, ...opcoesCustomizadas.filter(o => !AMBIENTES_PADRAO.includes(o))];
+
     const isCustom = orcamento.ambiente && !AMBIENTES_PADRAO.includes(orcamento.ambiente);
     const [usandoOutros, setUsandoOutros] = useState(isCustom);
+    const [salvarComoFixo, setSalvarComoFixo] = useState(false);
+
+    // Corrige o modo após carregar opções customizadas (ex: ao editar um orçamento)
+    useEffect(() => {
+        if (opcoesCustomizadas.length > 0 && orcamento.ambiente) {
+            const all = [...AMBIENTES_PADRAO, ...opcoesCustomizadas];
+            if (all.includes(orcamento.ambiente)) setUsandoOutros(false);
+        }
+    }, [opcoesCustomizadas, orcamento.ambiente]);
 
     const handleAmbienteChange = (e) => {
         if (e.target.value === 'Outros') {
             setUsandoOutros(true);
+            setSalvarComoFixo(false);
             onChange({ target: { name: 'ambiente', value: '' } });
         } else {
             setUsandoOutros(false);
+            setSalvarComoFixo(false);
             onChange(e);
+        }
+    };
+
+    const handleTextoChange = (e) => {
+        setSalvarComoFixo(false);
+        onChange(e);
+    };
+
+    const handleSalvarComoFixo = async (e) => {
+        const checked = e.target.checked;
+        setSalvarComoFixo(checked);
+        if (checked && orcamento.ambiente?.trim()) {
+            try {
+                await api.post('/opcoes-customizadas', { tipo: 'ambiente', nome: orcamento.ambiente.trim() });
+                setOpcoesCustomizadas(prev => [...new Set([...prev, orcamento.ambiente.trim()])]);
+                toast.success(`"${orcamento.ambiente}" salvo como opção fixa!`);
+            } catch {
+                setSalvarComoFixo(false);
+                toast.error('Erro ao salvar opção.');
+            }
         }
     };
 
@@ -38,19 +81,31 @@ export default function DadosGerais({ orcamento, clientes, onChange }) {
                     <label>Ambiente</label>
                     <select name="ambiente" value={usandoOutros ? 'Outros' : (orcamento.ambiente || '')} onChange={handleAmbienteChange}>
                         <option value="">Selecione um ambiente...</option>
-                        {AMBIENTES_PADRAO.map(amb => <option key={amb} value={amb}>{amb}</option>)}
-                        <option value="Outros">Outros...</option>
+                        {todasOpcoes.map(amb => <option key={amb} value={amb}>{amb}</option>)}
+                        <option value="Outros">[ + ] Outro (Digitar manualmente)</option>
                     </select>
                     {usandoOutros && (
-                        <input
-                            type="text"
-                            name="ambiente"
-                            value={orcamento.ambiente}
-                            onChange={onChange}
-                            placeholder="Descreva o ambiente..."
-                            style={{ marginTop: '8px' }}
-                            autoFocus
-                        />
+                        <>
+                            <input
+                                type="text"
+                                name="ambiente"
+                                value={orcamento.ambiente}
+                                onChange={handleTextoChange}
+                                placeholder="Descreva o ambiente..."
+                                style={{ marginTop: '8px' }}
+                                autoFocus
+                            />
+                            {orcamento.ambiente?.trim() && (
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '0.9rem', cursor: 'pointer', color: 'var(--text-soft)' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={salvarComoFixo}
+                                        onChange={handleSalvarComoFixo}
+                                    />
+                                    Salvar "{orcamento.ambiente}" como opção fixa
+                                </label>
+                            )}
+                        </>
                     )}
                 </section>
                 <section className="form-section">

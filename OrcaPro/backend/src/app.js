@@ -45,6 +45,7 @@ const clienteRoutes = require('./routes/clienteRoutes');
 const materialRoutes = require('./routes/materialRoutes');
 const orcamentoRoutes = require('./routes/orcamentoRoutes');
 const auditRoutes = require('./routes/auditRoutes');
+const opcaoCustomizadaRoutes = require('./routes/opcaoCustomizadaRoutes');
 const AuthController = require('./controllers/AuthController');
 const authMiddleware = require('./middlewares/auth');
 const errorHandler = require('./middlewares/errorHandler');
@@ -68,6 +69,7 @@ app.use('/api/clientes', clienteRoutes);
 app.use('/api/materiais', materialRoutes);
 app.use('/api/orcamentos', orcamentoRoutes);
 app.use('/api/audit-log', auditRoutes);
+app.use('/api/opcoes-customizadas', opcaoCustomizadaRoutes);
 
 const { buscarPendentes } = require('./services/telegram');
 app.get('/api/telegram/pendentes', authMiddleware, async (req, res) => {

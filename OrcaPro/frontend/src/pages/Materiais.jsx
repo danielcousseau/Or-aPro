@@ -11,11 +11,15 @@ export default function Materiais() {
     const [materiais, setMateriais] = useState([]);
     const [materialEmEdicao, setMaterialEmEdicao] = useState(null);
     const [materialParaExcluir, setMaterialParaExcluir] = useState(null);
-    const [abaAtiva, setAbaAtiva] = useState('consulta'); // 'consulta' ou 'cadastro'
-    const [termoBusca, setTermoBusca] = useState(''); // Guarda o texto da pesquisa
+    const [abaAtiva, setAbaAtiva] = useState('consulta');
+    const [termoBusca, setTermoBusca] = useState('');
     const [salvando, setSalvando] = useState(false);
     const [usandoOutrosCategoria, setUsandoOutrosCategoria] = useState(false);
     const [usandoOutrosUnidade, setUsandoOutrosUnidade] = useState(false);
+    const [salvarCategoriaComoFixo, setSalvarCategoriaComoFixo] = useState(false);
+    const [salvarUnidadeComoFixo, setSalvarUnidadeComoFixo] = useState(false);
+    const [categoriasCustomizadas, setCategoriasCustomizadas] = useState([]);
+    const [unidadesCustomizadas, setUnidadesCustomizadas] = useState([]);
 
     const [formData, setFormData] = useState({
         nome: '',
@@ -26,7 +30,31 @@ export default function Materiais() {
 
     useEffect(() => {
         carregarMateriais();
+        api.get('/opcoes-customizadas?tipo=material_categoria')
+            .then(r => setCategoriasCustomizadas(r.data.map(o => o.nome)))
+            .catch(() => {});
+        api.get('/opcoes-customizadas?tipo=material_unidade')
+            .then(r => setUnidadesCustomizadas(r.data.map(o => o.nome)))
+            .catch(() => {});
     }, []);
+
+    // Corrige o modo "outros" após carregar opções customizadas (ao editar um material)
+    useEffect(() => {
+        if (materialEmEdicao && formData.categoria) {
+            const all = [...CATEGORIAS_PADRAO, ...categoriasCustomizadas];
+            if (all.includes(formData.categoria)) setUsandoOutrosCategoria(false);
+        }
+    }, [categoriasCustomizadas]);
+
+    useEffect(() => {
+        if (materialEmEdicao && formData.unidade) {
+            const all = [...UNIDADES_PADRAO, ...unidadesCustomizadas];
+            if (all.includes(formData.unidade)) setUsandoOutrosUnidade(false);
+        }
+    }, [unidadesCustomizadas]);
+
+    const todasCategorias = [...CATEGORIAS_PADRAO, ...categoriasCustomizadas.filter(o => !CATEGORIAS_PADRAO.includes(o))];
+    const todasUnidades = [...UNIDADES_PADRAO, ...unidadesCustomizadas.filter(o => !UNIDADES_PADRAO.includes(o))];
 
     const carregarMateriais = async () => {
         try {
@@ -39,10 +67,7 @@ export default function Materiais() {
 
     const handleChange = (e) => {
         let { name, value } = e.target;
-        
-        // Aplica a máscara se o campo for 'valor'
         if (name === 'valor') value = mascaraMoeda(value);
-        
         setFormData({ ...formData, [name]: value });
     };
 
@@ -51,14 +76,18 @@ export default function Materiais() {
         setMaterialEmEdicao(null);
         setUsandoOutrosCategoria(false);
         setUsandoOutrosUnidade(false);
+        setSalvarCategoriaComoFixo(false);
+        setSalvarUnidadeComoFixo(false);
     };
 
     const handleCategoriaChange = (e) => {
         if (e.target.value === 'Outros') {
             setUsandoOutrosCategoria(true);
+            setSalvarCategoriaComoFixo(false);
             setFormData(prev => ({ ...prev, categoria: '' }));
         } else {
             setUsandoOutrosCategoria(false);
+            setSalvarCategoriaComoFixo(false);
             setFormData(prev => ({ ...prev, categoria: e.target.value }));
         }
     };
@@ -66,27 +95,71 @@ export default function Materiais() {
     const handleUnidadeChange = (e) => {
         if (e.target.value === 'Outros') {
             setUsandoOutrosUnidade(true);
+            setSalvarUnidadeComoFixo(false);
             setFormData(prev => ({ ...prev, unidade: '' }));
         } else {
             setUsandoOutrosUnidade(false);
+            setSalvarUnidadeComoFixo(false);
             setFormData(prev => ({ ...prev, unidade: e.target.value }));
         }
     };
 
+    const handleCategoriaTextoChange = (e) => {
+        setSalvarCategoriaComoFixo(false);
+        handleChange(e);
+    };
+
+    const handleUnidadeTextoChange = (e) => {
+        setSalvarUnidadeComoFixo(false);
+        handleChange(e);
+    };
+
+    const handleSalvarCategoriaComoFixo = async (e) => {
+        const checked = e.target.checked;
+        setSalvarCategoriaComoFixo(checked);
+        if (checked && formData.categoria?.trim()) {
+            try {
+                await api.post('/opcoes-customizadas', { tipo: 'material_categoria', nome: formData.categoria.trim() });
+                setCategoriasCustomizadas(prev => [...new Set([...prev, formData.categoria.trim()])]);
+                toast.success(`"${formData.categoria}" salvo como categoria fixa!`);
+            } catch {
+                setSalvarCategoriaComoFixo(false);
+                toast.error('Erro ao salvar categoria.');
+            }
+        }
+    };
+
+    const handleSalvarUnidadeComoFixo = async (e) => {
+        const checked = e.target.checked;
+        setSalvarUnidadeComoFixo(checked);
+        if (checked && formData.unidade?.trim()) {
+            try {
+                await api.post('/opcoes-customizadas', { tipo: 'material_unidade', nome: formData.unidade.trim() });
+                setUnidadesCustomizadas(prev => [...new Set([...prev, formData.unidade.trim()])]);
+                toast.success(`"${formData.unidade}" salvo como unidade fixa!`);
+            } catch {
+                setSalvarUnidadeComoFixo(false);
+                toast.error('Erro ao salvar unidade.');
+            }
+        }
+    };
+
     const handleEditar = (material) => {
-        const isCustomCategoria = Boolean(material.categoria && !CATEGORIAS_PADRAO.includes(material.categoria));
-        const isCustomUnidade = Boolean(material.unidade && !UNIDADES_PADRAO.includes(material.unidade));
+        const isCustomCategoria = Boolean(material.categoria && !CATEGORIAS_PADRAO.includes(material.categoria) && !categoriasCustomizadas.includes(material.categoria));
+        const isCustomUnidade = Boolean(material.unidade && !UNIDADES_PADRAO.includes(material.unidade) && !unidadesCustomizadas.includes(material.unidade));
         setMaterialEmEdicao(material);
         setUsandoOutrosCategoria(isCustomCategoria);
         setUsandoOutrosUnidade(isCustomUnidade);
+        setSalvarCategoriaComoFixo(false);
+        setSalvarUnidadeComoFixo(false);
         setFormData({
             nome: material.nome || '',
             categoria: material.categoria || '',
-            valor: mascaraMoeda(material.valor) || '', // Já traz do banco formatado
+            valor: mascaraMoeda(material.valor) || '',
             unidade: material.unidade || ''
         });
-        setAbaAtiva('cadastro'); // Muda para aba de cadastro automaticamente
-        window.scrollTo(0, 0); // Rola para o topo do formulário
+        setAbaAtiva('cadastro');
+        window.scrollTo(0, 0);
     };
 
     const confirmarExclusao = async () => {
@@ -104,26 +177,22 @@ export default function Materiais() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
         if (salvando) return;
         setSalvando(true);
-        
         try {
             const dadosParaEnviar = {
                 ...formData,
-                valor: desmascararMoeda(formData.valor) // Limpa o "R$" antes de mandar pro banco
+                valor: desmascararMoeda(formData.valor)
             };
-
             if (materialEmEdicao) {
                 await api.put(`/materiais/${materialEmEdicao.id}`, dadosParaEnviar);
             } else {
                 await api.post('/materiais', dadosParaEnviar);
             }
-
             toast.success(`Material ${materialEmEdicao ? 'atualizado' : 'salvo'} com sucesso!`);
             limparFormulario();
             carregarMateriais();
-            setAbaAtiva('consulta'); // Volta pra lista após salvar
+            setAbaAtiva('consulta');
         } catch (error) {
             console.error("Erro detalhado do backend:", error.response?.data || error.message);
             toast.error('Erro ao salvar material. Verifique o console.');
@@ -132,7 +201,6 @@ export default function Materiais() {
         }
     };
 
-    // Filtra os materiais com base na barra de pesquisa
     const materiaisFiltrados = materiais.filter(material => {
         const termo = termoBusca.toLowerCase();
         return (
@@ -155,7 +223,6 @@ export default function Materiais() {
                 </div>
             </div>
 
-            {/* CONTEÚDO DA ABA DE CADASTRO */}
             {abaAtiva === 'cadastro' && (
                 <div>
                     <h2 style={{ marginBottom: '20px', color: 'var(--text-main)', borderBottom: '2px solid var(--border)', paddingBottom: '10px' }}>
@@ -172,19 +239,31 @@ export default function Materiais() {
                                     <label>Categoria</label>
                                     <select name="categoria" value={usandoOutrosCategoria ? 'Outros' : (formData.categoria || '')} onChange={handleCategoriaChange}>
                                         <option value="">Selecione uma categoria...</option>
-                                        {CATEGORIAS_PADRAO.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                                        <option value="Outros">Outros...</option>
+                                        {todasCategorias.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                                        <option value="Outros">[ + ] Outro (Digitar manualmente)</option>
                                     </select>
                                     {usandoOutrosCategoria && (
-                                        <input
-                                            type="text"
-                                            name="categoria"
-                                            value={formData.categoria}
-                                            onChange={handleChange}
-                                            placeholder="Descreva a categoria..."
-                                            style={{ marginTop: '8px' }}
-                                            autoFocus
-                                        />
+                                        <>
+                                            <input
+                                                type="text"
+                                                name="categoria"
+                                                value={formData.categoria}
+                                                onChange={handleCategoriaTextoChange}
+                                                placeholder="Descreva a categoria..."
+                                                style={{ marginTop: '8px' }}
+                                                autoFocus
+                                            />
+                                            {formData.categoria?.trim() && (
+                                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '0.9rem', cursor: 'pointer', color: 'var(--text-soft)' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={salvarCategoriaComoFixo}
+                                                        onChange={handleSalvarCategoriaComoFixo}
+                                                    />
+                                                    Salvar "{formData.categoria}" como categoria fixa
+                                                </label>
+                                            )}
+                                        </>
                                     )}
                                 </section>
                             </div>
@@ -198,19 +277,31 @@ export default function Materiais() {
                                     <label>Unidade de Medida</label>
                                     <select name="unidade" value={usandoOutrosUnidade ? 'Outros' : (formData.unidade || '')} onChange={handleUnidadeChange}>
                                         <option value="">Selecione uma unidade...</option>
-                                        {UNIDADES_PADRAO.map(un => <option key={un} value={un}>{un}</option>)}
-                                        <option value="Outros">Outros...</option>
+                                        {todasUnidades.map(un => <option key={un} value={un}>{un}</option>)}
+                                        <option value="Outros">[ + ] Outro (Digitar manualmente)</option>
                                     </select>
                                     {usandoOutrosUnidade && (
-                                        <input
-                                            type="text"
-                                            name="unidade"
-                                            value={formData.unidade}
-                                            onChange={handleChange}
-                                            placeholder="Descreva a unidade..."
-                                            style={{ marginTop: '8px' }}
-                                            autoFocus
-                                        />
+                                        <>
+                                            <input
+                                                type="text"
+                                                name="unidade"
+                                                value={formData.unidade}
+                                                onChange={handleUnidadeTextoChange}
+                                                placeholder="Descreva a unidade..."
+                                                style={{ marginTop: '8px' }}
+                                                autoFocus
+                                            />
+                                            {formData.unidade?.trim() && (
+                                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '0.9rem', cursor: 'pointer', color: 'var(--text-soft)' }}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={salvarUnidadeComoFixo}
+                                                        onChange={handleSalvarUnidadeComoFixo}
+                                                    />
+                                                    Salvar "{formData.unidade}" como unidade fixa
+                                                </label>
+                                            )}
+                                        </>
                                     )}
                                 </section>
                             </div>
@@ -228,7 +319,6 @@ export default function Materiais() {
                 </div>
             )}
 
-            {/* CONTEÚDO DA ABA DE CONSULTA */}
             {abaAtiva === 'consulta' && (
                 <section className="lista-clientes">
                     <div className="search-bar">
@@ -249,25 +339,24 @@ export default function Materiais() {
                         ) : (
                             <div className="grid-cards">
                                 {materiaisFiltrados.map((material) => (
-                                <div key={material.id} className="cliente-card highlight-primary">
-                                    <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem' }}>{material.nome}</h3>
+                                    <div key={material.id} className="cliente-card highlight-primary">
+                                        <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem' }}>{material.nome}</h3>
                                         <p style={{ margin: '4px 0' }}><strong>Valor:</strong> {formatarMoeda(material.valor)}</p>
-                                    <p style={{ margin: '4px 0' }}><strong>Categoria:</strong> {material.categoria || 'Não informada'}</p>
-                                    <p style={{ margin: '4px 0' }}><strong>Unidade:</strong> {material.unidade || 'Não informada'}</p>
-                                    
-                                    <div className="card-actions" style={{ marginTop: '15px' }}>
-                                        <button type="button" className="btn-action btn-edit" onClick={() => handleEditar(material)}>Editar</button>
-                                        <button type="button" className="btn-action btn-delete" onClick={() => setMaterialParaExcluir(material.id)}>Excluir</button>
+                                        <p style={{ margin: '4px 0' }}><strong>Categoria:</strong> {material.categoria || 'Não informada'}</p>
+                                        <p style={{ margin: '4px 0' }}><strong>Unidade:</strong> {material.unidade || 'Não informada'}</p>
+
+                                        <div className="card-actions" style={{ marginTop: '15px' }}>
+                                            <button type="button" className="btn-action btn-edit" onClick={() => handleEditar(material)}>Editar</button>
+                                            <button type="button" className="btn-action btn-delete" onClick={() => setMaterialParaExcluir(material.id)}>Excluir</button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </section>
             )}
 
-            {/* Modal de Confirmação de Exclusão */}
             {materialParaExcluir && (
                 <div className="modal-overlay">
                     <div className="modal-content">
