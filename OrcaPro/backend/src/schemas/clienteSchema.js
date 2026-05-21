@@ -11,7 +11,8 @@ const clienteSchema = z.object({
     rua: z.string().optional().nullable(),
     numero: z.string().optional().nullable(),
     cep: z.string().optional().nullable(),
-    observacoes: z.string().optional().nullable()
+    observacoes: z.string().optional().nullable(),
+    telegramChatId: z.string().optional().nullable().or(z.literal(''))
 });
 
 // Exportando do jeito certo (com chaves)
