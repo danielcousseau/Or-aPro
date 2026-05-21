@@ -774,6 +774,17 @@ input[type="number"] {
     border-color: var(--border-input);
 }
 
+.btn-add {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+}
+
+.btn-add:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 2px 8px rgba(0, 86, 163, 0.3);
+}
+
 .modal-overlay {
     position: fixed;
     top: 0;
