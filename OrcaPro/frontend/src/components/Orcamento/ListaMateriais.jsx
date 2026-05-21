@@ -26,7 +26,7 @@ export default function ListaMateriais({ materiaisSelecionados, materiaisDb, onA
                     {index > 0 && <button type="button" onClick={() => onRemove(mat.idFalso)} className="btn-delete btn-remover-material">🗑️ Remover</button>}
                 </div>
             ))}
-            <button type="button" className="btn-add" onClick={onAdd}>+ Adicionar Material</button>
+            <button type="button" className="btn-add" style={{ background: '#0056A3', color: '#fff' }} onClick={onAdd}>+ Adicionar Material</button>
         </div>
     );
 }
