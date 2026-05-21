@@ -16,6 +16,7 @@ module.exports = {
             });
             return res.json(opcoes);
         } catch (error) {
+            console.error('[OpcaoCustomizada.listar]', error);
             return res.status(500).json({ error: 'Erro ao listar opções.' });
         }
     },
@@ -29,13 +30,25 @@ module.exports = {
             if (!nome || !nome.trim()) {
                 return res.status(400).json({ error: 'Nome é obrigatório.' });
             }
-            const opcao = await prisma.opcaoCustomizada.upsert({
-                where: { tipo_nome_userId: { tipo, nome: nome.trim(), userId: req.userId } },
-                update: {},
-                create: { tipo, nome: nome.trim(), userId: req.userId }
-            });
-            return res.status(201).json(opcao);
+            const nomeLimpo = nome.trim();
+            try {
+                const opcao = await prisma.opcaoCustomizada.create({
+                    data: { tipo, nome: nomeLimpo, userId: req.userId }
+                });
+                return res.status(201).json(opcao);
+            } catch (createError) {
+                // P2002 = violação de unique (opção já existe) — trata como sucesso
+                if (createError.code === 'P2002') {
+                    const existente = await prisma.opcaoCustomizada.findFirst({
+                        where: { tipo, nome: nomeLimpo, userId: req.userId },
+                        select: { id: true, nome: true }
+                    });
+                    return res.status(200).json(existente);
+                }
+                throw createError;
+            }
         } catch (error) {
+            console.error('[OpcaoCustomizada.criar]', error);
             return res.status(500).json({ error: 'Erro ao salvar opção.' });
         }
     },
@@ -50,6 +63,7 @@ module.exports = {
             await prisma.opcaoCustomizada.delete({ where: { id } });
             return res.status(204).send();
         } catch (error) {
+            console.error('[OpcaoCustomizada.excluir]', error);
             return res.status(500).json({ error: 'Erro ao excluir opção.' });
         }
     }
