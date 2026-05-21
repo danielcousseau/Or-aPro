@@ -7,7 +7,10 @@
       "Bash(node_modules/.bin/prisma migrate *)",
       "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\victor.amorim\\\\Documents\\\\GitHub\\\\OrcaPro\\\\OrcaPro\\\\backend\\\\prisma\\\\migrations\\\\20260521000000_add_opcao_customizada\")",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(ls \"c:\\\\Users\\\\victor.amorim\\\\.claude\\\\projects\\\\c--Users-victor-amorim-Documents-GitHub-OrcaPro\\\\memory\\\\\" 2>/dev/null || echo \"vazio\")",
+      "Read(//c/Users/victor.amorim/.claude/projects/c--Users-victor-amorim-Documents-GitHub-OrcaPro/memory\" 2>/dev/**)",
+      "Read(//c/Users/victor.amorim/.claude/projects/c--Users-victor-amorim-Documents-GitHub-OrcaPro/**)"
     ]
   }
 }
