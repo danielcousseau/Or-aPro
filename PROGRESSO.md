@@ -5,12 +5,51 @@
 
 ---
 
-## Estado Atual do Projeto (2026-05-20) — atualizado sessão 9
+## Estado Atual do Projeto (2026-05-21) — atualizado sessão 10
 
 - **Frontend:** React + Vite + PWA → Vercel
 - **Backend:** Node.js + Express + Prisma → Render
 - **Banco:** PostgreSQL → Neon.tech (multi-tenant / SaaS)
 - **Status:** Funcional em produção
+
+---
+
+## Bugs conhecidos (abertos)
+
+> Registrados em 2026-05-21. Resolver na próxima sessão disponível.
+
+### 🔴 Migration `OpcaoCustomizada` não aplicada no banco de produção
+- **Sintoma:** endpoint `/api/opcoes-customizadas` retorna 500 com `P2021 — table does not exist`
+- **Causa:** `prisma migrate deploy` falha silenciosamente no Render porque `DIRECT_URL` provavelmente não está configurada como env var. O Neon.tech exige URL direta (sem pooler) para DDL. O `prisma.config.ts` que foi gerado automaticamente também sobrescrevia o datasource sem `directUrl` — isso foi corrigido em 2026-05-21, mas a migration ainda não rodou.
+- **Fix pendente:** Opção A — adicionar `DIRECT_URL` nas env vars do Render (valor: Connection String → Direct no painel do Neon); Opção B — rodar o SQL manualmente no SQL Editor do Neon (SQL em `prisma/migrations/20260521000000_add_opcao_customizada/migration.sql`).
+
+### 🔴 Telegram — Chat ID do cliente não está sendo salvo
+- **Sintoma:** campo "Chat ID do Telegram" no cadastro de clientes não persiste o valor corretamente
+- **Causa:** ainda em investigação. Commit `ec1c626` tentou preservar o `telegramChatId` existente quando o frontend não enviava o campo, mas o bug persiste.
+- **Fix pendente:** investigar o fluxo `Clientes.jsx → PUT /api/clientes/:id → ClienteController.atualizar` para verificar se o campo está sendo enviado e se o controller está salvando.
+
+---
+
+## Sessão 10 — 2026-05-21
+
+### Feature — Opções Customizadas Fixas (spec: `specs/002-opcoes-customizadas.md`)
+- **Problema resolvido:** ao digitar no campo "Outros" dos dropdowns, o valor digitado era descartado e precisava ser redigitado toda vez
+- **Solução:** checkbox "Salvar X como opção fixa" aparece enquanto o usuário digita; ao marcar, salva imediatamente via API independente de salvar o orçamento
+- **Campos cobertos:** Ambiente (`DadosGerais.jsx`), Forma de Pagamento (`ResumoValores.jsx`), Categoria de Material e Unidade de Medida (`Materiais.jsx`)
+- Nova tabela `OpcaoCustomizada(id, tipo, nome, userId, createdAt)` com `@@unique([tipo, nome, userId])`
+- Novo controller `OpcaoCustomizadaController.js` com `listar`, `criar` (create + handler P2002) e `excluir`
+- Rota `/api/opcoes-customizadas` montada no `app.js`
+- Opção do dropdown alterada de "Outros..." para "[ + ] Outro (Digitar manualmente)" para deixar mais claro
+- Ao editar orçamento existente com valor customizado já salvo, o valor aparece no dropdown (não abre em modo texto)
+- **Status:** commitado e deployado — mas migration ainda não aplicada no banco (ver bug acima)
+
+### Fix — `prisma.config.ts` sobrescrevia datasource sem `directUrl`
+- O arquivo `prisma.config.ts` (gerado automaticamente pelo Prisma v6) tinha um bloco `datasource` com apenas `url`, ignorando o `directUrl` do `schema.prisma`
+- Sem `directUrl`, o Neon.tech usa o pooler para migrations — que bloqueia DDL
+- Fix: removido o bloco `datasource` do config; Prisma agora lê do `schema.prisma` que já tem os dois campos corretamente
+
+### Fix — controller sem logging
+- Catches dos endpoints de `OpcaoCustomizada` passaram a logar `console.error` com prefixo — o que permitiu identificar o erro P2021 nos logs do Render
 
 ---
 
@@ -225,8 +264,10 @@
 ### Média prioridade
 - [x] **Índices no banco** — aplicados via `prisma db push` (sessão 9)
 - [x] **Audit log** — implementado e aplicado no banco (sessão 9)
-- [ ] **Notificações Telegram** — implementado localmente (sessão 9); pendente commit + `TELEGRAM_BOT_TOKEN` no Render
-- [ ] **Spec-driven development** — estrutura de specs criada (sessão 9); specs das próximas features devem ser escritas antes da implementação
+- [ ] **Notificações Telegram** — implementado (sessão 9); 🔴 bug: Chat ID não está salvando (ver bugs conhecidos)
+- [x] **Spec-driven development** — estrutura criada (sessão 9); spec 002 escrita (sessão 10)
+- [ ] **Opções customizadas fixas** — implementado (sessão 10); 🔴 migration pendente no banco (ver bugs conhecidos)
+- [ ] **Interface para gerenciar opções salvas** — excluir opções fixas que não quer mais; próxima sessão
 
 ### Baixa prioridade
 - [x] **PDF download** — funcionando em produção (sessão 9)
