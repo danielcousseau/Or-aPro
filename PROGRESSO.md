@@ -5,7 +5,7 @@
 
 ---
 
-## Estado Atual do Projeto (2026-05-21) — atualizado sessão 10
+## Estado Atual do Projeto (2026-05-21) — atualizado sessão 11
 
 - **Frontend:** React + Vite + PWA → Vercel
 - **Backend:** Node.js + Express + Prisma → Render
@@ -16,17 +16,38 @@
 
 ## Bugs conhecidos (abertos)
 
-> Registrados em 2026-05-21. Resolver na próxima sessão disponível.
+### 🟡 Botão "Adicionar Material" — cor azul não aparece no Vercel
+- **Sintoma:** botão continua branco mesmo após commits com `btn-add` e inline style `#0056A3`
+- **Causa provável:** Service Worker do PWA cacheando o bundle antigo. Hard refresh não limpa SW.
+- **Fix pendente:** unregister do SW via DevTools → Application → Service Workers → Unregister, depois recarregar. Ou "Clear site data" em Application → Storage.
 
-### 🔴 Migration `OpcaoCustomizada` não aplicada no banco de produção
-- **Sintoma:** endpoint `/api/opcoes-customizadas` retorna 500 com `P2021 — table does not exist`
-- **Causa:** `prisma migrate deploy` falha silenciosamente no Render porque `DIRECT_URL` provavelmente não está configurada como env var. O Neon.tech exige URL direta (sem pooler) para DDL. O `prisma.config.ts` que foi gerado automaticamente também sobrescrevia o datasource sem `directUrl` — isso foi corrigido em 2026-05-21, mas a migration ainda não rodou.
-- **Fix pendente:** Opção A — adicionar `DIRECT_URL` nas env vars do Render (valor: Connection String → Direct no painel do Neon); Opção B — rodar o SQL manualmente no SQL Editor do Neon (SQL em `prisma/migrations/20260521000000_add_opcao_customizada/migration.sql`).
+---
 
-### 🔴 Telegram — Chat ID do cliente não está sendo salvo
-- **Sintoma:** campo "Chat ID do Telegram" no cadastro de clientes não persiste o valor corretamente
-- **Causa:** ainda em investigação. Commit `ec1c626` tentou preservar o `telegramChatId` existente quando o frontend não enviava o campo, mas o bug persiste.
-- **Fix pendente:** investigar o fluxo `Clientes.jsx → PUT /api/clientes/:id → ClienteController.atualizar` para verificar se o campo está sendo enviado e se o controller está salvando.
+## Sessão 11 — 2026-05-21
+
+### Bug fix — Telegram Chat ID não salvava (causa raiz encontrada)
+- **Causa:** `telegramChatId` não estava declarado no `clienteSchema` (Zod). O middleware `validate.js` faz `req.body = schema.parseAsync(req.body)` — Zod remove campos desconhecidos por padrão (strip mode). O campo chegava como `undefined` no controller, que então preservava o valor antigo (null).
+- **Fix:** adicionado `telegramChatId: z.string().optional().nullable().or(z.literal(''))` ao `clienteSchema.js` (commit `e767953`)
+
+### Bug fix — Migration `OpcaoCustomizada` — raiz e resolução completa
+- **Causa 1:** Render build command era `npm install && npx prisma generate` — sem `migrate deploy`. Corrigido mudando para `npm install && npm run build` no painel do Render.
+- **Causa 2:** banco criado via `prisma db push` (sem histórico de migrations) → P3005 ao rodar `migrate deploy`. Tentativa de baseline via SQL na sessão, mas o `migrate deploy` foi removido do build script para evitar o problema permanentemente (commit `f8658e9`).
+- **Causa 3:** tabela `OpcaoCustomizada` criada manualmente via Neon SQL Editor (SQL do arquivo `prisma/migrations/20260521000000_add_opcao_customizada/migration.sql`).
+- **Status:** tabela existe no banco, feature deve funcionar em produção.
+
+### Fix — CSP bloqueava busca de CEP (ViaCEP)
+- **Causa:** `connect-src` no `vercel.json` não incluía `viacep.com.br` — adicionado na sessão 9 mas sem esse domínio.
+- **Fix:** adicionado `https://viacep.com.br` ao `connect-src` (commit `2386b7b`)
+
+### Style — botão "Adicionar Material" azul
+- Nova classe CSS `btn-add` criada com `background: var(--primary)` e `box-shadow` azul.
+- Botão em `ListaMateriais.jsx` trocado de `btn-cancel` para `btn-add` + inline style de fallback.
+- Não confirmado visualmente em produção ainda (ver bug acima sobre SW cache).
+
+### Style — alinhamento do checkbox "Salvar como opção fixa"
+- `alignItems: 'center'` → `alignItems: 'flex-start'` em `ResumoValores.jsx` e `DadosGerais.jsx`
+- Checkbox com `width: 16px`, `height: 16px`, `marginTop: 2px` e `flexShrink: 0`
+- Evita que o checkbox fique centralizado no meio do texto quando ele quebra em múltiplas linhas (commit `9bea0b5`)
 
 ---
 
