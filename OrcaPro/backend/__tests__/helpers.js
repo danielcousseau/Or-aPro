@@ -17,6 +17,7 @@ async function criarUsuarioTeste(sufixo) {
 
 async function limparUsuarioTeste(userId) {
     // Precisa deletar em ordem por causa das FKs (sem cascade do User)
+    await prisma.auditLog.deleteMany({ where: { userId } });
     await prisma.orcamento.deleteMany({ where: { userId } }); // OrcamentoMaterial cascadeia
     await prisma.cliente.deleteMany({ where: { userId } });
     await prisma.material.deleteMany({ where: { userId } });
