@@ -50,7 +50,7 @@ export default function Clientes() {
         else if (name === 'cep') value = mascaraCep(value);
 
         // Salva no estado já formatado
-        setFormData({ ...formData, [name]: value });
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const limparFormulario = () => {
