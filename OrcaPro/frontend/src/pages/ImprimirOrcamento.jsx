@@ -274,7 +274,7 @@ export default function ImprimirOrcamento() {
                 @media print {
                     @page {
                         size: A4;
-                        margin: 15mm 15mm 15mm 15mm;
+                        margin: 0; /* Remove cabeçalho/rodapé nativos do navegador (nome do arquivo, URL) */
                     }
 
                     .no-print,
@@ -298,7 +298,7 @@ export default function ImprimirOrcamento() {
                         border: none !important;
                         box-shadow: none !important;
                         margin: 0 !important;
-                        padding: 0 !important;
+                        padding: 15mm !important; /* Margem interna substitui a @page margin */
                         page-break-after: avoid;
                     }
 
