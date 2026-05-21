@@ -11,6 +11,9 @@
       "Bash(ls \"c:\\\\Users\\\\victor.amorim\\\\.claude\\\\projects\\\\c--Users-victor-amorim-Documents-GitHub-OrcaPro\\\\memory\\\\\" 2>/dev/null || echo \"vazio\")",
       "Read(//c/Users/victor.amorim/.claude/projects/c--Users-victor-amorim-Documents-GitHub-OrcaPro/memory\" 2>/dev/**)",
       "Read(//c/Users/victor.amorim/.claude/projects/c--Users-victor-amorim-Documents-GitHub-OrcaPro/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\victor.amorim\\.claude\\projects\\c--Users-victor-amorim-Documents-GitHub-OrcaPro\\memory"
     ]
   }
 }
