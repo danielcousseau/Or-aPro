@@ -44,7 +44,19 @@ module.exports = {
 
             const clienteAtualizado = await prisma.cliente.update({
                 where: { id: Number(id) },
-                data: dados
+                data: {
+                    nome: dados.nome,
+                    cpfCnpj: dados.cpfCnpj,
+                    email: dados.email,
+                    telefone: dados.telefone,
+                    cidade: dados.cidade,
+                    bairro: dados.bairro,
+                    rua: dados.rua,
+                    numero: dados.numero,
+                    cep: dados.cep,
+                    observacoes: dados.observacoes,
+                    telegramChatId: dados.telegramChatId,
+                }
             });
 
             await registrar(req.userId, 'atualizou', 'Cliente', clienteAtualizado.id, clienteAtualizado.nome);
