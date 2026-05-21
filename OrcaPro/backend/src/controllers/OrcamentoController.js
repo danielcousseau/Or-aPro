@@ -1,6 +1,5 @@
 const prisma = require('../lib/prisma');
 const jwt = require('jsonwebtoken');
-const PDFDocument = require('pdfkit');
 const { registrar } = require('../services/audit');
 const { notificarMudancaStatus } = require('../services/telegram');
 
@@ -214,6 +213,7 @@ module.exports = {
     // =========================================================
     async gerarPDF(req, res) {
         try {
+            const PDFDocument = require('pdfkit');
             const { id } = req.params;
 
             // Busca o orçamento garantindo que pertence ao usuário logado
