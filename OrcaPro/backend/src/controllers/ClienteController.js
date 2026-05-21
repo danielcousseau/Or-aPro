@@ -55,7 +55,7 @@ module.exports = {
                     numero: dados.numero,
                     cep: dados.cep,
                     observacoes: dados.observacoes,
-                    telegramChatId: dados.telegramChatId,
+                    telegramChatId: dados.telegramChatId !== undefined ? dados.telegramChatId : pertence.telegramChatId,
                 }
             });
 
