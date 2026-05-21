@@ -10,7 +10,12 @@
       "Bash(git commit -m ' *)",
       "Bash(ls \"c:\\\\Users\\\\victor.amorim\\\\.claude\\\\projects\\\\c--Users-victor-amorim-Documents-GitHub-OrcaPro\\\\memory\\\\\" 2>/dev/null || echo \"vazio\")",
       "Read(//c/Users/victor.amorim/.claude/projects/c--Users-victor-amorim-Documents-GitHub-OrcaPro/memory\" 2>/dev/**)",
-      "Read(//c/Users/victor.amorim/.claude/projects/c--Users-victor-amorim-Documents-GitHub-OrcaPro/**)"
+      "Read(//c/Users/victor.amorim/.claude/projects/c--Users-victor-amorim-Documents-GitHub-OrcaPro/**)",
+      "Bash(git push *)",
+      "Bash(sha256sum __TRACKED_VAR__/migration.sql)",
+      "Bash(certutil -hashfile __TRACKED_VAR__/migration.sql SHA256)",
+      "Bash(git -C \"c:\\\\Users\\\\victor.amorim\\\\Documents\\\\GitHub\\\\OrcaPro\" show HEAD:OrcaPro/frontend/src/components/Orcamento/ListaMateriais.jsx)",
+      "Bash(xargs grep -l \"html2pdf\\\\|baixarPDF\\\\|enviarWhatsApp\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\victor.amorim\\.claude\\projects\\c--Users-victor-amorim-Documents-GitHub-OrcaPro\\memory"
