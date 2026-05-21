@@ -236,85 +236,84 @@ module.exports = {
 
             // Gera em buffer para poder retornar erro JSON se falhar
             const pdfBuffer = await new Promise((resolve, reject) => {
+                const path = require('path');
+                const fs = require('fs');
+
                 const doc = new PDFDocument({ size: 'A4', margin: 50, compress: true });
                 const chunks = [];
                 doc.on('data', chunk => chunks.push(chunk));
                 doc.on('end', () => resolve(Buffer.concat(chunks)));
                 doc.on('error', reject);
 
-                const W = 495;       // largura útil (595 - 2×50)
-                const COL = 245;     // largura de cada coluna (deixa 5px de gap)
-                const LINE_H = 18;   // altura de linha
-                const X_DIR = 50 + COL + 10;  // início da coluna direita
+                const W = 495;
+                const COL = 240;
+                const LINE_H = 17;
+                const X_DIR = 310;
                 const AZUL = '#0056A3';
                 const VERDE = '#10B981';
                 const CINZA = '#64748B';
                 const BORDA = '#E2E8F0';
 
-                // --- Cabeçalho ---
-                doc.fontSize(24).font('Helvetica-Bold').fillColor(AZUL)
-                   .text('OrcaPro', 50, 50);
+                // === CABECALHO ===
+                const logoPath = path.join(__dirname, '../../../frontend/public/logo-orcapro.png');
+                if (fs.existsSync(logoPath)) {
+                    doc.image(logoPath, 50, 40, { fit: [200, 55] });
+                } else {
+                    doc.fontSize(22).font('Helvetica-Bold').fillColor(AZUL).text('Orca Pro', 50, 48);
+                }
+
+                doc.fontSize(18).font('Helvetica-Bold').fillColor('#1E293B')
+                   .text(`Orcamento #${numeroLocal}`, 50, 45, { align: 'right', width: W });
                 doc.fontSize(10).font('Helvetica').fillColor(CINZA)
-                   .text('Sistema de Orcamentos para Marcenarias', 50, 80);
+                   .text(`Data: ${new Date(orcamento.createdAt).toLocaleDateString('pt-BR')}`, 50, 70, { align: 'right', width: W });
 
-                doc.fontSize(16).font('Helvetica-Bold').fillColor('#1E293B')
-                   .text(`Orcamento #${numeroLocal}`, 50, 50, { align: 'right', width: W });
-                doc.fontSize(10).font('Helvetica').fillColor(CINZA)
-                   .text(`Data: ${new Date(orcamento.createdAt).toLocaleDateString('pt-BR')}`, 50, 75, { align: 'right', width: W });
+                // Linha fina azul separando cabecalho
+                doc.moveTo(50, 108).lineTo(545, 108).lineWidth(1.5).strokeColor(AZUL).stroke();
 
-                doc.moveTo(50, 105).lineTo(545, 105).lineWidth(2).strokeColor('#333').stroke();
+                // === DADOS (duas colunas sem bordas pesadas) ===
+                const Y_SEC = 124;
+                const Y_DATA = Y_SEC + 18;
 
-                // --- Dados do Cliente (coluna esquerda) ---
-                const Y_SEC = 125;
-                const Y_DATA = Y_SEC + 26;
-
-                doc.fontSize(12).font('Helvetica-Bold').fillColor('#1E293B')
+                doc.fontSize(11).font('Helvetica-Bold').fillColor(AZUL)
                    .text('Dados do Cliente', 50, Y_SEC, { width: COL });
-                doc.moveTo(50, Y_SEC + 17).lineTo(50 + COL, Y_SEC + 17)
-                   .lineWidth(0.8).strokeColor(BORDA).stroke();
+                doc.fontSize(11).font('Helvetica-Bold').fillColor(AZUL)
+                   .text('Projeto', X_DIR, Y_SEC, { width: COL });
 
                 doc.fontSize(10).font('Helvetica').fillColor('#1E293B');
                 doc.text(`Nome: ${orcamento.cliente.nome}`, 50, Y_DATA, { width: COL });
                 doc.text(`Telefone: ${orcamento.cliente.telefone || '-'}`, 50, Y_DATA + LINE_H, { width: COL });
                 doc.text(`Cidade: ${orcamento.cliente.cidade || '-'}`, 50, Y_DATA + LINE_H * 2, { width: COL });
 
-                // --- Dados do Projeto (coluna direita) ---
-                doc.fontSize(12).font('Helvetica-Bold').fillColor('#1E293B')
-                   .text('Projeto', X_DIR, Y_SEC, { width: COL });
-                doc.moveTo(X_DIR, Y_SEC + 17).lineTo(X_DIR + COL, Y_SEC + 17)
-                   .lineWidth(0.8).strokeColor(BORDA).stroke();
-
-                doc.fontSize(10).font('Helvetica').fillColor('#1E293B');
                 doc.text(`Titulo: ${orcamento.titulo}`, X_DIR, Y_DATA, { width: COL });
                 doc.text(`Ambiente: ${orcamento.ambiente || '-'}`, X_DIR, Y_DATA + LINE_H, { width: COL });
                 doc.text(`Movel: ${orcamento.tipoMovel || '-'}`, X_DIR, Y_DATA + LINE_H * 2, { width: COL });
 
-                // --- Caixa de Totais ---
-                const Y_TOTAL = 265;
-                const LARGURA_BOX = 255;
+                // === CAIXA DE TOTAIS (fundo cinza suave, borda leve) ===
+                const Y_TOTAL = 240;
+                const LARGURA_BOX = 250;
                 const X_BOX = 545 - LARGURA_BOX;
 
-                doc.rect(X_BOX, Y_TOTAL, LARGURA_BOX, 90)
-                   .lineWidth(2).strokeColor('#333').stroke();
+                doc.roundedRect(X_BOX, Y_TOTAL, LARGURA_BOX, 90, 6)
+                   .fillAndStroke('#F9FAFC', BORDA);
 
                 doc.fontSize(10).font('Helvetica').fillColor('#1E293B');
-                doc.text(`Prazo: ${orcamento.prazo || 'A combinar'}`, X_BOX + 15, Y_TOTAL + 12, { width: LARGURA_BOX - 25 });
-                doc.text(`Pagamento: ${orcamento.pagamento || 'A combinar'}`, X_BOX + 15, Y_TOTAL + 30, { width: LARGURA_BOX - 25 });
+                doc.text(`Prazo: ${orcamento.prazo || 'A combinar'}`, X_BOX + 16, Y_TOTAL + 13, { width: LARGURA_BOX - 28 });
+                doc.text(`Pagamento: ${orcamento.pagamento || 'A combinar'}`, X_BOX + 16, Y_TOTAL + 31, { width: LARGURA_BOX - 28 });
 
-                doc.moveTo(X_BOX + 10, Y_TOTAL + 52).lineTo(X_BOX + LARGURA_BOX - 10, Y_TOTAL + 52)
-                   .lineWidth(0.5).strokeColor('#ccc').stroke();
+                doc.moveTo(X_BOX + 14, Y_TOTAL + 52).lineTo(X_BOX + LARGURA_BOX - 14, Y_TOTAL + 52)
+                   .lineWidth(0.5).strokeColor(BORDA).stroke();
 
-                doc.fontSize(15).font('Helvetica-Bold').fillColor(VERDE)
-                   .text(`Total: ${formatarMoedaBR(orcamento.totalFinal)}`, X_BOX + 15, Y_TOTAL + 60, { width: LARGURA_BOX - 25 });
+                doc.fontSize(16).font('Helvetica-Bold').fillColor(VERDE)
+                   .text(`Total: ${formatarMoedaBR(orcamento.totalFinal)}`, X_BOX + 16, Y_TOTAL + 60, { width: LARGURA_BOX - 28 });
 
-                // --- Rodapé ---
+                // === RODAPE ===
                 const Y_FOOTER = 720;
                 doc.moveTo(50, Y_FOOTER).lineTo(545, Y_FOOTER)
                    .lineWidth(0.5).strokeColor(BORDA).stroke();
                 doc.fontSize(9).font('Helvetica').fillColor(CINZA);
                 doc.text(`Este orcamento e valido por ${orcamento.validade || '7 dias'}.`, 50, Y_FOOTER + 14, { width: W });
                 if (orcamento.observacoes) {
-                    doc.text(`Observacoes: ${orcamento.observacoes}`, 50, Y_FOOTER + 30, { width: W });
+                    doc.text(`Observacoes: ${orcamento.observacoes}`, 50, Y_FOOTER + 29, { width: W });
                 }
 
                 doc.end();
