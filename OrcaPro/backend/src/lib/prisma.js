@@ -1,4 +1,4 @@
-const { PrismaClient } = require('../generated/prisma');
+const { PrismaClient } = require('@prisma/client');
 
 // Singleton: evita criar múltiplas conexões em hot-reload (dev) e esgotamento
 // de pool em produção. Em dev, reutiliza a instância salva em global.
