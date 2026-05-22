@@ -20,10 +20,22 @@ export interface Material {
   quantidade?: number;
   categoria?: string;
   unidade?: string;
+  quantidadeEstoque?: number | null;
+  estoqueMinimo?: number | null;
+}
+
+export interface OrcamentoMaterialItem {
+  id: number;
+  nome: string;
+  valor: number;
+  quantidade: number;
+  materialId?: number | null;
 }
 
 export interface MaterialSelecionado {
   idFalso: string | number;
+  id?: number;
+  materialId?: number | null;
   nome: string;
   valor: string;
   quantidade: number;
@@ -72,7 +84,7 @@ export interface Orcamento {
   tipoLucro?: string;
   lucroValor?: number;
   lucroQtde?: number;
-  materiais?: Material[];
+  materiais?: OrcamentoMaterialItem[];
   prazo?: string;
   pagamento?: string;
   validade?: string;

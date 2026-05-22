@@ -10,6 +10,76 @@ import { notificarMudancaStatus } from '../services/telegram';
 const formatarMoedaBR = (valor: unknown): string =>
     Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+interface MatLineInput {
+    id?: number;
+    nome: string;
+    valor: number;
+    quantidade: number;
+    materialId?: number | null;
+}
+
+async function descontarEstoque(materiais: MatLineInput[], userId: number): Promise<string[]> {
+    const descontos = new Map<number, number>();
+    for (const mat of materiais) {
+        if (mat.materialId) {
+            descontos.set(mat.materialId, (descontos.get(mat.materialId) ?? 0) + mat.quantidade);
+        }
+    }
+
+    const alertas: string[] = [];
+    for (const [materialId, qtd] of descontos) {
+        const material = await prisma.material.findFirst({ where: { id: materialId, userId } });
+        if (material && material.quantidadeEstoque !== null) {
+            const novoEstoque = Math.max(0, material.quantidadeEstoque - qtd);
+            await prisma.material.update({ where: { id: materialId }, data: { quantidadeEstoque: novoEstoque } });
+            if (material.estoqueMinimo !== null && novoEstoque < material.estoqueMinimo) {
+                alertas.push(material.nome);
+            }
+        }
+    }
+    return alertas;
+}
+
+async function ajustarDiffEstoque(
+    materiaisAntes: { materialId: number | null; quantidade: number }[],
+    materiaisDepois: MatLineInput[],
+    userId: number
+): Promise<string[]> {
+    const beforeMap = new Map<number, number>();
+    for (const m of materiaisAntes) {
+        if (m.materialId) {
+            beforeMap.set(m.materialId, (beforeMap.get(m.materialId) ?? 0) + m.quantidade);
+        }
+    }
+
+    const afterMap = new Map<number, number>();
+    for (const m of materiaisDepois) {
+        if (m.materialId) {
+            afterMap.set(m.materialId, (afterMap.get(m.materialId) ?? 0) + m.quantidade);
+        }
+    }
+
+    const allIds = new Set([...beforeMap.keys(), ...afterMap.keys()]);
+    const alertas: string[] = [];
+
+    for (const materialId of allIds) {
+        const before = beforeMap.get(materialId) ?? 0;
+        const after = afterMap.get(materialId) ?? 0;
+        const diff = after - before;
+        if (diff === 0) continue;
+
+        const material = await prisma.material.findFirst({ where: { id: materialId, userId } });
+        if (material && material.quantidadeEstoque !== null) {
+            const novoEstoque = Math.max(0, material.quantidadeEstoque - diff);
+            await prisma.material.update({ where: { id: materialId }, data: { quantidadeEstoque: novoEstoque } });
+            if (material.estoqueMinimo !== null && novoEstoque < material.estoqueMinimo) {
+                alertas.push(material.nome);
+            }
+        }
+    }
+    return alertas;
+}
+
 export default {
     async listar(req: Request, res: Response): Promise<void> {
         try {
@@ -48,17 +118,20 @@ export default {
                     tipoMovel, ambiente, medidas, prazo, pagamento, validade, observacoes,
                     userId: req.userId!,
                     materiais: {
-                        create: materiais.map((mat: { nome: string; valor: number; quantidade: number }) => ({
+                        create: (materiais as MatLineInput[]).map(mat => ({
                             nome: mat.nome,
                             valor: mat.valor,
-                            quantidade: mat.quantidade
+                            quantidade: mat.quantidade,
+                            materialId: mat.materialId ?? null
                         }))
                     }
                 }
             });
 
+            const alertasEstoque = await descontarEstoque(materiais as MatLineInput[], req.userId!);
+
             await registrar(req.userId!, 'criou', 'Orçamento', novoOrcamento.id, novoOrcamento.titulo);
-            res.status(201).json(novoOrcamento);
+            res.status(201).json({ ...novoOrcamento, alertasEstoque });
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao criar orçamento' });
@@ -88,24 +161,59 @@ export default {
                 return;
             }
 
+            // Carrega linhas atuais para calcular diff de estoque
+            const linhasAtuais = await prisma.orcamentoMaterial.findMany({
+                where: { orcamentoId: Number(id) },
+                select: { id: true, materialId: true, quantidade: true }
+            });
+
+            const novasMateriais = materiais as MatLineInput[];
+            const existingIds = novasMateriais.filter(m => m.id).map(m => m.id as number);
+
+            // Exclui linhas removidas
+            if (existingIds.length > 0) {
+                await prisma.orcamentoMaterial.deleteMany({
+                    where: { orcamentoId: Number(id), id: { notIn: existingIds } }
+                });
+            } else {
+                await prisma.orcamentoMaterial.deleteMany({ where: { orcamentoId: Number(id) } });
+            }
+
+            // Atualiza linhas existentes
+            for (const mat of novasMateriais.filter(m => m.id)) {
+                await prisma.orcamentoMaterial.update({
+                    where: { id: mat.id! },
+                    data: { nome: mat.nome, valor: mat.valor, quantidade: mat.quantidade, materialId: mat.materialId ?? null }
+                });
+            }
+
+            // Cria novas linhas
+            const linhasNovas = novasMateriais.filter(m => !m.id);
+            if (linhasNovas.length > 0) {
+                await prisma.orcamentoMaterial.createMany({
+                    data: linhasNovas.map(mat => ({
+                        orcamentoId: Number(id),
+                        nome: mat.nome,
+                        valor: mat.valor,
+                        quantidade: mat.quantidade,
+                        materialId: mat.materialId ?? null
+                    }))
+                });
+            }
+
+            const alertasEstoque = await ajustarDiffEstoque(linhasAtuais, novasMateriais, req.userId!);
+
             const orcamentoAtualizado = await prisma.orcamento.update({
                 where: { id: Number(id) },
                 data: {
                     titulo, clienteId, tipoMaoDeObra, maoDeObraValor, maoDeObraQtde,
                     tipoLucro, lucroValor, lucroQtde, totalFinal,
-                    tipoMovel, ambiente, medidas, prazo, pagamento, validade, observacoes,
-                    materiais: {
-                        deleteMany: {},
-                        create: materiais.map((mat: { nome: string; valor: number; quantidade: number }) => ({
-                            nome: mat.nome,
-                            valor: mat.valor,
-                            quantidade: mat.quantidade
-                        }))
-                    }
+                    tipoMovel, ambiente, medidas, prazo, pagamento, validade, observacoes
                 }
             });
+
             await registrar(req.userId!, 'atualizou', 'Orçamento', orcamentoAtualizado.id, orcamentoAtualizado.titulo);
-            res.json(orcamentoAtualizado);
+            res.json({ ...orcamentoAtualizado, alertasEstoque });
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao atualizar orçamento' });

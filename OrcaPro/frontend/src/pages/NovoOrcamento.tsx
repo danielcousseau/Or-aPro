@@ -6,7 +6,7 @@ import ListaMateriais from '../components/Orcamento/ListaMateriais';
 import ResumoValores from '../components/Orcamento/ResumoValores';
 import { toast } from 'react-toastify';
 import { mascaraMoeda, desmascararMoeda } from '../utils/masks';
-import { OrcamentoFormData, MaterialSelecionado, Material, FormaPagamento, Cliente, Totais } from '../types';
+import { OrcamentoFormData, MaterialSelecionado, Material, OrcamentoMaterialItem, FormaPagamento, Cliente, Totais } from '../types';
 
 type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
 type FakeEvent = { target: { name: string; value: string } };
@@ -77,8 +77,10 @@ export default function NovoOrcamento() {
                 });
 
                 if (data.materiais && data.materiais.length > 0) {
-                    setMateriaisSelecionados(data.materiais.map((m: Material) => ({
+                    setMateriaisSelecionados(data.materiais.map((m: OrcamentoMaterialItem) => ({
                         idFalso: m.id || Date.now() + Math.random(),
+                        id: m.id,
+                        materialId: m.materialId ?? null,
                         nome: m.nome,
                         valor: mascaraMoeda(m.valor),
                         quantidade: m.quantidade || 1
@@ -166,11 +168,16 @@ export default function NovoOrcamento() {
             if (mat.idFalso === idFalso) {
                 let novoMat = { ...mat, [campo]: valor };
                 if (campo === 'valor') novoMat.valor = mascaraMoeda(valor);
-                if (campo === 'selectDb' && valor !== '') {
-                    const materialDoBanco = materiaisDb.find(m => m.id === Number(valor));
-                    if (materialDoBanco) {
-                        novoMat.nome = materialDoBanco.nome;
-                        novoMat.valor = mascaraMoeda(materialDoBanco.valor);
+                if (campo === 'selectDb') {
+                    if (valor !== '') {
+                        const materialDoBanco = materiaisDb.find(m => m.id === Number(valor));
+                        if (materialDoBanco) {
+                            novoMat.nome = materialDoBanco.nome;
+                            novoMat.valor = mascaraMoeda(materialDoBanco.valor);
+                            novoMat.materialId = materialDoBanco.id;
+                        }
+                    } else {
+                        novoMat.materialId = null;
                     }
                 }
                 return novoMat;
@@ -196,19 +203,30 @@ export default function NovoOrcamento() {
             maoDeObraValor: desmascararMoeda(orcamento.maoDeObraValor),
             lucroValor: desmascararMoeda(orcamento.lucroValor),
             totalFinal: totais.final,
-            materiais: materiaisSelecionados.map(m => ({
-                nome: m.nome,
-                valor: desmascararMoeda(m.valor),
-                quantidade: Number(m.quantidade) || 1
-            })).filter(m => m.nome !== '')
+            materiais: materiaisSelecionados
+                .filter(m => m.nome !== '')
+                .map(m => ({
+                    ...(m.id ? { id: m.id } : {}),
+                    nome: m.nome,
+                    valor: desmascararMoeda(m.valor),
+                    quantidade: Number(m.quantidade) || 1,
+                    materialId: m.materialId ?? null
+                }))
         };
 
         try {
+            const response = id
+                ? await api.put(`/orcamentos/${id}`, dadosParaEnviar)
+                : await api.post('/orcamentos', dadosParaEnviar);
+
+            const alertas: string[] = response.data.alertasEstoque || [];
+            if (alertas.length > 0) {
+                toast.warn(`Estoque baixo após salvar: ${alertas.join(', ')}`);
+            }
+
             if (id) {
-                await api.put(`/orcamentos/${id}`, dadosParaEnviar);
                 toast.success('Orçamento atualizado com sucesso!');
             } else {
-                await api.post('/orcamentos', dadosParaEnviar);
                 toast.success('Orçamento gerado e salvo de forma segura!');
             }
             localStorage.removeItem('rascunhoOrcamento');

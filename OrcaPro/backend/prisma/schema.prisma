@@ -53,16 +53,19 @@ model Cliente {
 }
 
 model Material {
-  id          Int      @id @default(autoincrement())
-  nome        String
-  categoria   String?
-  valor       Float
-  unidade     String?
-  createdAt   DateTime @default(now())
+  id                 Int      @id @default(autoincrement())
+  nome               String
+  categoria          String?
+  valor              Float
+  unidade            String?
+  quantidadeEstoque  Float?
+  estoqueMinimo      Float?
+  createdAt          DateTime @default(now())
 
   // Etiqueta de dono (SaaS)
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id])
+  userId             Int
+  user               User     @relation(fields: [userId], references: [id])
+  orcamentoMateriais OrcamentoMaterial[]
 
   @@index([userId])
 }
@@ -109,6 +112,8 @@ model OrcamentoMaterial {
   nome        String
   valor       Float
   quantidade  Float
+  materialId  Int?
+  material    Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
 }
 
 model OpcaoCustomizada {

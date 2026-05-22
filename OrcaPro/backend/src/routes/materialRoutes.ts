@@ -11,6 +11,7 @@ router.use(authMiddleware);
 router.get('/', MaterialController.listar);
 router.post('/', validate(materialSchema), MaterialController.criar);
 router.put('/:id', validate(materialSchema), MaterialController.atualizar);
+router.patch('/:id/estoque', MaterialController.ajustarEstoque);
 router.delete('/:id', MaterialController.excluir);
 
 export default router;

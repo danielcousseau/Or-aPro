@@ -67,6 +67,34 @@ export default {
         }
     },
 
+    async ajustarEstoque(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+            const { quantidadeEstoque } = req.body;
+
+            if (typeof quantidadeEstoque !== 'number' || quantidadeEstoque < 0) {
+                res.status(400).json({ error: 'Quantidade inválida' });
+                return;
+            }
+
+            const pertence = await prisma.material.findFirst({ where: { id: Number(id), userId: req.userId } });
+            if (!pertence) {
+                res.status(403).json({ error: 'Acesso negado' });
+                return;
+            }
+
+            const materialAtualizado = await prisma.material.update({
+                where: { id: Number(id) },
+                data: { quantidadeEstoque }
+            });
+            await registrar(req.userId!, 'ajustou estoque', 'Material', materialAtualizado.id, `${materialAtualizado.nome} → ${quantidadeEstoque}`);
+            res.json(materialAtualizado);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Erro ao ajustar estoque' });
+        }
+    },
+
     async excluir(req: Request, res: Response): Promise<void> {
         try {
             const { id } = req.params;

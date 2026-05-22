@@ -13,12 +13,19 @@ interface MaterialFormData {
     categoria: string;
     valor: string;
     unidade: string;
+    quantidadeEstoque: string;
+    estoqueMinimo: string;
 }
+
+const FORM_VAZIO: MaterialFormData = { nome: '', categoria: '', valor: '', unidade: '', quantidadeEstoque: '', estoqueMinimo: '' };
 
 export default function Materiais() {
     const [materiais, setMateriais] = useState<Material[]>([]);
     const [materialEmEdicao, setMaterialEmEdicao] = useState<Material | null>(null);
     const [materialParaExcluir, setMaterialParaExcluir] = useState<number | null>(null);
+    const [materialParaAjustar, setMaterialParaAjustar] = useState<Material | null>(null);
+    const [valorAjuste, setValorAjuste] = useState('');
+    const [ajustando, setAjustando] = useState(false);
     const [abaAtiva, setAbaAtiva] = useState<'consulta' | 'cadastro'>('consulta');
     const [termoBusca, setTermoBusca] = useState('');
     const [salvando, setSalvando] = useState(false);
@@ -29,7 +36,7 @@ export default function Materiais() {
     const [categoriasCustomizadas, setCategoriasCustomizadas] = useState<string[]>([]);
     const [unidadesCustomizadas, setUnidadesCustomizadas] = useState<string[]>([]);
 
-    const [formData, setFormData] = useState<MaterialFormData>({ nome: '', categoria: '', valor: '', unidade: '' });
+    const [formData, setFormData] = useState<MaterialFormData>(FORM_VAZIO);
 
     useEffect(() => {
         carregarMateriais();
@@ -74,7 +81,7 @@ export default function Materiais() {
     };
 
     const limparFormulario = () => {
-        setFormData({ nome: '', categoria: '', valor: '', unidade: '' });
+        setFormData(FORM_VAZIO);
         setMaterialEmEdicao(null);
         setUsandoOutrosCategoria(false);
         setUsandoOutrosUnidade(false);
@@ -158,7 +165,9 @@ export default function Materiais() {
             nome: material.nome || '',
             categoria: material.categoria || '',
             valor: mascaraMoeda(material.valor) || '',
-            unidade: material.unidade || ''
+            unidade: material.unidade || '',
+            quantidadeEstoque: material.quantidadeEstoque != null ? String(material.quantidadeEstoque) : '',
+            estoqueMinimo: material.estoqueMinimo != null ? String(material.estoqueMinimo) : '',
         });
         setAbaAtiva('cadastro');
         window.scrollTo(0, 0);
@@ -177,12 +186,38 @@ export default function Materiais() {
         }
     };
 
+    const confirmarAjusteEstoque = async () => {
+        if (!materialParaAjustar) return;
+        const quantidade = parseFloat(valorAjuste.replace(',', '.'));
+        if (isNaN(quantidade) || quantidade < 0) {
+            toast.error('Informe uma quantidade válida (zero ou maior).');
+            return;
+        }
+        setAjustando(true);
+        try {
+            await api.patch(`/materiais/${materialParaAjustar.id}/estoque`, { quantidadeEstoque: quantidade });
+            toast.success(`Estoque de "${materialParaAjustar.nome}" atualizado para ${quantidade}!`);
+            setMaterialParaAjustar(null);
+            setValorAjuste('');
+            carregarMateriais();
+        } catch {
+            toast.error('Erro ao ajustar estoque.');
+        } finally {
+            setAjustando(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (salvando) return;
         setSalvando(true);
         try {
-            const dadosParaEnviar = { ...formData, valor: desmascararMoeda(formData.valor) };
+            const dadosParaEnviar = {
+                ...formData,
+                valor: desmascararMoeda(formData.valor),
+                quantidadeEstoque: formData.quantidadeEstoque !== '' ? Number(formData.quantidadeEstoque) : null,
+                estoqueMinimo: formData.estoqueMinimo !== '' ? Number(formData.estoqueMinimo) : null,
+            };
             if (materialEmEdicao) {
                 await api.put(`/materiais/${materialEmEdicao.id}`, dadosParaEnviar);
             } else {
@@ -207,6 +242,9 @@ export default function Materiais() {
             (material.categoria && material.categoria.toLowerCase().includes(termo))
         );
     });
+
+    const estoqueEmAlerta = (m: Material) =>
+        m.quantidadeEstoque != null && m.estoqueMinimo != null && m.quantidadeEstoque < m.estoqueMinimo;
 
     return (
         <div>
@@ -277,6 +315,17 @@ export default function Materiais() {
                                 </section>
                             </div>
 
+                            <div className="form-grid-1-1">
+                                <section className="form-section">
+                                    <label>Estoque Atual</label>
+                                    <input type="number" name="quantidadeEstoque" value={formData.quantidadeEstoque} onChange={handleChange} placeholder="Deixe em branco = sem controle" min="0" step="0.01" />
+                                </section>
+                                <section className="form-section">
+                                    <label>Estoque Mínimo</label>
+                                    <input type="number" name="estoqueMinimo" value={formData.estoqueMinimo} onChange={handleChange} placeholder="Alerta abaixo deste valor" min="0" step="0.01" />
+                                </section>
+                            </div>
+
                             <div className="form-buttons">
                                 <button type="submit" disabled={salvando} style={{ opacity: salvando ? 0.7 : 1, cursor: salvando ? 'not-allowed' : 'pointer' }}>
                                     {salvando ? 'Salvando...' : (materialEmEdicao ? 'Atualizar Material' : 'Salvar Material')}
@@ -302,13 +351,28 @@ export default function Materiais() {
                         ) : (
                             <div className="grid-cards">
                                 {materiaisFiltrados.map((material) => (
-                                    <div key={material.id} className="cliente-card highlight-primary">
-                                        <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem' }}>{material.nome}</h3>
+                                    <div key={material.id} className={`cliente-card highlight-primary${estoqueEmAlerta(material) ? ' card-alerta-estoque' : ''}`}>
+                                        <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem' }}>
+                                            {estoqueEmAlerta(material) && <span title="Estoque abaixo do mínimo" style={{ marginRight: '6px' }}>⚠️</span>}
+                                            {material.nome}
+                                        </h3>
                                         <p style={{ margin: '4px 0' }}><strong>Valor:</strong> {formatarMoeda(material.valor)}</p>
                                         <p style={{ margin: '4px 0' }}><strong>Categoria:</strong> {material.categoria || 'Não informada'}</p>
                                         <p style={{ margin: '4px 0' }}><strong>Unidade:</strong> {material.unidade || 'Não informada'}</p>
+                                        <p style={{ margin: '4px 0' }}>
+                                            <strong>Estoque:</strong>{' '}
+                                            {material.quantidadeEstoque != null ? (
+                                                <span style={{ color: estoqueEmAlerta(material) ? 'var(--danger)' : 'inherit', fontWeight: estoqueEmAlerta(material) ? 600 : 400 }}>
+                                                    {material.quantidadeEstoque} {material.unidade || 'unid.'}
+                                                    {material.estoqueMinimo != null && <span style={{ color: 'var(--text-soft)', fontWeight: 400 }}> (mín: {material.estoqueMinimo})</span>}
+                                                </span>
+                                            ) : (
+                                                <span style={{ color: 'var(--text-soft)' }}>Não controlado</span>
+                                            )}
+                                        </p>
                                         <div className="card-actions" style={{ marginTop: '15px' }}>
                                             <button type="button" className="btn-action btn-edit" onClick={() => handleEditar(material)}>Editar</button>
+                                            <button type="button" className="btn-action" style={{ background: 'var(--primary)', color: '#fff' }} onClick={() => { setMaterialParaAjustar(material); setValorAjuste(material.quantidadeEstoque != null ? String(material.quantidadeEstoque) : ''); }}>Estoque</button>
                                             <button type="button" className="btn-action btn-delete" onClick={() => setMaterialParaExcluir(material.id)}>Excluir</button>
                                         </div>
                                     </div>
@@ -327,6 +391,36 @@ export default function Materiais() {
                         <div className="modal-actions">
                             <button type="button" className="btn-cancel" onClick={() => setMaterialParaExcluir(null)}>Cancelar</button>
                             <button type="button" className="btn-delete" onClick={confirmarExclusao}>Sim, Excluir</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {materialParaAjustar && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Ajustar Estoque</h3>
+                        <p style={{ marginBottom: '4px' }}><strong>{materialParaAjustar.nome}</strong></p>
+                        <p style={{ color: 'var(--text-soft)', fontSize: '0.9rem', marginBottom: '16px' }}>
+                            Informe a quantidade atual em estoque (sobrescreve o valor anterior).
+                        </p>
+                        <section className="form-section">
+                            <label>Quantidade em estoque</label>
+                            <input
+                                type="number"
+                                value={valorAjuste}
+                                onChange={e => setValorAjuste(e.target.value)}
+                                min="0"
+                                step="0.01"
+                                placeholder="Ex: 15"
+                                autoFocus
+                            />
+                        </section>
+                        <div className="modal-actions" style={{ marginTop: '16px' }}>
+                            <button type="button" className="btn-cancel" onClick={() => { setMaterialParaAjustar(null); setValorAjuste(''); }}>Cancelar</button>
+                            <button type="button" onClick={confirmarAjusteEstoque} disabled={ajustando} style={{ opacity: ajustando ? 0.7 : 1 }}>
+                                {ajustando ? 'Salvando...' : 'Salvar Estoque'}
+                            </button>
                         </div>
                     </div>
                 </div>
