@@ -139,13 +139,15 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 
 ### 🔴 Bugs abertos
 
-- [ ] **Telegram chatId não salva pelo formulário** — frontend envia o campo corretamente, mas o Render usa cache do `node_modules` entre deploys, e o Prisma Client gerado no build não chega ao container. Workaround ativo: setar via SQL direto no Neon. Solução definitiva: investigar opção de desativar cache do `node_modules` no Render.
-- [ ] **Botão "Adicionar Material" — cor azul não aparece no Vercel** — Service Worker do PWA cacheia o bundle antigo. Fix para o usuário: DevTools → Application → Service Workers → Unregister → recarregar.
+Nenhum bug aberto no momento.
+
+### ✅ Bugs resolvidos (histórico)
+
+- [x] **Telegram chatId não salva pelo formulário** — resolvido. Campo salva corretamente.
+- [x] **Botão "Adicionar Material" — cor azul não aparece no Vercel** — resolvido. Botão aparece azul corretamente.
 
 ### 🟡 Média prioridade
 
-- [ ] **Interface para gerenciar opções fixas salvas** — tela para o marceneiro ver e excluir as opções customizadas que salvou (ex: apagar "Área Gourmet" que não usa mais)
-- [ ] **Onboarding guiado** — wizard de 3 passos para novo usuário: criar primeiro cliente → criar primeiro orçamento → enviar primeira proposta
 - [ ] **WhatsApp API** — substituir Telegram por Z-API ou Evolution API (usa o próprio número de WhatsApp do marceneiro, mais prático que bot Telegram)
 
 ### 🟢 Baixa prioridade / SaaS futuro
