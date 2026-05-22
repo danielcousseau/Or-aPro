@@ -120,6 +120,10 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - [x] PWA: ícones, manifest, service worker com `skipWaiting: true`
 - [x] Testes automatizados: `__tests__/auth.test.js` + `__tests__/crossTenant.test.js`
 
+### Fixes sessão 22/05/2026 (continuação)
+- [x] **Emotes removidos dos botões** — `ImprimirOrcamento.jsx` tinha 🖨️ ⬇️ 💬 ← nos botões. Removidos para visual mais profissional.
+- [x] **Segunda folha em branco na impressão mobile** — `html` e `#root` tinham `min-height: 100vh` que não era zerado no `@media print`. Corrigido no `index.css`.
+
 ### Fixes sessão 22/05/2026
 - [x] **Incidente de perda de dados** — `prisma db push --accept-data-loss` foi adicionado ao build script e apagou todos os dados de produção. Dados recuperados via Neon PITR (restore para 21/05/2026 23:00). Build script corrigido: apenas `npx prisma generate`. Coluna `nomeMarcenaria` re-adicionada via SQL manual.
 - [x] **`nomeMarcenaria` no banco** — coluna adicionada via `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "nomeMarcenaria" TEXT;`
@@ -139,8 +143,8 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 
 ### 🔴 Bugs abertos
 
-- [ ] **Telegram chatId não salva pelo formulário** — frontend envia o campo corretamente, mas o Render usa cache do `node_modules` entre deploys, e o Prisma Client gerado no build não chega ao container. Workaround ativo: setar via SQL direto no Neon. Solução definitiva: investigar opção de desativar cache do `node_modules` no Render.
-- [ ] **Botão "Adicionar Material" — cor azul não aparece no Vercel** — Service Worker do PWA cacheia o bundle antigo. Fix para o usuário: DevTools → Application → Service Workers → Unregister → recarregar.
+- [x] **Telegram chatId não salva pelo formulário** — resolvido espontaneamente após atualização (confirmado por Victor em 22/05/2026). Campo do chatId agora fica preenchido corretamente no Perfil.
+- [x] **Botão "Adicionar Material" — cor azul não aparece no Vercel** — resolvido após atualização (confirmado em múltiplos dispositivos por Victor em 22/05/2026).
 
 ### 🟡 Média prioridade
 
