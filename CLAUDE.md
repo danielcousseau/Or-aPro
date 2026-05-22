@@ -153,6 +153,7 @@ Nenhum bug aberto no momento.
 
 - [x] **Telegram chatId não salva pelo formulário** — resolvido. Campo salva corretamente.
 - [x] **Botão "Adicionar Material" — cor azul não aparece no Vercel** — resolvido. Botão aparece azul corretamente.
+- [x] **Layout mobile quebrado após sidebar desktop** — resolvido. `.app-shell` é `display: flex` (row por padrão); no mobile o menu voltava ao fluxo (`position: sticky`) mas o conteúdo ficava espremido à direita. Fix: `flex-direction: column` no `.app-shell` dentro do `@media (max-width: 900px)` no `index.css`.
 
 ---
 
