@@ -120,6 +120,12 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - [x] PWA: ícones, manifest, service worker com `skipWaiting: true`
 - [x] Testes automatizados: `__tests__/auth.test.js` + `__tests__/crossTenant.test.js`
 
+### Fixes sessão 22/05/2026
+- [x] **Incidente de perda de dados** — `prisma db push --accept-data-loss` foi adicionado ao build script e apagou todos os dados de produção. Dados recuperados via Neon PITR (restore para 21/05/2026 23:00). Build script corrigido: apenas `npx prisma generate`. Coluna `nomeMarcenaria` re-adicionada via SQL manual.
+- [x] **`nomeMarcenaria` no banco** — coluna adicionada via `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "nomeMarcenaria" TEXT;`
+- [x] **Tela em branco no Ver/Imprimir** — `contentRef` usado mas não declarado em `ImprimirOrcamento.jsx`. Corrigido adicionando `useRef` ao import e `const contentRef = useRef(null)`.
+- [x] **Documentação reorganizada** — `CLAUDE.md` criado, `PROGRESSO.md` e `OrcaPro/frontend/README.md` deletados.
+
 ### Decisões de arquitetura importantes
 - **Banco:** usar `prisma db push` (não `migrate dev`) — o projeto não tem histórico de migrations. Novas colunas exigem `db push` explícito com aprovação do Victor.
 - **Email:** Brevo HTTP API via `fetch` nativo — o Render bloqueia a porta 587 (SMTP), então Nodemailer não funciona.
