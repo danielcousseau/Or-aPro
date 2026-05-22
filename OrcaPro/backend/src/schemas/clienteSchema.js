@@ -2,17 +2,17 @@ const { z } = require('zod');
 
 // Validação exata com base no seu schema.prisma
 const clienteSchema = z.object({
-    nome: z.string().min(3, "O nome precisa ter no mínimo 3 caracteres"),
-    cpfCnpj: z.string().optional().nullable().or(z.literal('')),
-    email: z.string().email("E-mail inválido").optional().nullable().or(z.literal('')),
-    telefone: z.string().min(8, "O telefone é obrigatório"),
-    cidade: z.string().optional().nullable(),
-    bairro: z.string().optional().nullable(),
-    rua: z.string().optional().nullable(),
-    numero: z.string().optional().nullable(),
-    cep: z.string().optional().nullable(),
-    observacoes: z.string().optional().nullable(),
-    telegramChatId: z.string().optional().nullable().or(z.literal(''))
+    nome: z.string().trim().min(3, "O nome precisa ter no mínimo 3 caracteres"),
+    cpfCnpj: z.string().trim().optional().nullable().or(z.literal('')),
+    email: z.string().trim().email("E-mail inválido").optional().nullable().or(z.literal('')),
+    telefone: z.string().trim().min(8, "O telefone é obrigatório"),
+    cidade: z.string().trim().optional().nullable(),
+    bairro: z.string().trim().optional().nullable(),
+    rua: z.string().trim().optional().nullable(),
+    numero: z.string().trim().optional().nullable(),
+    cep: z.string().trim().optional().nullable(),
+    observacoes: z.string().trim().optional().nullable(),
+    telegramChatId: z.string().trim().optional().nullable().or(z.literal(''))
 });
 
 // Exportando do jeito certo (com chaves)
