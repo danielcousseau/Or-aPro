@@ -19,8 +19,8 @@
 ### Stack completa
 | Camada | Tecnologia | Hospedagem |
 |---|---|---|
-| Frontend | React + Vite + PWA | Vercel |
-| Backend (API) | Node.js + Express + Prisma ORM | Render |
+| Frontend | React + Vite + TypeScript + PWA | Vercel |
+| Backend (API) | Node.js + Express + Prisma ORM + TypeScript | Render |
 | Banco de dados | PostgreSQL | Neon.tech (serverless) |
 
 ### Estrutura de pastas
@@ -30,21 +30,26 @@ OrcaPro/
 │   ├── backend/
 │   │   ├── prisma/           # schema.prisma + migrations (não usar migrate dev — ver seção 7)
 │   │   ├── src/
-│   │   │   ├── controllers/  # lógica de negócio
-│   │   │   ├── middlewares/  # auth, validate, errorHandler, adminAuth
-│   │   │   ├── routes/       # rotas Express
-│   │   │   ├── services/     # telegram.js, audit.js, email
-│   │   │   ├── lib/          # prisma.js (singleton)
-│   │   │   ├── constants/    # materiaisPadrao.js
-│   │   │   └── app.js        # Express app (separado do server.js para testes)
+│   │   │   ├── controllers/  # lógica de negócio (.ts)
+│   │   │   ├── middlewares/  # auth, validate, errorHandler, adminAuth (.ts)
+│   │   │   ├── routes/       # rotas Express (.ts)
+│   │   │   ├── services/     # telegram.ts, audit.ts, email (.ts)
+│   │   │   ├── lib/          # prisma.ts (singleton)
+│   │   │   ├── constants/    # materiaisPadrao.ts
+│   │   │   └── app.ts        # Express app (separado do server.ts para testes)
+│   │   ├── dist/             # output compilado pelo tsc (gerado no build, não commitar)
+│   │   ├── tsconfig.json     # TypeScript backend (strict: true, output em dist/)
 │   │   └── __tests__/        # Jest + Supertest
 │   └── frontend/
 │       ├── src/
-│       │   ├── pages/        # uma pasta por tela (Login, Clientes, NovoOrcamento, etc.)
-│       │   ├── components/   # componentes reutilizáveis
-│       │   └── services/     # api.ts (Axios com interceptor de refresh token)
-│       └── public/           # ícones PWA, logo
-│       └── tsconfig.json     # TypeScript (noEmit: true — Vite compila, TS só checa tipos)
+│       │   ├── pages/        # uma tela por arquivo (.tsx)
+│       │   ├── components/   # componentes reutilizáveis (.tsx)
+│       │   ├── services/     # api.ts (Axios com interceptor de refresh token)
+│       │   ├── utils/        # format.ts, masks.ts, validators.ts
+│       │   ├── types.ts      # todas as interfaces compartilhadas do frontend
+│       │   └── types/        # html2pdf.d.ts (declaração de tipos de libs sem @types)
+│       ├── public/           # ícones PWA, logo
+│       └── tsconfig.json     # TypeScript frontend (noEmit: true — Vite compila, TS só checa tipos)
 ├── specs/                    # specs de features (escrever antes de implementar)
 ├── .github/workflows/        # CI/CD GitHub Actions
 ├── CLAUDE.md                 # este arquivo
@@ -91,7 +96,7 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - [x] `PrismaClient` singleton em `backend/src/lib/prisma.js`
 - [x] Middleware de erro global `errorHandler.js`
 - [x] `httpOnly cookies` + `refresh tokens` (access token: 15min, refresh token: 7 dias)
-- [x] Recuperação de senha via e-mail (Brevo HTTP API) — `EsqueciSenha.jsx`, `RedefinirSenha.jsx`
+- [x] Recuperação de senha via e-mail (Brevo HTTP API) — `EsqueciSenha.tsx`, `RedefinirSenha.tsx`
 - [x] Helmet.js ativo no backend
 - [x] Cloudflare Turnstile no cadastro (chaves reais configuradas para `orca-pro-seven.vercel.app`)
 - [x] CSP (Content-Security-Policy) configurado no `vercel.json`
@@ -131,7 +136,7 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - **Email:** Brevo HTTP API via `fetch` nativo — o Render bloqueia a porta 587 (SMTP), então Nodemailer não funciona.
 - **PDF:** sempre usar `html2pdf.js` no frontend. O backend tem uma rota `GET /api/orcamentos/:id/pdf` com `pdfkit`, mas não é usada pelo frontend (layout diferente, mantida por precaução).
 - **Estilos de impressão:** centralizados no `index.css` em `@media print`. Nunca colocar `.no-print` apenas em `<style>` inline de componente — não funciona no mobile.
-- **Testes:** conectam no banco real do Neon.tech (não mockado). O `helpers.js` deve deletar `AuditLog` antes do `User` na limpeza (FK constraint).
+- **Testes:** conectam no banco real do Neon.tech (não mockado). O `helpers.ts` deve deletar `AuditLog` antes do `User` na limpeza (FK constraint).
 
 ---
 
