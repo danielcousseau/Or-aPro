@@ -116,27 +116,47 @@ export default function Historico() {
                                     <p><strong>Móvel:</strong> {orc.tipoMovel || '-'}</p>
                                     <p><strong>Ambiente:</strong> {orc.ambiente || '-'}</p>
                                     <div>
+                                        <p style={{ margin: '0 0 6px 0' }}><strong>Materiais:</strong></p>
                                         {orc.materiais && orc.materiais.length > 0 ? (
-                                            <button
-                                                type="button"
-                                                className="btn-ghost"
-                                                onClick={() => toggleMateriais(orc.id)}
-                                                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)', fontSize: '0.9rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
-                                            >
-                                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: materiaisAbertos.has(orc.id) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
-                                                    <polyline points="2,5 7,9 12,5" />
-                                                </svg>
-                                                {orc.materiais.length} {orc.materiais.length === 1 ? 'material' : 'materiais'}
-                                            </button>
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleMateriais(orc.id)}
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '6px',
+                                                        background: materiaisAbertos.has(orc.id) ? 'rgba(0, 86, 163, 0.08)' : 'var(--panel-soft)',
+                                                        border: '1px solid',
+                                                        borderColor: materiaisAbertos.has(orc.id) ? 'var(--primary)' : 'var(--border-input)',
+                                                        borderRadius: '20px',
+                                                        padding: '5px 12px',
+                                                        cursor: 'pointer',
+                                                        color: 'var(--primary)',
+                                                        fontSize: '0.82rem',
+                                                        fontWeight: '600',
+                                                        boxShadow: 'none',
+                                                        minHeight: 'auto',
+                                                        transition: '0.2s ease',
+                                                        fontFamily: 'Montserrat, sans-serif',
+                                                    }}
+                                                >
+                                                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                                                        style={{ transform: materiaisAbertos.has(orc.id) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
+                                                        <polyline points="2,5 7,9 12,5" />
+                                                    </svg>
+                                                    {materiaisAbertos.has(orc.id) ? 'Ocultar' : 'Ver'} {orc.materiais.length} {orc.materiais.length === 1 ? 'material' : 'materiais'}
+                                                </button>
+                                                {materiaisAbertos.has(orc.id) && (
+                                                    <ul style={{ margin: '8px 0 0 0', paddingLeft: '16px', fontSize: '0.85rem', color: 'var(--text-soft)', lineHeight: '1.7' }}>
+                                                        {orc.materiais.map(m => (
+                                                            <li key={m.id}>{m.quantidade}× {m.nome} — {formatarMoeda(m.valor)}</li>
+                                                        ))}
+                                                    </ul>
+                                                )}
+                                            </>
                                         ) : (
-                                            <p><strong>Materiais:</strong> nenhum</p>
-                                        )}
-                                        {materiaisAbertos.has(orc.id) && orc.materiais && (
-                                            <ul style={{ margin: '6px 0 0 0', paddingLeft: '16px', fontSize: '0.85rem', color: 'var(--text-soft)', lineHeight: '1.7' }}>
-                                                {orc.materiais.map(m => (
-                                                    <li key={m.id}>{m.quantidade}× {m.nome} — {formatarMoeda(m.valor)}</li>
-                                                ))}
-                                            </ul>
+                                            <span style={{ color: 'var(--text-soft)', fontSize: '0.9rem' }}>nenhum</span>
                                         )}
                                     </div>
                                     <p><strong>Status:</strong> <span style={{ background: CORES_STATUS[orc.status ?? ''] || CORES_STATUS['Aguardando'], color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold' }}>{(!orc.status || orc.status === 'analise') ? 'Aguardando' : orc.status}</span></p>
