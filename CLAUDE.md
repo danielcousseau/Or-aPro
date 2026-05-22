@@ -229,6 +229,7 @@ Nenhum bug aberto no momento.
 ### No final de cada sessão
 - Atualize a seção "Estado Atual" com o que foi implementado
 - Atualize o Backlog (marque o que foi concluído, adicione bugs novos)
+- Se a sessão trouxe mudanças estruturais, atualize também as seções afetadas: Stack, Estrutura de pastas, Decisões de arquitetura, Convenções — qualquer campo que ficou desatualizado em relação ao que foi feito
 - Faça commit e push de tudo que ficou pendente
 
 ### Regras críticas para banco de dados
