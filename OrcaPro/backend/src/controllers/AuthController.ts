@@ -1,50 +1,49 @@
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const prisma = require('../lib/prisma');
-const { enviarEmailResetSenha } = require('../services/emailService');
-const MATERIAIS_PADRAO = require('../constants/materiaisPadrao');
-const { registrar } = require('../services/audit');
+import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import prisma = require('../lib/prisma');
+import { enviarEmailResetSenha } from '../services/emailService';
+import MATERIAIS_PADRAO from '../constants/materiaisPadrao';
+import { registrar } from '../services/audit';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Opções de cookie compartilhadas.
-// SameSite=none obrigatório para cross-origin (Vercel + Render).
-// Em dev, lax funciona para localhost → localhost.
-function cookieOpts(maxAge) {
+function cookieOpts(maxAge: number) {
     return {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
+        sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
         maxAge,
         path: '/',
     };
 }
 
-module.exports = {
-    async login(req, res) {
+export default {
+    async login(req: Request, res: Response): Promise<void> {
         const { usuario, senha } = req.body;
 
         try {
             const user = await prisma.user.findUnique({ where: { usuario } });
 
             if (!user) {
-                return res.status(401).json({ error: 'Usuário ou senha inválidos' });
+                res.status(401).json({ error: 'Usuário ou senha inválidos' });
+                return;
             }
 
             const senhaValida = await bcrypt.compare(senha, user.password);
             if (!senhaValida) {
-                return res.status(401).json({ error: 'Usuário ou senha inválidos' });
+                res.status(401).json({ error: 'Usuário ou senha inválidos' });
+                return;
             }
 
             const jwtSecret = process.env.JWT_SECRET;
             if (!jwtSecret) {
                 console.error('CRÍTICO: JWT_SECRET não configurado.');
-                return res.status(500).json({ error: 'Erro interno de configuração do servidor' });
+                res.status(500).json({ error: 'Erro interno de configuração do servidor' });
+                return;
             }
 
-            // Access token curto: janela de exposição menor em caso de comprometimento
             const accessToken = jwt.sign({ id: user.id }, jwtSecret, { expiresIn: '15m' });
-            // Refresh token longo: permite renovar a sessão sem novo login por 7 dias
             const refreshToken = jwt.sign({ id: user.id, type: 'refresh' }, jwtSecret, { expiresIn: '7d' });
 
             res.cookie('token', accessToken, cookieOpts(15 * 60 * 1000));
@@ -52,65 +51,66 @@ module.exports = {
 
             await registrar(user.id, 'login', 'Sessão', null, null);
 
-            // Tokens também no body: necessário para Safari/iOS (ITP bloqueia cookies cross-domain)
-            return res.json({
+            res.json({
                 user: { id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null },
                 accessToken,
                 refreshToken,
             });
         } catch (error) {
             console.error(error);
-            return res.status(500).json({ error: 'Erro interno no servidor' });
+            res.status(500).json({ error: 'Erro interno no servidor' });
         }
     },
 
-    async refresh(req, res) {
-        // Aceita token do body (Safari/iOS) ou do cookie (outros browsers)
+    async refresh(req: Request, res: Response): Promise<void> {
         const refreshToken = req.body?.refreshToken || req.cookies?.refreshToken;
         if (!refreshToken) {
-            return res.status(401).json({ error: 'Sessão expirada. Faça login novamente.' });
+            res.status(401).json({ error: 'Sessão expirada. Faça login novamente.' });
+            return;
         }
 
         try {
-            const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+            const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET!) as { id: number; type: string };
             if (decoded.type !== 'refresh') throw new Error('Token inválido');
 
-            const newAccessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET, { expiresIn: '15m' });
+            const newAccessToken = jwt.sign({ id: decoded.id }, process.env.JWT_SECRET!, { expiresIn: '15m' });
             res.cookie('token', newAccessToken, cookieOpts(15 * 60 * 1000));
 
-            return res.json({ ok: true, accessToken: newAccessToken });
+            res.json({ ok: true, accessToken: newAccessToken });
         } catch {
             res.clearCookie('token');
             res.clearCookie('refreshToken');
-            return res.status(401).json({ error: 'Sessão expirada. Faça login novamente.' });
+            res.status(401).json({ error: 'Sessão expirada. Faça login novamente.' });
         }
     },
 
-    async me(req, res) {
+    async me(req: Request, res: Response): Promise<void> {
         try {
             const user = await prisma.user.findUnique({
                 where: { id: req.userId },
                 select: { id: true, usuario: true, name: true, email: true, avatar: true, nomeMarcenaria: true }
             });
-            if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
-            return res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null });
+            if (!user) {
+                res.status(404).json({ error: 'Usuário não encontrado.' });
+                return;
+            }
+            res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null });
         } catch (error) {
             console.error(error);
-            return res.status(500).json({ error: 'Erro interno no servidor' });
+            res.status(500).json({ error: 'Erro interno no servidor' });
         }
     },
 
-    async logout(req, res) {
+    async logout(_req: Request, res: Response): Promise<void> {
         res.clearCookie('token', cookieOpts(0));
         res.clearCookie('refreshToken', cookieOpts(0));
-        return res.json({ ok: true });
+        res.json({ ok: true });
     },
 
-    async register(req, res) {
+    async register(req: Request, res: Response): Promise<void> {
         try {
             const { nome, usuario, senha, email, turnstileToken } = req.body;
 
-            // Verifica Turnstile apenas em produção (TURNSTILE_SECRET_KEY não definida em dev)
             const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
             if (turnstileSecret) {
                 const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
@@ -118,15 +118,17 @@ module.exports = {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ secret: turnstileSecret, response: turnstileToken })
                 });
-                const verifyData = await verifyRes.json();
+                const verifyData = await verifyRes.json() as { success: boolean };
                 if (!verifyData.success) {
-                    return res.status(400).json({ error: 'Verificação de segurança falhou. Tente novamente.' });
+                    res.status(400).json({ error: 'Verificação de segurança falhou. Tente novamente.' });
+                    return;
                 }
             }
 
             const userExists = await prisma.user.findUnique({ where: { usuario } });
             if (userExists) {
-                return res.status(400).json({ error: 'Este nome de usuário já está em uso.' });
+                res.status(400).json({ error: 'Este nome de usuário já está em uso.' });
+                return;
             }
 
             const hashPassword = await bcrypt.hash(senha, 10);
@@ -138,17 +140,17 @@ module.exports = {
                 data: MATERIAIS_PADRAO.map(m => ({ ...m, userId: novoUsuario.id }))
             });
 
-            return res.status(201).json({ message: 'Conta criada com sucesso!' });
+            res.status(201).json({ message: 'Conta criada com sucesso!' });
         } catch (error) {
             console.error(error);
-            return res.status(500).json({ error: 'Erro ao criar conta.' });
+            res.status(500).json({ error: 'Erro ao criar conta.' });
         }
     },
 
-    async atualizarPerfil(req, res) {
+    async atualizarPerfil(req: Request, res: Response): Promise<void> {
         try {
             const { nome, email, avatar, nomeMarcenaria } = req.body;
-            const data = { name: nome, email: email || null };
+            const data: Record<string, unknown> = { name: nome, email: email || null };
             if (avatar !== undefined) data.avatar = avatar;
             if (nomeMarcenaria !== undefined) data.nomeMarcenaria = nomeMarcenaria || null;
             const user = await prisma.user.update({
@@ -156,51 +158,60 @@ module.exports = {
                 data,
                 select: { id: true, usuario: true, name: true, email: true, avatar: true, nomeMarcenaria: true }
             });
-            return res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null });
-        } catch (error) {
-            if (error.code === 'P2002') {
-                return res.status(409).json({ error: 'Este e-mail já está em uso por outra conta.' });
+            res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null });
+        } catch (error: unknown) {
+            if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code === 'P2002') {
+                res.status(409).json({ error: 'Este e-mail já está em uso por outra conta.' });
+                return;
             }
             console.error(error);
-            return res.status(500).json({ error: 'Erro ao atualizar perfil.' });
+            res.status(500).json({ error: 'Erro ao atualizar perfil.' });
         }
     },
 
-    async alterarSenha(req, res) {
+    async alterarSenha(req: Request, res: Response): Promise<void> {
         try {
             const { senhaAtual, novaSenha } = req.body;
             if (!senhaAtual || !novaSenha || novaSenha.length < 6) {
-                return res.status(400).json({ error: 'Dados inválidos para alteração de senha.' });
+                res.status(400).json({ error: 'Dados inválidos para alteração de senha.' });
+                return;
             }
 
             const user = await prisma.user.findUnique({ where: { id: req.userId } });
+            if (!user) {
+                res.status(404).json({ error: 'Usuário não encontrado.' });
+                return;
+            }
             const senhaValida = await bcrypt.compare(senhaAtual, user.password);
             if (!senhaValida) {
-                return res.status(400).json({ error: 'Senha atual incorreta.' });
+                res.status(400).json({ error: 'Senha atual incorreta.' });
+                return;
             }
 
             const hashNovaSenha = await bcrypt.hash(novaSenha, 10);
             await prisma.user.update({ where: { id: req.userId }, data: { password: hashNovaSenha } });
 
-            return res.json({ message: 'Senha atualizada com sucesso!' });
+            res.json({ message: 'Senha atualizada com sucesso!' });
         } catch (error) {
             console.error(error);
-            return res.status(500).json({ error: 'Erro ao alterar senha.' });
+            res.status(500).json({ error: 'Erro ao alterar senha.' });
         }
     },
 
-    async forgotPassword(req, res) {
+    async forgotPassword(req: Request, res: Response): Promise<void> {
         try {
             const { usuario } = req.body;
             if (!usuario) {
-                return res.status(400).json({ error: 'Informe o nome de usuário.' });
+                res.status(400).json({ error: 'Informe o nome de usuário.' });
+                return;
             }
 
             const user = await prisma.user.findUnique({ where: { usuario } });
 
             // Sempre retorna sucesso — não expõe se o usuário existe (prevenção de enumeração)
             if (!user || !user.email) {
-                return res.json({ message: 'Se este usuário existir e tiver um e-mail cadastrado, você receberá as instruções em breve.' });
+                res.json({ message: 'Se este usuário existir e tiver um e-mail cadastrado, você receberá as instruções em breve.' });
+                return;
             }
 
             // O hash da senha atual faz parte do segredo — trocar a senha invalida o token automaticamente
@@ -212,40 +223,42 @@ module.exports = {
 
             await enviarEmailResetSenha(user.email, user.name, linkReset);
 
-            return res.json({ message: 'Se este usuário existir e tiver um e-mail cadastrado, você receberá as instruções em breve.' });
+            res.json({ message: 'Se este usuário existir e tiver um e-mail cadastrado, você receberá as instruções em breve.' });
         } catch (error) {
             console.error('Erro ao processar recuperação de senha:', error);
-            // Não expõe detalhes de falha de envio de email
-            return res.json({ message: 'Se este usuário existir e tiver um e-mail cadastrado, você receberá as instruções em breve.' });
+            res.json({ message: 'Se este usuário existir e tiver um e-mail cadastrado, você receberá as instruções em breve.' });
         }
     },
 
-    async resetPassword(req, res) {
+    async resetPassword(req: Request, res: Response): Promise<void> {
         try {
             const { token, userId, novaSenha } = req.body;
             if (!token || !userId || !novaSenha || novaSenha.length < 6) {
-                return res.status(400).json({ error: 'Dados inválidos.' });
+                res.status(400).json({ error: 'Dados inválidos.' });
+                return;
             }
 
             const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
             if (!user) {
-                return res.status(400).json({ error: 'Link inválido ou expirado.' });
+                res.status(400).json({ error: 'Link inválido ou expirado.' });
+                return;
             }
 
             const resetSecret = process.env.JWT_SECRET + user.password;
             try {
                 jwt.verify(token, resetSecret);
             } catch {
-                return res.status(400).json({ error: 'Link inválido ou expirado.' });
+                res.status(400).json({ error: 'Link inválido ou expirado.' });
+                return;
             }
 
             const hashNovaSenha = await bcrypt.hash(novaSenha, 10);
             await prisma.user.update({ where: { id: user.id }, data: { password: hashNovaSenha } });
 
-            return res.json({ message: 'Senha redefinida com sucesso! Faça login com a nova senha.' });
+            res.json({ message: 'Senha redefinida com sucesso! Faça login com a nova senha.' });
         } catch (error) {
             console.error(error);
-            return res.status(500).json({ error: 'Erro ao redefinir senha.' });
+            res.status(500).json({ error: 'Erro ao redefinir senha.' });
         }
     },
 };

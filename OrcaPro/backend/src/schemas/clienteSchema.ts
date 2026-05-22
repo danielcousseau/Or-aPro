@@ -1,7 +1,6 @@
-const { z } = require('zod');
+import { z } from 'zod';
 
-// Validação exata com base no seu schema.prisma
-const clienteSchema = z.object({
+export const clienteSchema = z.object({
     nome: z.string().trim().min(3, "O nome precisa ter no mínimo 3 caracteres"),
     cpfCnpj: z.string().trim().optional().nullable().or(z.literal('')),
     email: z.string().trim().email("E-mail inválido").optional().nullable().or(z.literal('')),
@@ -14,8 +13,3 @@ const clienteSchema = z.object({
     observacoes: z.string().trim().optional().nullable(),
     telegramChatId: z.string().trim().optional().nullable().or(z.literal(''))
 });
-
-// Exportando do jeito certo (com chaves)
-module.exports = {
-    clienteSchema
-};

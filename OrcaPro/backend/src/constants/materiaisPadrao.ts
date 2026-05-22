@@ -1,4 +1,11 @@
-const MATERIAIS_PADRAO = [
+interface MaterialPadrao {
+    nome: string;
+    categoria: string;
+    valor: number;
+    unidade: string;
+}
+
+const MATERIAIS_PADRAO: MaterialPadrao[] = [
     // --- Chapas ---
     { nome: 'MDF 18mm branco',           categoria: 'Chapas',     valor: 185.00, unidade: 'Chapa'   },
     { nome: 'MDF 18mm cor',              categoria: 'Chapas',     valor: 210.00, unidade: 'Chapa'   },
@@ -39,4 +46,4 @@ const MATERIAIS_PADRAO = [
     { nome: 'Cola',                        categoria: 'Acabamento', valor: 28.00, unidade: 'Kg'    },
 ];
 
-module.exports = MATERIAIS_PADRAO;
+export default MATERIAIS_PADRAO;

@@ -1,4 +1,4 @@
-require('dotenv').config();
+import 'dotenv/config';
 
 const REQUIRED_ENV = ['DATABASE_URL', 'JWT_SECRET'];
 const missingEnv = REQUIRED_ENV.filter(key => !process.env[key]);
@@ -7,7 +7,7 @@ if (missingEnv.length > 0) {
     process.exit(1);
 }
 
-const app = require('./app');
+import app = require('./app');
 
 const PORT = process.env.PORT || 3333;
 app.listen(PORT, () => {

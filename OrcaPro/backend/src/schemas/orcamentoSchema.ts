@@ -1,14 +1,12 @@
-const { z } = require('zod');
+import { z } from 'zod';
 
-// Regras para os materiais que vão dentro do orçamento
 const materialOrcamentoSchema = z.object({
     nome: z.string().min(1, "O nome do material é obrigatório"),
     valor: z.coerce.number().min(0, "O valor do material não pode ser negativo"),
     quantidade: z.coerce.number().positive("A quantidade deve ser maior que zero")
 });
 
-// Validação principal baseada no seu schema.prisma
-const orcamentoSchema = z.object({
+export const orcamentoSchema = z.object({
     titulo: z.string().min(3, "O título precisa ter no mínimo 3 caracteres"),
     clienteId: z.coerce.number().int().positive("Selecione um cliente válido"),
     tipoMaoDeObra: z.string().min(1, "Tipo de mão de obra é obrigatório"),
@@ -27,7 +25,3 @@ const orcamentoSchema = z.object({
     observacoes: z.string().optional().nullable(),
     materiais: z.array(materialOrcamentoSchema).optional().default([])
 });
-
-module.exports = {
-    orcamentoSchema
-};

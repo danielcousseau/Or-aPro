@@ -1,8 +1,18 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const cookieParser = require('cookie-parser');
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
+
+import clienteRoutes from './routes/clienteRoutes';
+import materialRoutes from './routes/materialRoutes';
+import orcamentoRoutes from './routes/orcamentoRoutes';
+import auditRoutes from './routes/auditRoutes';
+import opcaoCustomizadaRoutes from './routes/opcaoCustomizadaRoutes';
+import AuthController from './controllers/AuthController';
+import authMiddleware from './middlewares/auth';
+import errorHandler from './middlewares/errorHandler';
+import { buscarPendentes } from './services/telegram';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -32,7 +42,7 @@ if (!isTest) {
 }
 
 const authLimiter = isTest
-    ? (req, res, next) => next()
+    ? (_req: Request, _res: Response, next: NextFunction) => next()
     : rateLimit({
         windowMs: 15 * 60 * 1000,
         max: 10,
@@ -41,16 +51,7 @@ const authLimiter = isTest
         legacyHeaders: false,
     });
 
-const clienteRoutes = require('./routes/clienteRoutes');
-const materialRoutes = require('./routes/materialRoutes');
-const orcamentoRoutes = require('./routes/orcamentoRoutes');
-const auditRoutes = require('./routes/auditRoutes');
-const opcaoCustomizadaRoutes = require('./routes/opcaoCustomizadaRoutes');
-const AuthController = require('./controllers/AuthController');
-const authMiddleware = require('./middlewares/auth');
-const errorHandler = require('./middlewares/errorHandler');
-
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok', message: 'API do OrcaPro rodando!' });
 });
 
@@ -71,12 +72,11 @@ app.use('/api/orcamentos', orcamentoRoutes);
 app.use('/api/audit-log', auditRoutes);
 app.use('/api/opcoes-customizadas', opcaoCustomizadaRoutes);
 
-const { buscarPendentes } = require('./services/telegram');
-app.get('/api/telegram/pendentes', authMiddleware, async (req, res) => {
+app.get('/api/telegram/pendentes', authMiddleware, async (_req: Request, res: Response) => {
     const mensagens = await buscarPendentes();
     res.json(mensagens);
 });
 
 app.use(errorHandler);
 
-module.exports = app;
+export = app;

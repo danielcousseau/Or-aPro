@@ -1,0 +1,23 @@
+import { Router } from 'express';
+import OrcamentoController from '../controllers/OrcamentoController';
+import authMiddleware from '../middlewares/auth';
+import validate from '../middlewares/validate';
+import { orcamentoSchema } from '../schemas/orcamentoSchema';
+
+const router = Router();
+
+// [SecOps] Rota PÚBLICA — deve ficar ANTES do authMiddleware
+router.get('/proposta/:token', OrcamentoController.buscarPorTokenPublico);
+
+router.use(authMiddleware);
+
+router.get('/', OrcamentoController.listar);
+router.post('/', validate(orcamentoSchema), OrcamentoController.criar);
+router.get('/:id/pdf', OrcamentoController.gerarPDF);
+router.get('/:id', OrcamentoController.buscarPorId);
+router.put('/:id', validate(orcamentoSchema), OrcamentoController.atualizar);
+router.patch('/:id/status', OrcamentoController.atualizarStatus);
+router.delete('/:id', OrcamentoController.excluir);
+router.post('/:id/link-publico', OrcamentoController.gerarTokenPublico);
+
+export default router;

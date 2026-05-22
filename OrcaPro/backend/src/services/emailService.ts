@@ -1,9 +1,13 @@
-async function enviarEmailResetSenha(destinatario, nomeUsuario, linkReset) {
+export async function enviarEmailResetSenha(
+    destinatario: string,
+    nomeUsuario: string,
+    linkReset: string
+): Promise<void> {
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
             'accept': 'application/json',
-            'api-key': process.env.BREVO_API_KEY,
+            'api-key': process.env.BREVO_API_KEY ?? '',
             'content-type': 'application/json',
         },
         body: JSON.stringify({
@@ -40,5 +44,3 @@ async function enviarEmailResetSenha(destinatario, nomeUsuario, linkReset) {
         throw new Error(`Brevo API error ${response.status}: ${erro}`);
     }
 }
-
-module.exports = { enviarEmailResetSenha };
