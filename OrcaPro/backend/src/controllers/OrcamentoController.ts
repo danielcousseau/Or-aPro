@@ -128,7 +128,7 @@ export default {
                 }
             });
 
-            const alertasEstoque = await descontarEstoque(materiais as MatLineInput[], req.userId!);
+            const alertasEstoque = await descontarEstoque(materiais as MatLineInput[], req.userId!).catch(() => [] as string[]);
 
             await registrar(req.userId!, 'criou', 'Orçamento', novoOrcamento.id, novoOrcamento.titulo);
             res.status(201).json({ ...novoOrcamento, alertasEstoque });
@@ -201,7 +201,7 @@ export default {
                 });
             }
 
-            const alertasEstoque = await ajustarDiffEstoque(linhasAtuais, novasMateriais, req.userId!);
+            const alertasEstoque = await ajustarDiffEstoque(linhasAtuais, novasMateriais, req.userId!).catch(() => [] as string[]);
 
             const orcamentoAtualizado = await prisma.orcamento.update({
                 where: { id: Number(id) },
