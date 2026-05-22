@@ -36,6 +36,10 @@ jobs:
         working-directory: OrcaPro/backend
         run: npx prisma generate
 
+      - name: Sincronizar schema com o banco
+        working-directory: OrcaPro/backend
+        run: npx prisma db push
+
       - name: Rodar testes
         working-directory: OrcaPro/backend
         run: npm test
