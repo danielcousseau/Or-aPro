@@ -219,10 +219,20 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - Faça commit e push de tudo que ficou pendente
 
 ### Regras críticas para banco de dados
-O projeto usa `prisma db push` (não `prisma migrate dev`) porque o banco foi criado sem histórico de migrations. Isso significa:
-- Toda alteração de schema precisa de aprovação explícita do Victor antes de rodar
-- `prisma db push` modifica o banco de produção real — não existe "ambiente de teste separado"
-- **Nunca** usar `--accept-data-loss` sem mostrar ao Victor exatamente o que será apagado
+
+**NUNCA colocar `prisma db push` em scripts automáticos** (build, CI, postinstall). Em 22/05/2026 isso causou perda total dos dados de produção. A lição: qualquer comando que toca o banco deve ser rodado manualmente, com aprovação explícita do Victor, e verificado antes de qualquer deploy.
+
+Para adicionar uma nova coluna ao banco, o processo correto é:
+1. Editar o `schema.prisma`
+2. Mostrar o diff para o Victor e explicar o que muda
+3. Victor aprova
+4. Rodar o SQL manualmente no **Neon → SQL Editor** (ex: `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "nomeMarcenaria" TEXT;`)
+5. Só então fazer o deploy do código
+
+O projeto usa `prisma db push` apenas como ferramenta local/manual — nunca em automação. Isso significa:
+- `build` no `package.json`: apenas `npx prisma generate`
+- CI no GitHub Actions: apenas `npx prisma generate` + testes
+- **Nunca** usar `--accept-data-loss` — esta flag ignora o aviso de segurança e pode apagar dados reais
 
 ### Se o contexto da sessão estiver acabando
 - Pare, atualize este `CLAUDE.md` com o estado atual
