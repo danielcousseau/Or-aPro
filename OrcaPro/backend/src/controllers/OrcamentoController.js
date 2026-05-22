@@ -239,81 +239,102 @@ module.exports = {
                 const path = require('path');
                 const fs = require('fs');
 
-                const doc = new PDFDocument({ size: 'A4', margin: 50, compress: true });
+                // margin: 0 evita que pdfkit crie segunda página automática baseado em cursor
+                const doc = new PDFDocument({ size: 'A4', margin: 0, compress: true });
                 const chunks = [];
                 doc.on('data', chunk => chunks.push(chunk));
                 doc.on('end', () => resolve(Buffer.concat(chunks)));
                 doc.on('error', reject);
 
-                const W = 495;
-                const COL = 240;
-                const LINE_H = 17;
-                const X_DIR = 310;
-                const AZUL = '#0056A3';
+                const X = 50;        // margem esquerda
+                const W = 495;       // largura útil (595 - 2×50)
+                const COL = 240;     // largura de cada coluna
+                const X_DIR = 310;   // início da coluna direita
+                const LINE_H = 18;   // altura de linha
                 const VERDE = '#10B981';
                 const CINZA = '#64748B';
-                const BORDA = '#E2E8F0';
+                const ESCURO = '#333333';
+                const BORDA_CINZA = '#dddddd';
 
-                // === CABECALHO ===
+                // === CABEÇALHO ===
                 const logoPath = path.join(__dirname, '../../../frontend/public/logo-orcapro.png');
                 if (fs.existsSync(logoPath)) {
-                    doc.image(logoPath, 50, 40, { fit: [200, 55] });
+                    doc.image(logoPath, X, 40, { fit: [200, 55] });
                 } else {
-                    doc.fontSize(22).font('Helvetica-Bold').fillColor(AZUL).text('Orca Pro', 50, 48);
+                    doc.fontSize(22).font('Helvetica-Bold').fillColor('#0056A3').text('OrcaPro', X, 48);
                 }
 
-                doc.fontSize(18).font('Helvetica-Bold').fillColor('#1E293B')
-                   .text(`Orcamento #${numeroLocal}`, 50, 45, { align: 'right', width: W });
+                // Número e data alinhados à direita
+                doc.fontSize(18).font('Helvetica-Bold').fillColor(ESCURO)
+                   .text(`Orcamento #${numeroLocal}`, X, 45, { align: 'right', width: W });
                 doc.fontSize(10).font('Helvetica').fillColor(CINZA)
-                   .text(`Data: ${new Date(orcamento.createdAt).toLocaleDateString('pt-BR')}`, 50, 70, { align: 'right', width: W });
+                   .text(`Data: ${new Date(orcamento.createdAt).toLocaleDateString('pt-BR')}`, X, 72, { align: 'right', width: W });
 
-                // Linha fina azul separando cabecalho
-                doc.moveTo(50, 108).lineTo(545, 108).lineWidth(1.5).strokeColor(AZUL).stroke();
+                // Linha separadora escura (igual ao borderBottom: 2px solid #333 do HTML)
+                doc.moveTo(X, 108).lineTo(545, 108).lineWidth(2).strokeColor(ESCURO).stroke();
 
-                // === DADOS (duas colunas sem bordas pesadas) ===
-                const Y_SEC = 124;
-                const Y_DATA = Y_SEC + 18;
+                // === SEÇÕES DE DADOS ===
+                const Y_SEC = 126;
+                const Y_DATA = Y_SEC + 22;
 
-                doc.fontSize(11).font('Helvetica-Bold').fillColor(AZUL)
-                   .text('Dados do Cliente', 50, Y_SEC, { width: COL });
-                doc.fontSize(11).font('Helvetica-Bold').fillColor(AZUL)
+                // Títulos de seção em negrito com underline cinza (igual ao HTML)
+                doc.fontSize(12).font('Helvetica-Bold').fillColor(ESCURO)
+                   .text('Dados do Cliente', X, Y_SEC, { width: COL });
+                doc.moveTo(X, Y_SEC + 18).lineTo(X + COL, Y_SEC + 18)
+                   .lineWidth(0.7).strokeColor(BORDA_CINZA).stroke();
+
+                doc.fontSize(12).font('Helvetica-Bold').fillColor(ESCURO)
                    .text('Projeto', X_DIR, Y_SEC, { width: COL });
+                doc.moveTo(X_DIR, Y_SEC + 18).lineTo(X_DIR + COL, Y_SEC + 18)
+                   .lineWidth(0.7).strokeColor(BORDA_CINZA).stroke();
 
-                doc.fontSize(10).font('Helvetica').fillColor('#1E293B');
-                doc.text(`Nome: ${orcamento.cliente.nome}`, 50, Y_DATA, { width: COL });
-                doc.text(`Telefone: ${orcamento.cliente.telefone || '-'}`, 50, Y_DATA + LINE_H, { width: COL });
-                doc.text(`Cidade: ${orcamento.cliente.cidade || '-'}`, 50, Y_DATA + LINE_H * 2, { width: COL });
+                // Dados: label em bold + valor em regular (continued: true com 4 args — sem NaN)
+                doc.fontSize(10).fillColor(ESCURO);
 
-                doc.text(`Titulo: ${orcamento.titulo}`, X_DIR, Y_DATA, { width: COL });
-                doc.text(`Ambiente: ${orcamento.ambiente || '-'}`, X_DIR, Y_DATA + LINE_H, { width: COL });
-                doc.text(`Movel: ${orcamento.tipoMovel || '-'}`, X_DIR, Y_DATA + LINE_H * 2, { width: COL });
+                doc.font('Helvetica-Bold').text('Nome: ', X, Y_DATA, { continued: true, width: COL });
+                doc.font('Helvetica').text(orcamento.cliente.nome || '-');
 
-                // === CAIXA DE TOTAIS (fundo cinza suave, borda leve) ===
-                const Y_TOTAL = 240;
+                doc.font('Helvetica-Bold').text('Telefone: ', X, Y_DATA + LINE_H, { continued: true, width: COL });
+                doc.font('Helvetica').text(orcamento.cliente.telefone || '-');
+
+                doc.font('Helvetica-Bold').text('Cidade: ', X, Y_DATA + LINE_H * 2, { continued: true, width: COL });
+                doc.font('Helvetica').text(orcamento.cliente.cidade || '-');
+
+                doc.font('Helvetica-Bold').text('Titulo: ', X_DIR, Y_DATA, { continued: true, width: COL });
+                doc.font('Helvetica').text(orcamento.titulo || '-');
+
+                doc.font('Helvetica-Bold').text('Ambiente: ', X_DIR, Y_DATA + LINE_H, { continued: true, width: COL });
+                doc.font('Helvetica').text(orcamento.ambiente || '-');
+
+                doc.font('Helvetica-Bold').text('Movel: ', X_DIR, Y_DATA + LINE_H * 2, { continued: true, width: COL });
+                doc.font('Helvetica').text(orcamento.tipoMovel || '-');
+
+                // === CAIXA DE TOTAIS (borda escura, sem fundo — igual ao HTML) ===
+                const Y_TOTAL = 260;
                 const LARGURA_BOX = 250;
                 const X_BOX = 545 - LARGURA_BOX;
 
-                doc.roundedRect(X_BOX, Y_TOTAL, LARGURA_BOX, 90, 6)
-                   .fillAndStroke('#F9FAFC', BORDA);
+                doc.rect(X_BOX, Y_TOTAL, LARGURA_BOX, 90)
+                   .lineWidth(2).strokeColor(ESCURO).stroke();
 
-                doc.fontSize(10).font('Helvetica').fillColor('#1E293B');
-                doc.text(`Prazo: ${orcamento.prazo || 'A combinar'}`, X_BOX + 16, Y_TOTAL + 13, { width: LARGURA_BOX - 28 });
-                doc.text(`Pagamento: ${orcamento.pagamento || 'A combinar'}`, X_BOX + 16, Y_TOTAL + 31, { width: LARGURA_BOX - 28 });
+                doc.fontSize(10).font('Helvetica').fillColor(ESCURO);
+                doc.text(`Prazo: ${orcamento.prazo || 'A combinar'}`, X_BOX + 15, Y_TOTAL + 13, { width: LARGURA_BOX - 25 });
+                doc.text(`Pagamento: ${orcamento.pagamento || 'A combinar'}`, X_BOX + 15, Y_TOTAL + 31, { width: LARGURA_BOX - 25 });
 
-                doc.moveTo(X_BOX + 14, Y_TOTAL + 52).lineTo(X_BOX + LARGURA_BOX - 14, Y_TOTAL + 52)
-                   .lineWidth(0.5).strokeColor(BORDA).stroke();
+                doc.moveTo(X_BOX + 10, Y_TOTAL + 54).lineTo(X_BOX + LARGURA_BOX - 10, Y_TOTAL + 54)
+                   .lineWidth(0.5).strokeColor(BORDA_CINZA).stroke();
 
                 doc.fontSize(16).font('Helvetica-Bold').fillColor(VERDE)
-                   .text(`Total: ${formatarMoedaBR(orcamento.totalFinal)}`, X_BOX + 16, Y_TOTAL + 60, { width: LARGURA_BOX - 28 });
+                   .text(`Total: ${formatarMoedaBR(orcamento.totalFinal)}`, X_BOX + 15, Y_TOTAL + 61, { width: LARGURA_BOX - 25 });
 
-                // === RODAPE ===
+                // === RODAPÉ ===
                 const Y_FOOTER = 720;
-                doc.moveTo(50, Y_FOOTER).lineTo(545, Y_FOOTER)
-                   .lineWidth(0.5).strokeColor(BORDA).stroke();
+                doc.moveTo(X, Y_FOOTER).lineTo(545, Y_FOOTER)
+                   .lineWidth(0.5).strokeColor(BORDA_CINZA).stroke();
                 doc.fontSize(9).font('Helvetica').fillColor(CINZA);
-                doc.text(`Este orcamento e valido por ${orcamento.validade || '7 dias'}.`, 50, Y_FOOTER + 14, { width: W });
+                doc.text(`Este orcamento e valido por ${orcamento.validade || '7 dias'}.`, X, Y_FOOTER + 14, { width: W });
                 if (orcamento.observacoes) {
-                    doc.text(`Observacoes: ${orcamento.observacoes}`, 50, Y_FOOTER + 29, { width: W });
+                    doc.text(`Observacoes: ${orcamento.observacoes}`, X, Y_FOOTER + 29, { width: W });
                 }
 
                 doc.end();
