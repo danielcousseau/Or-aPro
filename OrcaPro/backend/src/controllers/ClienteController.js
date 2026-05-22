@@ -70,15 +70,19 @@ module.exports = {
     async excluir(req, res) {
         try {
             const { id } = req.params;
-            
-            // [SaaS] Valida posse
+
             const pertence = await prisma.cliente.findFirst({ where: { id: Number(id), userId: req.userId }});
             if (!pertence) return res.status(403).json({ error: 'Acesso negado' });
 
+            const totalOrcamentos = await prisma.orcamento.count({ where: { clienteId: Number(id) } });
+            if (totalOrcamentos > 0) {
+                return res.status(409).json({
+                    error: `Este cliente possui ${totalOrcamentos} orçamento(s) vinculado(s). Exclua os orçamentos antes de excluir o cliente.`
+                });
+            }
+
             await registrar(req.userId, 'excluiu', 'Cliente', pertence.id, pertence.nome);
-            await prisma.cliente.delete({
-                where: { id: Number(id) }
-            });
+            await prisma.cliente.delete({ where: { id: Number(id) } });
 
             return res.json({ message: 'Cliente excluído com sucesso!' });
         } catch (error) {

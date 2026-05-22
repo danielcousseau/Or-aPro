@@ -89,7 +89,8 @@ export default function Clientes() {
             setClienteParaExcluir(null);
             carregarClientes();
         } catch (error) {
-            toast.error('Erro ao excluir cliente.');
+            const msg = error.response?.data?.error || 'Erro ao excluir cliente.';
+            toast.error(msg);
             setClienteParaExcluir(null);
         }
     };
