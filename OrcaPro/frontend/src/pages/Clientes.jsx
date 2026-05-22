@@ -94,26 +94,45 @@ export default function Clientes() {
         }
     };
 
-    // Busca o CEP automaticamente na API pública do ViaCEP
     const buscarCep = async (e) => {
-        const cepLimpo = e.target.value.replace(/\D/g, ''); // Limpa traços e pontos, deixando só números
-        
-        if (cepLimpo.length === 8) {
-            try {
-                const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
-                const data = await response.json();
+        const cepLimpo = e.target.value.replace(/\D/g, '');
+        if (cepLimpo.length !== 8) return;
 
-                if (!data.erro) {
-                    setFormData(prev => ({
-                        ...prev,
-                        rua: data.logradouro || prev.rua, // O ViaCEP chama rua de "logradouro"
-                        cidade: data.localidade || prev.cidade, // O ViaCEP chama cidade de "localidade"
-                        bairro: data.bairro || prev.bairro
-                    }));
+        try {
+            let endereco = null;
+
+            // Tenta ViaCEP primeiro
+            try {
+                const res = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+                if (res.ok) {
+                    const json = await res.json();
+                    if (!json.erro) {
+                        endereco = { rua: json.logradouro, cidade: json.localidade, bairro: json.bairro };
+                    }
                 }
-            } catch (error) {
-                console.error("Erro ao buscar informações do CEP:", error);
+            } catch { /* ViaCEP indisponível — tenta fallback */ }
+
+            // Fallback: BrasilAPI
+            if (!endereco) {
+                const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${cepLimpo}`);
+                if (res.ok) {
+                    const json = await res.json();
+                    endereco = { rua: json.street, cidade: json.city, bairro: json.neighborhood };
+                }
             }
+
+            if (endereco) {
+                setFormData(prev => ({
+                    ...prev,
+                    rua: endereco.rua || prev.rua,
+                    cidade: endereco.cidade || prev.cidade,
+                    bairro: endereco.bairro || prev.bairro,
+                }));
+            } else {
+                toast.warn('CEP não encontrado.');
+            }
+        } catch (error) {
+            console.error('Erro ao buscar CEP:', error);
         }
     };
 
