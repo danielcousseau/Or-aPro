@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { formatarMoeda } from '../utils/format';
@@ -11,6 +11,7 @@ export default function ImprimirOrcamento() {
     const [erro, setErro] = useState(false);
     const [numeroLocal, setNumeroLocal] = useState('');
     const [gerando, setGerando] = useState(false);
+    const contentRef = useRef(null);
 
     useEffect(() => {
         Promise.all([
