@@ -1003,11 +1003,17 @@ input[type="number"] {
         display: none !important;
     }
 
-    body {
+    html, body {
         background: white !important;
         min-height: 0 !important;
+        height: auto !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+    }
+
+    #root {
+        min-height: 0 !important;
+        height: auto !important;
     }
 
     /* Remove espaço extra do wrapper externo da Proposta */

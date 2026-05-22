@@ -94,12 +94,12 @@ export default function ImprimirOrcamento() {
     return (
         <div className="print-container">
             <div className="print-action-bar no-print">
-                <button onClick={() => window.print()} style={{ background: '#27ae60' }}>🖨️ Imprimir</button>
+                <button onClick={() => window.print()} style={{ background: '#27ae60' }}>Imprimir</button>
                 <button onClick={baixarPDF} disabled={gerando} style={{ background: '#2980b9' }}>
-                    {gerando ? 'Gerando...' : '⬇️ Baixar PDF'}
+                    {gerando ? 'Gerando...' : 'Baixar PDF'}
                 </button>
-                <button onClick={enviarWhatsApp} style={{ background: '#25D366', color: '#fff' }}>💬 WhatsApp</button>
-                <button onClick={() => navigate('/historico')} style={{ background: '#7f8c8d' }}>← Voltar</button>
+                <button onClick={enviarWhatsApp} style={{ background: '#25D366', color: '#fff' }}>WhatsApp</button>
+                <button onClick={() => navigate('/historico')} style={{ background: '#7f8c8d' }}>Voltar</button>
             </div>
 
             <div ref={contentRef} className="print-page">
