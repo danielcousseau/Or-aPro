@@ -126,7 +126,10 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - [x] PWA: ícones, manifest, service worker com `skipWaiting: true`
 - [x] Testes automatizados: `__tests__/auth.test.js` + `__tests__/crossTenant.test.js`
 
-### Fixes sessão 22/05/2026
+### Fixes e melhorias sessão 22/05/2026
+
+- [x] **Layout desktop com sidebar lateral** — menu horizontal do topo convertido em sidebar fixa de 220px na esquerda (`--sidebar-width: 220px`). Conteúdo preenche toda a largura restante. Em telas ≤ 900px reverte para menu horizontal no topo (comportamento anterior). Estrutura: `.app-shell` (flex) → `Menu` sidebar + `.app-main`. Avatar e dropdown de perfil/logout movidos para dentro do `Menu.tsx` como props (`user`, `avatarUrl`, `onLogout`).
+- [x] **Botão de materiais no Histórico** — chip/pílula com borda e texto dinâmico "Ver/Ocultar X materiais". Remove `btn-ghost` que herdava `box-shadow` laranja do base `button`. Adiciona label "Materiais:" sempre visível. Fundo azul claro + borda azul quando expandido.
 
 - [x] **Migração para TypeScript — backend completo** — todos os arquivos `src/**/*.js` convertidos para `.ts`. Pacotes instalados: `typescript`, `ts-node`, `ts-jest`, `cross-env`, `@types/*`. `tsconfig.json` com `strict: true`, output em `dist/`. Testes: 14/14 passando. Script `build` atualizado para `npx prisma generate && tsc`. Script `start` aponta para `dist/server.js`.
 - [x] **Migração para TypeScript — frontend completo** — todos os arquivos `.jsx`/`.js` convertidos para `.tsx`/`.ts` (26 arquivos, ~3100 linhas). `tsconfig.json` com `noEmit: true` (Vite compila, TS só checa tipos), `strict: true`, `types: ["vite/client"]`. `src/types.ts` centraliza todas as interfaces compartilhadas. `src/types/html2pdf.d.ts` declara tipos do `html2pdf.js`. `tsc --noEmit`: zero erros. Build: sucesso.
@@ -151,16 +154,43 @@ Nenhum bug aberto no momento.
 - [x] **Telegram chatId não salva pelo formulário** — resolvido. Campo salva corretamente.
 - [x] **Botão "Adicionar Material" — cor azul não aparece no Vercel** — resolvido. Botão aparece azul corretamente.
 
-### 🟡 Média prioridade
+---
 
-- [ ] **WhatsApp API** — substituir Telegram por Z-API ou Evolution API (usa o próprio número de WhatsApp do marceneiro, mais prático que bot Telegram)
+### Roadmap de produto — o que falta pra ser competitivo
 
-### 🟢 Baixa prioridade / SaaS futuro
+> Baseado em análise de mercado (22/05/2026). Implementar uma feature por vez com spec antes de começar.
+
+#### 🔴 Fase 1 — Sem isso o sistema é incompleto
+
+- [ ] **Melhoria do PDF de proposta** — o PDF já existe (`html2pdf.js`), mas o layout pode ser mais bonito: logo da marcenaria destacada, cores da marca, tabela de itens bem formatada. *(PDF básico já funciona — isso é refinamento)*
+- [ ] **Contrato gerado automaticamente** — quando o orçamento é aprovado no Kanban, gera um contrato simples com dados preenchidos (cliente, valor, prazo, descrição do serviço) pronto pra assinar
+- [ ] **Estoque básico de materiais** — marceneiro cadastra quantidade em estoque (MDF, ferragens, acessórios). Ao criar orçamento, o sistema desconta automaticamente do estoque
+- [ ] **Alerta de estoque baixo** — avisa quando um material está abaixo de um limite definido pelo marceneiro antes de fechar novo orçamento *(depende do estoque básico)*
+- [ ] **Financeiro básico — contas a receber** — por projeto: registrar sinal pago, parcelas, saldo restante. Visualizar situação de pagamento de cada obra
+
+#### 🟡 Fase 2 — Transforma o produto
+
+- [ ] **Ordem de produção em 1 clique** — quando cliente aprova, já cria uma ordem de produção com os dados do orçamento (hoje precisa mover manualmente no Kanban)
+- [ ] **Métricas do funil de vendas** — o Kanban já existe, mas precisa de números: total em negociação, aprovados no mês, perdidos, valor médio
+- [ ] **Taxa de conversão** — relatório "de X orçamentos enviados, Y viraram venda" — referência valiosa pro marceneiro
+- [ ] **Rentabilidade por projeto** — lucro real por obra descontando material e mão de obra *(depende do financeiro básico da Fase 1)*
+- [ ] **Fluxo de caixa** — projeção do dinheiro que vai entrar nos próximos 30/60/90 dias com base nos projetos em andamento
+
+#### 🟢 Fase 3 — Diferencial competitivo
+
+- [ ] **WhatsApp via EvolutionAPI** — notificações automáticas pro cliente em cada etapa (substituir Telegram, que já está implementado). Já estava no backlog.
+- [ ] **Assinatura digital do contrato** — cliente assina pelo celular sem imprimir. Requer integração com ClickSign ou DocuSign (serviços pagos)
+- [ ] **Galeria de projetos concluídos** — marceneiro cadastra fotos das obras pra mostrar na proposta
+- [ ] **Catálogo de ambientes** — modelos prontos (cozinha, quarto, sala) com materiais e valores pré-calculados pra agilizar orçamento *(relacionado aos materiais padrão já existentes)*
+- [ ] **App nativo (Play Store)** — hoje o PWA já funciona como app; publicar na Play Store dá credibilidade mas é bastante trabalho. Deixar por último.
+
+---
+
+### 🟡 Outros itens
 
 - [ ] **Notificações push PWA** — service worker existe mas não tem push notifications implementado
 - [ ] **Planos e billing** — freemium vs pago; Stripe ou Pagar.me
 - [x] **TypeScript** — migração completa: backend (22/05/2026) + frontend (22/05/2026)
-- [ ] **Spec 003** — próxima feature a definir com Victor antes de implementar
 
 ---
 
