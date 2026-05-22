@@ -22,7 +22,7 @@ const comprimirImagem = (file: File): Promise<string> => new Promise((resolve) =
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
-        const MAX = 300;
+        const MAX = 400;
         let { width: w, height: h } = img;
         if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
         else { w = Math.round(w * MAX / h); h = MAX; }
@@ -31,7 +31,7 @@ const comprimirImagem = (file: File): Promise<string> => new Promise((resolve) =
         canvas.height = h;
         canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
         URL.revokeObjectURL(url);
-        resolve(canvas.toDataURL('image/jpeg', 0.8));
+        resolve(canvas.toDataURL('image/jpeg', 0.92));
     };
     img.src = url;
 });
