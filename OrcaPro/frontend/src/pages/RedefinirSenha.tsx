@@ -30,7 +30,7 @@ export default function RedefinirSenha() {
         );
     }
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (novaSenha !== confirmar) {
             toast.error('As senhas não coincidem.');
@@ -46,8 +46,9 @@ export default function RedefinirSenha() {
             await api.post('/reset-password', { token, userId, novaSenha });
             setConcluido(true);
             toast.success('Senha redefinida com sucesso!');
-        } catch (error) {
-            toast.error(error.response?.data?.error || 'Link inválido ou expirado.');
+        } catch (error: unknown) {
+            const axiosError = error as { response?: { data?: { error?: string } } };
+            toast.error(axiosError.response?.data?.error || 'Link inválido ou expirado.');
         } finally {
             setCarregando(false);
         }

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { toast } from 'react-toastify';
 
 export default function EsqueciSenha() {
     const [usuario, setUsuario] = useState('');
@@ -9,14 +8,13 @@ export default function EsqueciSenha() {
     const [carregando, setCarregando] = useState(false);
     const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setCarregando(true);
         try {
             await api.post('/forgot-password', { usuario: usuario.trim() });
             setEnviado(true);
         } catch {
-            // Sempre mostra a mesma mensagem — não expõe se o usuário existe
             setEnviado(true);
         } finally {
             setCarregando(false);

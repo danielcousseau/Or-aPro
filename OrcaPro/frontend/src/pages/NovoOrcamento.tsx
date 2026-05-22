@@ -5,56 +5,45 @@ import DadosGerais from '../components/Orcamento/DadosGerais';
 import ListaMateriais from '../components/Orcamento/ListaMateriais';
 import ResumoValores from '../components/Orcamento/ResumoValores';
 import { toast } from 'react-toastify';
-import { mascaraMoeda, desmascararMoeda } from '../utils/masks'; // [Clean Code] Importação dos conversores
+import { mascaraMoeda, desmascararMoeda } from '../utils/masks';
+import { OrcamentoFormData, MaterialSelecionado, Material, FormaPagamento, Cliente, Totais } from '../types';
+
+type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
+type FakeEvent = { target: { name: string; value: string } };
+
+const ORCAMENTO_VAZIO: OrcamentoFormData = {
+    titulo: '', clienteId: '', tipoMovel: '', ambiente: '', medidas: '',
+    tipoMaoDeObra: 'porcentagem', maoDeObraValor: '', maoDeObraQtde: 1,
+    tipoLucro: 'porcentagem', lucroValor: '', lucroQtde: 1,
+    prazo: '', pagamento: '', validade: '', observacoes: ''
+};
 
 export default function NovoOrcamento() {
-    const { id } = useParams(); // Pega o ID da URL se estiver editando
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
-    // Estado para bloquear a tela enquanto puxa as informações do banco
     const [carregando, setCarregando] = useState(!!id);
+    const [clientes, setClientes] = useState<Cliente[]>([]);
+    const [materiaisDb, setMateriaisDb] = useState<Material[]>([]);
+    const [formasPagamento, setFormasPagamento] = useState<FormaPagamento[]>([]);
 
-    // Listas do Banco de Dados
-    const [clientes, setClientes] = useState([]);
-    const [materiaisDb, setMateriaisDb] = useState([]);
-    const [formasPagamento, setFormasPagamento] = useState([]);
-
-    // Dados do Orçamento
-    const [orcamento, setOrcamento] = useState(() => {
-        // Se for edição, ignora rascunhos para não dar conflito
-        if (id) return {
-            titulo: '', clienteId: '', tipoMovel: '', ambiente: '', medidas: '',
-            tipoMaoDeObra: 'porcentagem', maoDeObraValor: '', maoDeObraQtde: 1,
-            tipoLucro: 'porcentagem', lucroValor: '', lucroQtde: 1,
-            prazo: '', pagamento: '', validade: '', observacoes: ''
-        };
-        
+    const [orcamento, setOrcamento] = useState<OrcamentoFormData>(() => {
+        if (id) return ORCAMENTO_VAZIO;
         const rascunho = localStorage.getItem('rascunhoOrcamento');
-        return rascunho ? JSON.parse(rascunho) : {
-            titulo: '', clienteId: '', tipoMovel: '', ambiente: '', medidas: '',
-            tipoMaoDeObra: 'porcentagem', maoDeObraValor: '',
-            tipoLucro: 'porcentagem', lucroValor: '', lucroQtde: 1,
-            prazo: '', pagamento: '', validade: '', observacoes: ''
-        };
+        return rascunho ? JSON.parse(rascunho) : { ...ORCAMENTO_VAZIO, maoDeObraQtde: undefined };
     });
 
-    // Lista dinâmica de materiais adicionados
-    const [materiaisSelecionados, setMateriaisSelecionados] = useState(() => {
-        if (id) return []; // Inicia vazio na edição, pois o banco vai preencher
-        
+    const [materiaisSelecionados, setMateriaisSelecionados] = useState<MaterialSelecionado[]>(() => {
+        if (id) return [];
         const rascunho = localStorage.getItem('rascunhoMateriais');
         return rascunho ? JSON.parse(rascunho) : [
             { idFalso: self.crypto?.randomUUID() || Date.now(), nome: '', valor: '', quantidade: 1 }
         ];
     });
 
-    // Totais calculados automaticamente
-    const [totais, setTotais] = useState({ materiais: 0, maoDeObra: 0, lucro: 0, final: 0 });
-    
-    // [UX/SecOps] Evita criação duplicada se o usuário clicar várias vezes rápido
+    const [totais, setTotais] = useState<Totais>({ materiais: 0, maoDeObra: 0, lucro: 0, final: 0 });
     const [salvando, setSalvando] = useState(false);
 
-    // 1. Busca os clientes e materiais quando a tela abre
     useEffect(() => {
         if (id) {
             setCarregando(true);
@@ -67,7 +56,7 @@ export default function NovoOrcamento() {
                 setClientes(resClientes.data);
                 setMateriaisDb(resMateriais.data);
                 setFormasPagamento(resFormas.data || []);
-                
+
                 const data = resOrcamento.data;
                 setOrcamento({
                     titulo: data.titulo || '',
@@ -76,7 +65,6 @@ export default function NovoOrcamento() {
                     ambiente: data.ambiente || '',
                     medidas: data.medidas || '',
                     tipoMaoDeObra: data.tipoMaoDeObra || 'porcentagem',
-                    // [UX] Se vier do banco como 'fixo' (R$), já carrega mascarado na tela
                     maoDeObraValor: data.tipoMaoDeObra === 'fixo' ? mascaraMoeda(data.maoDeObraValor) : (data.maoDeObraValor || 0),
                     maoDeObraQtde: data.maoDeObraQtde || 1,
                     tipoLucro: data.tipoLucro || 'porcentagem',
@@ -87,13 +75,13 @@ export default function NovoOrcamento() {
                     validade: data.validade || '',
                     observacoes: data.observacoes || ''
                 });
-                
+
                 if (data.materiais && data.materiais.length > 0) {
-                    setMateriaisSelecionados(data.materiais.map(m => ({
+                    setMateriaisSelecionados(data.materiais.map((m: Material) => ({
                         idFalso: m.id || Date.now() + Math.random(),
                         nome: m.nome,
-                        valor: mascaraMoeda(m.valor), // O valor do material sempre será monetário
-                        quantidade: m.quantidade
+                        valor: mascaraMoeda(m.valor),
+                        quantidade: m.quantidade || 1
                     })));
                 }
                 setCarregando(false);
@@ -109,12 +97,9 @@ export default function NovoOrcamento() {
         }
     }, [id, navigate]);
 
-    // 2. A Mágica: Recalcula tudo SEMPRE que o orçamento ou os materiais mudarem
     useEffect(() => {
-        // [SecOps] Proteção Matemática. Desmascara a string ("R$ 1.500,00" -> 1500.00) antes de multiplicar
         const custoMateriais = materiaisSelecionados.reduce((acc, mat) => acc + (desmascararMoeda(mat.valor) * mat.quantidade), 0);
 
-        // Mão de Obra
         let valorMaoDeObra = 0;
         const valorBase = desmascararMoeda(orcamento.maoDeObraValor);
         const qtde = Number(orcamento.maoDeObraQtde) || 1;
@@ -124,14 +109,11 @@ export default function NovoOrcamento() {
         } else if (orcamento.tipoMaoDeObra === 'porcentagem') {
             valorMaoDeObra = custoMateriais * (valorBase / 100);
         } else if (orcamento.tipoMaoDeObra === 'multiplicador') {
-            // Markup Custo Materiais -> Mão de Obra = Diferença para atingir a multiplicação
             valorMaoDeObra = Math.max(0, (custoMateriais * valorBase) - custoMateriais);
         } else {
-            // Se for diaria, hora, metro_linear, ou metro_quadrado
             valorMaoDeObra = valorBase * qtde;
         }
 
-        // Lucro
         let valorLucro = 0;
         const subtotal = custoMateriais + valorMaoDeObra;
         const lucroBase = desmascararMoeda(orcamento.lucroValor);
@@ -142,10 +124,8 @@ export default function NovoOrcamento() {
         } else if (orcamento.tipoLucro === 'porcentagem') {
             valorLucro = subtotal * (lucroBase / 100);
         } else if (orcamento.tipoLucro === 'multiplicador') {
-            // Markup Subtotal -> Lucro = Diferença para atingir a multiplicação
             valorLucro = Math.max(0, (subtotal * lucroBase) - subtotal);
         } else {
-            // Se for diaria ou hora
             valorLucro = lucroBase * lucroQtdeNum;
         }
 
@@ -157,7 +137,6 @@ export default function NovoOrcamento() {
         });
     }, [orcamento, materiaisSelecionados]);
 
-    // Salvar rascunhos no Local Storage sempre que houver mudanças
     useEffect(() => {
         if (!id) localStorage.setItem('rascunhoOrcamento', JSON.stringify(orcamento));
     }, [orcamento, id]);
@@ -166,40 +145,32 @@ export default function NovoOrcamento() {
         if (!id) localStorage.setItem('rascunhoMateriais', JSON.stringify(materiaisSelecionados));
     }, [materiaisSelecionados, id]);
 
-    // 3. Funções de controle do formulário
-    const handleChange = (e) => {
-        let { name, value } = e.target;
-        
-        // Aplica a máscara apenas se a escolha de Mão de Obra/Lucro for Dinheiro/Fixo
-        if (name === 'maoDeObraValor' && orcamento.tipoMaoDeObra === 'fixo') value = mascaraMoeda(value);
-        if (name === 'lucroValor' && orcamento.tipoLucro === 'fixo') value = mascaraMoeda(value);
-
-        setOrcamento({ ...orcamento, [name]: value });
+    const handleChange = (e: ChangeEvent | FakeEvent) => {
+        const { name, value } = e.target;
+        let novoValor: string | number = value;
+        if (name === 'maoDeObraValor' && orcamento.tipoMaoDeObra === 'fixo') novoValor = mascaraMoeda(value);
+        if (name === 'lucroValor' && orcamento.tipoLucro === 'fixo') novoValor = mascaraMoeda(value);
+        setOrcamento(prev => ({ ...prev, [name]: novoValor }));
     };
 
     const adicionarLinhaMaterial = () => {
-        // [SecOps] Garante identificadores únicos reais para prevenir erros do virtual DOM
         setMateriaisSelecionados([...materiaisSelecionados, { idFalso: self.crypto?.randomUUID() || Date.now(), nome: '', valor: '', quantidade: 1 }]);
     };
 
-    const removerLinhaMaterial = (idFalso) => {
+    const removerLinhaMaterial = (idFalso: string | number) => {
         setMateriaisSelecionados(materiaisSelecionados.filter(m => m.idFalso !== idFalso));
     };
 
-    const atualizarMaterialSelecionado = (idFalso, campo, valor) => {
+    const atualizarMaterialSelecionado = (idFalso: string | number, campo: string, valor: string) => {
         const novaLista = materiaisSelecionados.map(mat => {
             if (mat.idFalso === idFalso) {
                 let novoMat = { ...mat, [campo]: valor };
-                
-                // Se o usuário digitou no campo de valor, formata imediatamente
                 if (campo === 'valor') novoMat.valor = mascaraMoeda(valor);
-
-                // Se o usuário selecionou um material do select, já puxa o nome e o valor do banco
                 if (campo === 'selectDb' && valor !== '') {
                     const materialDoBanco = materiaisDb.find(m => m.id === Number(valor));
-                    if(materialDoBanco) {
+                    if (materialDoBanco) {
                         novoMat.nome = materialDoBanco.nome;
-                        novoMat.valor = mascaraMoeda(materialDoBanco.valor); // Puxa do banco já formatado
+                        novoMat.valor = mascaraMoeda(materialDoBanco.valor);
                     }
                 }
                 return novoMat;
@@ -209,32 +180,27 @@ export default function NovoOrcamento() {
         setMateriaisSelecionados(novaLista);
     };
 
-    // 4. Salvar no Banco
-    const salvarOrcamento = async (e) => {
+    const salvarOrcamento = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        
-        if (salvando) return; // Se já está salvando, ignora novos cliques
-        
+        if (salvando) return;
+
         if (!orcamento.clienteId) {
             toast.warn("Selecione um cliente antes de gerar o orçamento!");
             return;
         }
 
-        setSalvando(true); // Bloqueia o botão e inicia a submissão
+        setSalvando(true);
 
         const dadosParaEnviar = {
             ...orcamento,
-            // [SecOps] Assegura que o backend não receba uma string inválida com 'R$'
             maoDeObraValor: desmascararMoeda(orcamento.maoDeObraValor),
             lucroValor: desmascararMoeda(orcamento.lucroValor),
             totalFinal: totais.final,
-            // Limpa os dados antes de mandar pro back, tirando o idFalso e o selectDb
             materiais: materiaisSelecionados.map(m => ({
                 nome: m.nome,
                 valor: desmascararMoeda(m.valor),
-                // [Clean Code] Garante que a quantidade vá para o banco como número, mesmo se o campo ficar limpo na tela
                 quantidade: Number(m.quantidade) || 1
-            })).filter(m => m.nome !== '') // Só envia se tiver nome
+            })).filter(m => m.nome !== '')
         };
 
         try {
@@ -245,18 +211,16 @@ export default function NovoOrcamento() {
                 await api.post('/orcamentos', dadosParaEnviar);
                 toast.success('Orçamento gerado e salvo de forma segura!');
             }
-            
             localStorage.removeItem('rascunhoOrcamento');
             localStorage.removeItem('rascunhoMateriais');
-            navigate('/historico'); // Direciona pro histórico após salvar
-        } catch (error) {
+            navigate('/historico');
+        } catch {
             toast.error('Falha de comunicação com o servidor. Tente novamente.');
         } finally {
-            setSalvando(false); // Libera o botão independente de dar erro ou sucesso
+            setSalvando(false);
         }
     };
-    
-    // Impede de renderizar os campos vazios antes dos dados chegarem
+
     if (carregando) {
         return (
             <div className="container text-center" style={{ marginTop: '40px', padding: '40px' }}>
@@ -271,27 +235,9 @@ export default function NovoOrcamento() {
             <h1>{id ? 'Editar Orçamento' : 'Novo Orçamento'}</h1>
 
             <form onSubmit={salvarOrcamento}>
-                
-                <DadosGerais 
-                    orcamento={orcamento} 
-                    clientes={clientes} 
-                    onChange={handleChange} 
-                />
-
-                <ListaMateriais 
-                    materiaisSelecionados={materiaisSelecionados} 
-                    materiaisDb={materiaisDb} 
-                    onAdd={adicionarLinhaMaterial} 
-                    onRemove={removerLinhaMaterial} 
-                    onUpdate={atualizarMaterialSelecionado} 
-                />
-
-                <ResumoValores 
-                    orcamento={orcamento} 
-                    totais={totais} 
-                    formasPagamento={formasPagamento} 
-                    onChange={handleChange} 
-                />
+                <DadosGerais orcamento={orcamento} clientes={clientes} onChange={handleChange} />
+                <ListaMateriais materiaisSelecionados={materiaisSelecionados} materiaisDb={materiaisDb} onAdd={adicionarLinhaMaterial} onRemove={removerLinhaMaterial} onUpdate={atualizarMaterialSelecionado} />
+                <ResumoValores orcamento={orcamento} totais={totais} formasPagamento={formasPagamento} onChange={handleChange} />
 
                 <div className="form-buttons">
                     <button type="submit" disabled={salvando} style={{ opacity: salvando ? 0.7 : 1, cursor: salvando ? 'not-allowed' : 'pointer', fontSize: '1.1rem', padding: '16px 24px' }}>
@@ -301,7 +247,6 @@ export default function NovoOrcamento() {
                         <button type="button" className="btn-cancel" onClick={() => navigate('/historico')}>Cancelar Edição</button>
                     )}
                 </div>
-
             </form>
         </div>
     );

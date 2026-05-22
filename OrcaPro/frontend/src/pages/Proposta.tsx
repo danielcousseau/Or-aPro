@@ -2,21 +2,21 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../services/api';
 import { formatarMoeda } from '../utils/format';
+import { Orcamento } from '../types';
 
 export default function Proposta() {
-    const { token } = useParams();
-    const [orcamento, setOrcamento] = useState(null);
+    const { token } = useParams<{ token: string }>();
+    const [orcamento, setOrcamento] = useState<Orcamento | null>(null);
     const [erro, setErro] = useState('');
     const [gerando, setGerando] = useState(false);
-    const contentRef = useRef(null);
+    const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         api.get(`/orcamentos/proposta/${token}`)
             .then(res => setOrcamento(res.data))
-            .catch(err => setErro('Este link é inválido, expirou ou o orçamento foi removido.'));
+            .catch(() => setErro('Este link é inválido, expirou ou o orçamento foi removido.'));
     }, [token]);
 
-    // [SecOps] Tratamento de erros seguro. Se o token vencer, o cliente vê uma tela amigável
     if (erro) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f4f4f4' }}>
@@ -32,7 +32,7 @@ export default function Proposta() {
         setGerando(true);
         try {
             const html2pdf = (await import('html2pdf.js')).default;
-            const titulo = orcamento.titulo?.replace(/\s+/g, '_') || 'Proposta';
+            const titulo = orcamento?.titulo?.replace(/\s+/g, '_') || 'Proposta';
             await html2pdf().set({
                 margin: 10,
                 filename: `Proposta_${titulo}.pdf`,

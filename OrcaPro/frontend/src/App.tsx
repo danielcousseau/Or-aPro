@@ -16,79 +16,69 @@ import Proposta from './pages/Proposta';
 import EsqueciSenha from './pages/EsqueciSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
 import Admin from './pages/Admin';
+import FormasPagamento from './pages/FormasPagamento';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { User } from './types';
 
-// Guarda de rota: verifica se há dados de usuário em localStorage.
-// O cookie httpOnly (que contém o token real) é validado pelo backend a cada chamada —
-// se expirar, o interceptor do axios tenta refresh e, em último caso, redireciona pro login.
-function RotaProtegida({ children }) {
+function RotaProtegida({ children }: { children: React.ReactNode }) {
     const user = localStorage.getItem('@OrcaPro:user');
     if (!user) {
         return <Navigate to="/login" replace />;
     }
-    return children;
+    return <>{children}</>;
 }
 
-// 2. Layout do Sistema: Esconde o Menu no Login e adiciona o botão de Sair
-function LayoutSistema({ children }) {
+function LayoutSistema({ children }: { children: React.ReactNode }) {
     const location = useLocation();
     const navigate = useNavigate();
     const [perfilAberto, setPerfilAberto] = useState(false);
-    const [avatarUrl, setAvatarUrl] = useState(() => {
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(() => {
         try {
             const stored = localStorage.getItem('@OrcaPro:user');
-            return stored ? (JSON.parse(stored)?.avatar || null) : null;
+            return stored ? ((JSON.parse(stored) as User)?.avatar ?? null) : null;
         } catch {
             return null;
         }
     });
-    const perfilRef = useRef(null); // Cria uma referência para detectar cliques fora
+    const perfilRef = useRef<HTMLDivElement>(null);
     const isLoginPage = location.pathname === '/login';
     const isCadastroPage = location.pathname === '/cadastro';
-    // [Correção] Adicionamos uma verificação para a rota de impressão.
-    // Qualquer URL que comece com /imprimir/ será considerada uma página de impressão.
     const isPrintPage = location.pathname.startsWith('/imprimir/');
-    // Verifica se é a tela pública da proposta (sem menu do sistema)
     const isPropostaPage = location.pathname.startsWith('/proposta/');
     const isAuthAuxPage = location.pathname === '/esqueci-senha' || location.pathname === '/redefinir-senha';
-    // Puxa os dados do usuário do localStorage (se existirem)
     const userStorage = localStorage.getItem('@OrcaPro:user');
-    
-    let user = null;
+
+    let user: User | null = null;
     try {
-        // [SecOps] Previne que um localStorage corrompido crashe a aplicação inteira
-        user = userStorage ? JSON.parse(userStorage) : null;
+        user = userStorage ? (JSON.parse(userStorage) as User) : null;
     } catch (error) {
         console.error("Falha ao ler dados do usuário. Limpando sessão.");
         localStorage.removeItem('@OrcaPro:user');
         localStorage.removeItem('@OrcaPro:token');
     }
 
-    // Carrega avatar do banco na inicialização
     useEffect(() => {
         if (user) {
-            api.get('/me').then(({ data }) => {
+            api.get('/me').then(({ data }: { data: User }) => {
                 if (data.avatar) setAvatarUrl(data.avatar);
             }).catch(() => {});
         }
     }, []);
 
-    // Escuta atualizações da foto de perfil em tempo real
     useEffect(() => {
-        const handleAvatarUpdate = (e) => setAvatarUrl(e.detail);
+        const handleAvatarUpdate = (e: Event) => setAvatarUrl((e as CustomEvent<string | null>).detail);
         window.addEventListener('avatarAtualizado', handleAvatarUpdate);
         return () => window.removeEventListener('avatarAtualizado', handleAvatarUpdate);
     }, []);
 
-    // [UX] Fecha o menu do perfil ao clicar fora ou apertar Esc
     useEffect(() => {
-        function handleClickOutside(event) {
-            if (perfilRef.current && !perfilRef.current.contains(event.target)) {
+        function handleClickOutside(event: MouseEvent) {
+            if (perfilRef.current && !perfilRef.current.contains(event.target as Node)) {
                 setPerfilAberto(false);
             }
         }
-        function handleKeyDown(event) {
+        function handleKeyDown(event: KeyboardEvent) {
             if (event.key === 'Escape') {
                 setPerfilAberto(false);
             }
@@ -105,9 +95,9 @@ function LayoutSistema({ children }) {
 
     const handleLogout = async () => {
         try {
-            await api.post('/logout'); // Apaga os cookies httpOnly no servidor
+            await api.post('/logout');
         } catch {
-            // Segue em frente mesmo se a chamada falhar
+            // segue mesmo se a chamada falhar
         }
         localStorage.removeItem('@OrcaPro:user');
         localStorage.removeItem('@OrcaPro:refreshToken');
@@ -118,24 +108,23 @@ function LayoutSistema({ children }) {
         <>
             {!isLoginPage && !isCadastroPage && !isPrintPage && !isPropostaPage && !isAuthAuxPage && (
                 <>
-                    {/* Topbar do Usuário (Elegante e Harmônica) */}
-                    <div style={{ 
-                        maxWidth: '1200px', 
-                        margin: '15px auto 0', 
+                    <div style={{
+                        maxWidth: '1200px',
+                        margin: '15px auto 0',
                         padding: '0 18px',
-                        display: 'flex', 
-                        justifyContent: 'flex-end', 
-                        alignItems: 'center', 
-                        gap: '12px' 
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+                        gap: '12px'
                     }}>
                         {user && (
                             <div style={{ position: 'relative' }} ref={perfilRef}>
-                                <button 
-                                    onClick={() => setPerfilAberto(!perfilAberto)} 
-                                    style={{ 
-                                        width: '42px', height: '42px', borderRadius: '50%', 
-                                        background: 'var(--primary)', color: '#fff', 
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                                <button
+                                    onClick={() => setPerfilAberto(!perfilAberto)}
+                                    style={{
+                                        width: '42px', height: '42px', borderRadius: '50%',
+                                        background: 'var(--primary)', color: '#fff',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                                         fontWeight: 'bold', fontSize: '1.1rem', padding: 0, minHeight: 'auto',
                                         border: 'none', cursor: 'pointer', boxShadow: 'var(--shadow-soft)'
                                     }}
@@ -149,12 +138,12 @@ function LayoutSistema({ children }) {
                                 </button>
 
                                 {perfilAberto && (
-                                    <div style={{ 
-                                        position: 'absolute', top: '50px', right: '0', 
-                                        background: 'var(--panel)', border: '1px solid var(--border)', 
-                                        borderRadius: 'var(--radius-md)', padding: '16px', 
-                                        boxShadow: 'var(--shadow-main)', zIndex: 100, 
-                                        minWidth: '200px', textAlign: 'center' 
+                                    <div style={{
+                                        position: 'absolute', top: '50px', right: '0',
+                                        background: 'var(--panel)', border: '1px solid var(--border)',
+                                        borderRadius: 'var(--radius-md)', padding: '16px',
+                                        boxShadow: 'var(--shadow-main)', zIndex: 100,
+                                        minWidth: '200px', textAlign: 'center'
                                     }}>
                                         <p style={{ margin: '0 0 4px 0', fontWeight: 'bold', color: 'var(--text-main)' }}>
                                             {user.nome || user.usuario}
@@ -174,7 +163,7 @@ function LayoutSistema({ children }) {
                             </div>
                         )}
                     </div>
-                    
+
                     <Menu />
                 </>
             )}
@@ -191,14 +180,12 @@ export default function App() {
             <BrowserRouter>
                 <LayoutSistema>
                     <Routes>
-                        {/* Rotas Públicas */}
                         <Route path="/login" element={<Login />} />
                         <Route path="/cadastro" element={<Cadastro />} />
                         <Route path="/proposta/:token" element={<Proposta />} />
                         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
                         <Route path="/redefinir-senha" element={<RedefinirSenha />} />
-                        
-                        {/* Rotas Privadas (Blindadas pelo RotaProtegida) */}
+
                         <Route path="/" element={<RotaProtegida><Dashboard /></RotaProtegida>} />
                         <Route path="/clientes" element={<RotaProtegida><Clientes /></RotaProtegida>} />
                         <Route path="/materiais" element={<RotaProtegida><Materiais /></RotaProtegida>} />
@@ -209,10 +196,10 @@ export default function App() {
                         <Route path="/imprimir/:id" element={<RotaProtegida><ImprimirOrcamento /></RotaProtegida>} />
                         <Route path="/kanban" element={<RotaProtegida><Kanban /></RotaProtegida>} />
                         <Route path="/admin" element={<RotaProtegida><Admin /></RotaProtegida>} />
+                        <Route path="/formas-pagamento" element={<RotaProtegida><FormasPagamento /></RotaProtegida>} />
                     </Routes>
                 </LayoutSistema>
             </BrowserRouter>
-            {/* Configuração global do Toast (Pode mudar a posição, ex: bottom-right) */}
             <ToastContainer position="bottom-right" autoClose={3000} theme="colored" />
         </>
     );

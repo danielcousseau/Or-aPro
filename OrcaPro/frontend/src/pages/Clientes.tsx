@@ -2,30 +2,37 @@ import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { mascaraCpfCnpj, mascaraTelefone, mascaraCep } from '../utils/masks';
-import { validarCpfCnpj } from '../utils/validators'; // [SecOps] Validação matemática de dados
+import { validarCpfCnpj } from '../utils/validators';
+import { Cliente } from '../types';
+
+interface ClienteFormData {
+    nome: string;
+    cpfCnpj: string;
+    email: string;
+    telefone: string;
+    rua: string;
+    cidade: string;
+    bairro: string;
+    numero: string;
+    cep: string;
+    observacoes: string;
+    telegramChatId: string;
+}
+
+const FORM_INICIAL: ClienteFormData = {
+    nome: '', cpfCnpj: '', email: '', telefone: '',
+    rua: '', cidade: '', bairro: '', numero: '',
+    cep: '', observacoes: '', telegramChatId: ''
+};
 
 export default function Clientes() {
-    const [clientes, setClientes] = useState([]);
-    const [clienteEmEdicao, setClienteEmEdicao] = useState(null); // Guarda o cliente que está sendo editado
-    const [clienteParaExcluir, setClienteParaExcluir] = useState(null); // Guarda o ID do cliente para o modal de exclusão
-    const [abaAtiva, setAbaAtiva] = useState('consulta'); // 'consulta' ou 'cadastro'
-    const [termoBusca, setTermoBusca] = useState(''); // Guarda o texto da pesquisa
+    const [clientes, setClientes] = useState<Cliente[]>([]);
+    const [clienteEmEdicao, setClienteEmEdicao] = useState<Cliente | null>(null);
+    const [clienteParaExcluir, setClienteParaExcluir] = useState<number | null>(null);
+    const [abaAtiva, setAbaAtiva] = useState<'consulta' | 'cadastro'>('consulta');
+    const [termoBusca, setTermoBusca] = useState('');
     const [salvando, setSalvando] = useState(false);
-    
-    // State único para o formulário
-    const [formData, setFormData] = useState({
-        nome: '',
-        cpfCnpj: '',
-        email: '',
-        telefone: '',
-        rua: '',
-        cidade: '',
-        bairro: '',
-        numero: '',
-        cep: '',
-        observacoes: '',
-        telegramChatId: ''
-    });
+    const [formData, setFormData] = useState<ClienteFormData>(FORM_INICIAL);
 
     useEffect(() => {
         carregarClientes();
@@ -40,29 +47,20 @@ export default function Clientes() {
         }
     };
 
-    // Função que atualiza o state automaticamente conforme você digita
-    const handleChange = (e) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         let { name, value } = e.target;
-
-        // Intercepta e aplica as máscaras dependendo de qual campo está sendo digitado
         if (name === 'cpfCnpj') value = mascaraCpfCnpj(value);
         else if (name === 'telefone') value = mascaraTelefone(value);
         else if (name === 'cep') value = mascaraCep(value);
-
-        // Salva no estado já formatado
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const limparFormulario = () => {
-        setFormData({
-            nome: '', cpfCnpj: '', email: '', telefone: '',
-            rua: '', cidade: '', bairro: '', numero: '',
-            cep: '', observacoes: '', telegramChatId: ''
-        });
+        setFormData(FORM_INICIAL);
         setClienteEmEdicao(null);
     };
 
-    const handleEditar = (cliente) => {
+    const handleEditar = (cliente: Cliente) => {
         setClienteEmEdicao(cliente);
         setFormData({
             nome: cliente.nome || '',
@@ -77,8 +75,8 @@ export default function Clientes() {
             observacoes: cliente.observacoes || '',
             telegramChatId: cliente.telegramChatId || ''
         });
-        setAbaAtiva('cadastro'); // Muda para a aba de cadastro automaticamente ao editar
-        window.scrollTo(0, 0); // Rola para o topo para o usuário ver o formulário preenchido
+        setAbaAtiva('cadastro');
+        window.scrollTo(0, 0);
     };
 
     const confirmarExclusao = async () => {
@@ -88,21 +86,20 @@ export default function Clientes() {
             toast.success('Cliente excluído com sucesso!');
             setClienteParaExcluir(null);
             carregarClientes();
-        } catch (error) {
-            const msg = error.response?.data?.error || 'Erro ao excluir cliente.';
-            toast.error(msg);
+        } catch (error: unknown) {
+            const axiosError = error as { response?: { data?: { error?: string } } };
+            toast.error(axiosError.response?.data?.error || 'Erro ao excluir cliente.');
             setClienteParaExcluir(null);
         }
     };
 
-    const buscarCep = async (e) => {
+    const buscarCep = async (e: React.FocusEvent<HTMLInputElement>) => {
         const cepLimpo = e.target.value.replace(/\D/g, '');
         if (cepLimpo.length !== 8) return;
 
         try {
-            let endereco = null;
+            let endereco: { rua?: string; cidade?: string; bairro?: string } | null = null;
 
-            // Tenta ViaCEP primeiro
             try {
                 const res = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
                 if (res.ok) {
@@ -111,9 +108,8 @@ export default function Clientes() {
                         endereco = { rua: json.logradouro, cidade: json.localidade, bairro: json.bairro };
                     }
                 }
-            } catch { /* ViaCEP indisponível — tenta fallback */ }
+            } catch { /* fallback */ }
 
-            // Fallback: BrasilAPI
             if (!endereco) {
                 const res = await fetch(`https://brasilapi.com.br/api/cep/v2/${cepLimpo}`);
                 if (res.ok) {
@@ -125,9 +121,9 @@ export default function Clientes() {
             if (endereco) {
                 setFormData(prev => ({
                     ...prev,
-                    rua: endereco.rua || prev.rua,
-                    cidade: endereco.cidade || prev.cidade,
-                    bairro: endereco.bairro || prev.bairro,
+                    rua: endereco!.rua || prev.rua,
+                    cidade: endereco!.cidade || prev.cidade,
+                    bairro: endereco!.bairro || prev.bairro,
                 }));
             } else {
                 toast.warn('CEP não encontrado.');
@@ -137,13 +133,12 @@ export default function Clientes() {
         }
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        
-        // [SecOps] Previne salvar no banco CPFs formatados bonitos, mas matematicamente inexistentes.
+
         if (formData.cpfCnpj && !validarCpfCnpj(formData.cpfCnpj)) {
             toast.error('O CPF ou CNPJ informado é inválido. Verifique os números.');
-            return; // Encerra a função aqui, impedindo o envio pro backend
+            return;
         }
 
         try {
@@ -154,16 +149,15 @@ export default function Clientes() {
             toast.success(`Cliente ${clienteEmEdicao ? 'atualizado' : 'salvo'} com sucesso!`);
             limparFormulario();
             carregarClientes();
-            setAbaAtiva('consulta'); // Volta pra lista de clientes após salvar
+            setAbaAtiva('consulta');
         } catch (error) {
-            console.error("Erro detalhado do backend:", error.response?.data || error.message);
+            console.error("Erro detalhado do backend:", error);
             toast.error('Erro ao salvar cliente. Verifique o console.');
         } finally {
             setSalvando(false);
         }
     };
 
-    // Filtra os clientes com base na barra de pesquisa (busca por nome, fone, email ou doc)
     const clientesFiltrados = clientes.filter(cliente => {
         const termo = termoBusca.toLowerCase();
         return (
@@ -188,13 +182,11 @@ export default function Clientes() {
                 </div>
             </div>
 
-            {/* CONTEÚDO DA ABA DE CADASTRO */}
             {abaAtiva === 'cadastro' && (
                 <div>
                     <h2 style={{ marginBottom: '20px', color: 'var(--text-main)', borderBottom: '2px solid var(--border)', paddingBottom: '10px' }}>
                         {clienteEmEdicao ? 'Editar Cliente' : 'Cadastro de Cliente'}
                     </h2>
-                    
                     <form onSubmit={handleSubmit}>
                         <section className="form-section">
                             <p className="form-section-title">Informações Pessoais</p>
@@ -278,10 +270,8 @@ export default function Clientes() {
                 </div>
             )}
 
-            {/* CONTEÚDO DA ABA DE CONSULTA */}
             {abaAtiva === 'consulta' && (
                 <section className="lista-clientes">
-                    {/* Barra de Pesquisa */}
                     <div className="search-bar">
                         <h2>{clientesFiltrados.length} cliente{clientesFiltrados.length !== 1 ? 's' : ''}</h2>
                         <input
@@ -303,8 +293,6 @@ export default function Clientes() {
                                     <h3>{cliente.nome}</h3>
                                     <p><strong>Telefone:</strong> {cliente.telefone}</p>
                                     <p><strong>E-mail:</strong> {cliente.email || "Não informado"}</p>
-                                    
-                                    {/* Exibição explícita e organizada do endereço */}
                                     <div style={{ background: 'var(--panel)', padding: '10px', borderLeft: '3px solid var(--primary)', borderRadius: '4px', marginTop: '10px', marginBottom: '10px', fontSize: '0.9rem' }}>
                                         <p style={{ margin: '0 0 5px 0' }}>
                                             <strong>Rua/Logradouro:</strong> {cliente.rua || "Não informada"}{cliente.numero ? `, nº ${cliente.numero}` : ''}
@@ -314,20 +302,13 @@ export default function Clientes() {
                                         </p>
                                         <p style={{ margin: 0 }}><strong>CEP:</strong> {cliente.cep || "Não informado"}</p>
                                     </div>
-
                                     {cliente.telegramChatId && (
                                         <p style={{ color: '#0088cc', fontSize: '0.9rem' }}>✈️ Telegram ativo — receberá notificações de status</p>
                                     )}
                                     {cliente.observacoes && <p><strong>Obs:</strong> {cliente.observacoes}</p>}
-                                    
-                                    {/* Botões de Ação */}
                                     <div className="card-actions">
-                                        <button type="button" className="btn-action btn-edit" onClick={() => handleEditar(cliente)}>
-                                            Editar
-                                        </button>
-                                        <button type="button" className="btn-action btn-delete" onClick={() => setClienteParaExcluir(cliente.id)}>
-                                            Excluir
-                                        </button>
+                                        <button type="button" className="btn-action btn-edit" onClick={() => handleEditar(cliente)}>Editar</button>
+                                        <button type="button" className="btn-action btn-delete" onClick={() => setClienteParaExcluir(cliente.id)}>Excluir</button>
                                     </div>
                                 </div>
                             ))
@@ -336,19 +317,14 @@ export default function Clientes() {
                 </section>
             )}
 
-            {/* Modal de Confirmação de Exclusão */}
             {clienteParaExcluir && (
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <h3>Confirmar Exclusão</h3>
                         <p>Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.</p>
                         <div className="modal-actions">
-                            <button type="button" className="btn-cancel" onClick={() => setClienteParaExcluir(null)}>
-                                Cancelar
-                            </button>
-                            <button type="button" className="btn-delete" onClick={confirmarExclusao}>
-                                Sim, Excluir
-                            </button>
+                            <button type="button" className="btn-cancel" onClick={() => setClienteParaExcluir(null)}>Cancelar</button>
+                            <button type="button" className="btn-delete" onClick={confirmarExclusao}>Sim, Excluir</button>
                         </div>
                     </div>
                 </div>

@@ -1,4 +1,14 @@
-export default function ListaMateriais({ materiaisSelecionados, materiaisDb, onAdd, onRemove, onUpdate }) {
+import { Material, MaterialSelecionado } from '../../types';
+
+interface Props {
+    materiaisSelecionados: MaterialSelecionado[];
+    materiaisDb: Material[];
+    onAdd: () => void;
+    onRemove: (idFalso: string | number) => void;
+    onUpdate: (idFalso: string | number, campo: string, valor: string) => void;
+}
+
+export default function ListaMateriais({ materiaisSelecionados, materiaisDb, onAdd, onRemove, onUpdate }: Props) {
     return (
         <div className="cliente-card">
             <h3>2. Materiais</h3>

@@ -1,19 +1,23 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+
+declare module 'axios' {
+    interface InternalAxiosRequestConfig {
+        _retry?: boolean;
+    }
+}
 
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3333/api',
     withCredentials: true,
 });
 
-// Access token fica em memória (nunca no DOM/localStorage — reduz superfície XSS)
-let accessToken = null;
+let accessToken: string | null = null;
 
-export function setAccessToken(token) {
+export function setAccessToken(token: string): void {
     accessToken = token;
 }
 
-// Injeta o header em toda requisição quando o token estiver disponível
-api.interceptors.request.use(config => {
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`;
     }
@@ -21,33 +25,35 @@ api.interceptors.request.use(config => {
 });
 
 let isRefreshing = false;
-let failedQueue = [];
 
-function processQueue(error) {
+interface QueueItem {
+    resolve: () => void;
+    reject: (error: unknown) => void;
+}
+let failedQueue: QueueItem[] = [];
+
+function processQueue(error: unknown): void {
     failedQueue.forEach(p => error ? p.reject(error) : p.resolve());
     failedQueue = [];
 }
 
 api.interceptors.response.use(
     response => response,
-    async error => {
-        const originalRequest = error.config;
+    async (error: AxiosError) => {
+        const originalRequest = error.config as InternalAxiosRequestConfig;
         const isAuthEndpoint = originalRequest.url === '/refresh' || originalRequest.url === '/login';
 
         if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
             if (isRefreshing) {
-                return new Promise((resolve, reject) => {
+                return new Promise<void>((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
-                })
-                    .then(() => api(originalRequest))
-                    .catch(err => Promise.reject(err));
+                }).then(() => api(originalRequest));
             }
 
             originalRequest._retry = true;
             isRefreshing = true;
 
             try {
-                // Envia refreshToken pelo body (funciona no Safari/iOS que bloqueia cookies cross-domain)
                 const storedRefresh = localStorage.getItem('@OrcaPro:refreshToken');
                 const response = await api.post('/refresh', { refreshToken: storedRefresh });
                 accessToken = response.data.accessToken;

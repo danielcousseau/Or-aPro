@@ -42,8 +42,9 @@ OrcaPro/
 │       ├── src/
 │       │   ├── pages/        # uma pasta por tela (Login, Clientes, NovoOrcamento, etc.)
 │       │   ├── components/   # componentes reutilizáveis
-│       │   └── services/     # api.js (Axios com interceptor de refresh token)
+│       │   └── services/     # api.ts (Axios com interceptor de refresh token)
 │       └── public/           # ícones PWA, logo
+│       └── tsconfig.json     # TypeScript (noEmit: true — Vite compila, TS só checa tipos)
 ├── specs/                    # specs de features (escrever antes de implementar)
 ├── .github/workflows/        # CI/CD GitHub Actions
 ├── CLAUDE.md                 # este arquivo
@@ -110,7 +111,7 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - [x] Quadro Kanban com busca por título e cliente
 - [x] Proposta para cliente (HTML imprimível + PDF via html2pdf.js)
 - [x] Geração de link WhatsApp com mensagem pré-formatada (nome da marcenaria incluso)
-- [x] PDF download via `html2pdf.js` — `ImprimirOrcamento.jsx` e `Proposta.jsx`
+- [x] PDF download via `html2pdf.js` — `ImprimirOrcamento.tsx` e `Proposta.tsx`
 - [x] Nome da Marcenaria (`nomeMarcenaria`) editável no Perfil — aparece no PDF e no WhatsApp
 - [x] Materiais padrão de marcenaria (31 itens) — lazy init na primeira listagem do usuário
 - [x] Campos select + "Outro (digitar manualmente)": Ambiente, Forma de Pagamento, Categoria, Unidade
@@ -120,16 +121,10 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - [x] PWA: ícones, manifest, service worker com `skipWaiting: true`
 - [x] Testes automatizados: `__tests__/auth.test.js` + `__tests__/crossTenant.test.js`
 
-### Fixes sessão 22/05/2026 (continuação)
-- [x] **Emotes removidos dos botões** — `ImprimirOrcamento.jsx` tinha 🖨️ ⬇️ 💬 ← nos botões. Removidos para visual mais profissional.
-- [x] **Segunda folha em branco na impressão mobile** — `html` e `#root` tinham `min-height: 100vh` que não era zerado no `@media print`. Corrigido no `index.css`.
-- [x] **Migração para TypeScript (backend completo)** — todos os arquivos `src/**/*.js` convertidos para `.ts`. Pacotes instalados: `typescript`, `ts-node`, `ts-jest`, `cross-env`, `@types/*`. `tsconfig.json` com `strict: true`, output em `dist/`. Testes: 14/14 passando. `FormaPagamentoController` removido (modelo não existia no schema). Script `build` atualizado para `npx prisma generate && tsc`. Script `start` aponta para `dist/server.js`.
-
 ### Fixes sessão 22/05/2026
-- [x] **Incidente de perda de dados** — `prisma db push --accept-data-loss` foi adicionado ao build script e apagou todos os dados de produção. Dados recuperados via Neon PITR (restore para 21/05/2026 23:00). Build script corrigido: apenas `npx prisma generate`. Coluna `nomeMarcenaria` re-adicionada via SQL manual.
-- [x] **`nomeMarcenaria` no banco** — coluna adicionada via `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "nomeMarcenaria" TEXT;`
-- [x] **Tela em branco no Ver/Imprimir** — `contentRef` usado mas não declarado em `ImprimirOrcamento.jsx`. Corrigido adicionando `useRef` ao import e `const contentRef = useRef(null)`.
-- [x] **Documentação reorganizada** — `CLAUDE.md` criado, `PROGRESSO.md` e `OrcaPro/frontend/README.md` deletados.
+
+- [x] **Migração para TypeScript — backend completo** — todos os arquivos `src/**/*.js` convertidos para `.ts`. Pacotes instalados: `typescript`, `ts-node`, `ts-jest`, `cross-env`, `@types/*`. `tsconfig.json` com `strict: true`, output em `dist/`. Testes: 14/14 passando. Script `build` atualizado para `npx prisma generate && tsc`. Script `start` aponta para `dist/server.js`.
+- [x] **Migração para TypeScript — frontend completo** — todos os arquivos `.jsx`/`.js` convertidos para `.tsx`/`.ts` (26 arquivos, ~3100 linhas). `tsconfig.json` com `noEmit: true` (Vite compila, TS só checa tipos), `strict: true`, `types: ["vite/client"]`. `src/types.ts` centraliza todas as interfaces compartilhadas. `src/types/html2pdf.d.ts` declara tipos do `html2pdf.js`. `tsc --noEmit`: zero erros. Build: sucesso.
 
 ### Decisões de arquitetura importantes
 - **Banco:** usar `prisma db push` (não `migrate dev`) — o projeto não tem histórico de migrations. Novas colunas exigem `db push` explícito com aprovação do Victor.
@@ -144,8 +139,8 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 
 ### 🔴 Bugs abertos
 
-- [x] **Telegram chatId não salva pelo formulário** — resolvido espontaneamente após atualização (confirmado por Victor em 22/05/2026). Campo do chatId agora fica preenchido corretamente no Perfil.
-- [x] **Botão "Adicionar Material" — cor azul não aparece no Vercel** — resolvido após atualização (confirmado em múltiplos dispositivos por Victor em 22/05/2026).
+- [ ] **Telegram chatId não salva pelo formulário** — frontend envia o campo corretamente, mas o Render usa cache do `node_modules` entre deploys, e o Prisma Client gerado no build não chega ao container. Workaround ativo: setar via SQL direto no Neon. Solução definitiva: investigar opção de desativar cache do `node_modules` no Render.
+- [ ] **Botão "Adicionar Material" — cor azul não aparece no Vercel** — Service Worker do PWA cacheia o bundle antigo. Fix para o usuário: DevTools → Application → Service Workers → Unregister → recarregar.
 
 ### 🟡 Média prioridade
 
@@ -157,7 +152,7 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 
 - [ ] **Notificações push PWA** — service worker existe mas não tem push notifications implementado
 - [ ] **Planos e billing** — freemium vs pago; Stripe ou Pagar.me
-- [x] **TypeScript** — migração completa do backend concluída (22/05/2026)
+- [x] **TypeScript** — migração completa: backend (22/05/2026) + frontend (22/05/2026)
 - [ ] **Spec 003** — próxima feature a definir com Victor antes de implementar
 
 ---
@@ -230,20 +225,10 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - Faça commit e push de tudo que ficou pendente
 
 ### Regras críticas para banco de dados
-
-**NUNCA colocar `prisma db push` em scripts automáticos** (build, CI, postinstall). Em 22/05/2026 isso causou perda total dos dados de produção. A lição: qualquer comando que toca o banco deve ser rodado manualmente, com aprovação explícita do Victor, e verificado antes de qualquer deploy.
-
-Para adicionar uma nova coluna ao banco, o processo correto é:
-1. Editar o `schema.prisma`
-2. Mostrar o diff para o Victor e explicar o que muda
-3. Victor aprova
-4. Rodar o SQL manualmente no **Neon → SQL Editor** (ex: `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "nomeMarcenaria" TEXT;`)
-5. Só então fazer o deploy do código
-
-O projeto usa `prisma db push` apenas como ferramenta local/manual — nunca em automação. Isso significa:
-- `build` no `package.json`: apenas `npx prisma generate`
-- CI no GitHub Actions: apenas `npx prisma generate` + testes
-- **Nunca** usar `--accept-data-loss` — esta flag ignora o aviso de segurança e pode apagar dados reais
+O projeto usa `prisma db push` (não `prisma migrate dev`) porque o banco foi criado sem histórico de migrations. Isso significa:
+- Toda alteração de schema precisa de aprovação explícita do Victor antes de rodar
+- `prisma db push` modifica o banco de produção real — não existe "ambiente de teste separado"
+- **Nunca** usar `--accept-data-loss` sem mostrar ao Victor exatamente o que será apagado
 
 ### Se o contexto da sessão estiver acabando
 - Pare, atualize este `CLAUDE.md` com o estado atual

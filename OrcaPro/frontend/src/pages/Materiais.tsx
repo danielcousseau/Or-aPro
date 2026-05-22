@@ -3,42 +3,44 @@ import api from '../services/api';
 import { toast } from 'react-toastify';
 import { formatarMoeda } from '../utils/format';
 import { mascaraMoeda, desmascararMoeda } from '../utils/masks';
+import { Material } from '../types';
 
 const CATEGORIAS_PADRAO = ['Chapas', 'Fixação', 'Ferragens', 'Acabamento'];
 const UNIDADES_PADRAO = ['Chapa', 'Unidade', 'Metro', 'Metro Linear', 'Metro Quadrado', 'Caixa', 'Par', 'Rolo', 'Litro', 'Kg'];
 
+interface MaterialFormData {
+    nome: string;
+    categoria: string;
+    valor: string;
+    unidade: string;
+}
+
 export default function Materiais() {
-    const [materiais, setMateriais] = useState([]);
-    const [materialEmEdicao, setMaterialEmEdicao] = useState(null);
-    const [materialParaExcluir, setMaterialParaExcluir] = useState(null);
-    const [abaAtiva, setAbaAtiva] = useState('consulta');
+    const [materiais, setMateriais] = useState<Material[]>([]);
+    const [materialEmEdicao, setMaterialEmEdicao] = useState<Material | null>(null);
+    const [materialParaExcluir, setMaterialParaExcluir] = useState<number | null>(null);
+    const [abaAtiva, setAbaAtiva] = useState<'consulta' | 'cadastro'>('consulta');
     const [termoBusca, setTermoBusca] = useState('');
     const [salvando, setSalvando] = useState(false);
     const [usandoOutrosCategoria, setUsandoOutrosCategoria] = useState(false);
     const [usandoOutrosUnidade, setUsandoOutrosUnidade] = useState(false);
     const [salvarCategoriaComoFixo, setSalvarCategoriaComoFixo] = useState(false);
     const [salvarUnidadeComoFixo, setSalvarUnidadeComoFixo] = useState(false);
-    const [categoriasCustomizadas, setCategoriasCustomizadas] = useState([]);
-    const [unidadesCustomizadas, setUnidadesCustomizadas] = useState([]);
+    const [categoriasCustomizadas, setCategoriasCustomizadas] = useState<string[]>([]);
+    const [unidadesCustomizadas, setUnidadesCustomizadas] = useState<string[]>([]);
 
-    const [formData, setFormData] = useState({
-        nome: '',
-        categoria: '',
-        valor: '',
-        unidade: ''
-    });
+    const [formData, setFormData] = useState<MaterialFormData>({ nome: '', categoria: '', valor: '', unidade: '' });
 
     useEffect(() => {
         carregarMateriais();
         api.get('/opcoes-customizadas?tipo=material_categoria')
-            .then(r => setCategoriasCustomizadas(r.data.map(o => o.nome)))
+            .then(r => setCategoriasCustomizadas(r.data.map((o: { nome: string }) => o.nome)))
             .catch(() => {});
         api.get('/opcoes-customizadas?tipo=material_unidade')
-            .then(r => setUnidadesCustomizadas(r.data.map(o => o.nome)))
+            .then(r => setUnidadesCustomizadas(r.data.map((o: { nome: string }) => o.nome)))
             .catch(() => {});
     }, []);
 
-    // Corrige o modo "outros" após carregar opções customizadas (ao editar um material)
     useEffect(() => {
         if (materialEmEdicao && formData.categoria) {
             const all = [...CATEGORIAS_PADRAO, ...categoriasCustomizadas];
@@ -65,7 +67,7 @@ export default function Materiais() {
         }
     };
 
-    const handleChange = (e) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         let { name, value } = e.target;
         if (name === 'valor') value = mascaraMoeda(value);
         setFormData({ ...formData, [name]: value });
@@ -80,7 +82,7 @@ export default function Materiais() {
         setSalvarUnidadeComoFixo(false);
     };
 
-    const handleCategoriaChange = (e) => {
+    const handleCategoriaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         if (e.target.value === 'Outros') {
             setUsandoOutrosCategoria(true);
             setSalvarCategoriaComoFixo(false);
@@ -92,7 +94,7 @@ export default function Materiais() {
         }
     };
 
-    const handleUnidadeChange = (e) => {
+    const handleUnidadeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         if (e.target.value === 'Outros') {
             setUsandoOutrosUnidade(true);
             setSalvarUnidadeComoFixo(false);
@@ -104,17 +106,17 @@ export default function Materiais() {
         }
     };
 
-    const handleCategoriaTextoChange = (e) => {
+    const handleCategoriaTextoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSalvarCategoriaComoFixo(false);
         handleChange(e);
     };
 
-    const handleUnidadeTextoChange = (e) => {
+    const handleUnidadeTextoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSalvarUnidadeComoFixo(false);
         handleChange(e);
     };
 
-    const handleSalvarCategoriaComoFixo = async (e) => {
+    const handleSalvarCategoriaComoFixo = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const checked = e.target.checked;
         setSalvarCategoriaComoFixo(checked);
         if (checked && formData.categoria?.trim()) {
@@ -129,7 +131,7 @@ export default function Materiais() {
         }
     };
 
-    const handleSalvarUnidadeComoFixo = async (e) => {
+    const handleSalvarUnidadeComoFixo = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const checked = e.target.checked;
         setSalvarUnidadeComoFixo(checked);
         if (checked && formData.unidade?.trim()) {
@@ -144,7 +146,7 @@ export default function Materiais() {
         }
     };
 
-    const handleEditar = (material) => {
+    const handleEditar = (material: Material) => {
         const isCustomCategoria = Boolean(material.categoria && !CATEGORIAS_PADRAO.includes(material.categoria) && !categoriasCustomizadas.includes(material.categoria));
         const isCustomUnidade = Boolean(material.unidade && !UNIDADES_PADRAO.includes(material.unidade) && !unidadesCustomizadas.includes(material.unidade));
         setMaterialEmEdicao(material);
@@ -169,21 +171,18 @@ export default function Materiais() {
             toast.success('Material excluído com sucesso!');
             setMaterialParaExcluir(null);
             carregarMateriais();
-        } catch (error) {
+        } catch {
             toast.error('Erro ao excluir material.');
             setMaterialParaExcluir(null);
         }
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (salvando) return;
         setSalvando(true);
         try {
-            const dadosParaEnviar = {
-                ...formData,
-                valor: desmascararMoeda(formData.valor)
-            };
+            const dadosParaEnviar = { ...formData, valor: desmascararMoeda(formData.valor) };
             if (materialEmEdicao) {
                 await api.put(`/materiais/${materialEmEdicao.id}`, dadosParaEnviar);
             } else {
@@ -194,7 +193,7 @@ export default function Materiais() {
             carregarMateriais();
             setAbaAtiva('consulta');
         } catch (error) {
-            console.error("Erro detalhado do backend:", error.response?.data || error.message);
+            console.error("Erro detalhado do backend:", error);
             toast.error('Erro ao salvar material. Verifique o console.');
         } finally {
             setSalvando(false);
@@ -214,12 +213,8 @@ export default function Materiais() {
             <div className="page-header">
                 <h1>Gestão de Materiais</h1>
                 <div className="tabs">
-                    <button type="button" className={`tab-btn ${abaAtiva === 'consulta' ? 'ativo' : ''}`} onClick={() => { setAbaAtiva('consulta'); limparFormulario(); }}>
-                        Lista
-                    </button>
-                    <button type="button" className={`tab-btn ${abaAtiva === 'cadastro' ? 'ativo' : ''}`} onClick={() => { setAbaAtiva('cadastro'); limparFormulario(); }}>
-                        Novo Material
-                    </button>
+                    <button type="button" className={`tab-btn ${abaAtiva === 'consulta' ? 'ativo' : ''}`} onClick={() => { setAbaAtiva('consulta'); limparFormulario(); }}>Lista</button>
+                    <button type="button" className={`tab-btn ${abaAtiva === 'cadastro' ? 'ativo' : ''}`} onClick={() => { setAbaAtiva('cadastro'); limparFormulario(); }}>Novo Material</button>
                 </div>
             </div>
 
@@ -244,22 +239,10 @@ export default function Materiais() {
                                     </select>
                                     {usandoOutrosCategoria && (
                                         <>
-                                            <input
-                                                type="text"
-                                                name="categoria"
-                                                value={formData.categoria}
-                                                onChange={handleCategoriaTextoChange}
-                                                placeholder="Descreva a categoria..."
-                                                style={{ marginTop: '8px' }}
-                                                autoFocus
-                                            />
+                                            <input type="text" name="categoria" value={formData.categoria} onChange={handleCategoriaTextoChange} placeholder="Descreva a categoria..." style={{ marginTop: '8px' }} autoFocus />
                                             {formData.categoria?.trim() && (
                                                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '0.9rem', cursor: 'pointer', color: 'var(--text-soft)' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={salvarCategoriaComoFixo}
-                                                        onChange={handleSalvarCategoriaComoFixo}
-                                                    />
+                                                    <input type="checkbox" checked={salvarCategoriaComoFixo} onChange={handleSalvarCategoriaComoFixo} />
                                                     Salvar "{formData.categoria}" como categoria fixa
                                                 </label>
                                             )}
@@ -282,22 +265,10 @@ export default function Materiais() {
                                     </select>
                                     {usandoOutrosUnidade && (
                                         <>
-                                            <input
-                                                type="text"
-                                                name="unidade"
-                                                value={formData.unidade}
-                                                onChange={handleUnidadeTextoChange}
-                                                placeholder="Descreva a unidade..."
-                                                style={{ marginTop: '8px' }}
-                                                autoFocus
-                                            />
+                                            <input type="text" name="unidade" value={formData.unidade} onChange={handleUnidadeTextoChange} placeholder="Descreva a unidade..." style={{ marginTop: '8px' }} autoFocus />
                                             {formData.unidade?.trim() && (
                                                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '0.9rem', cursor: 'pointer', color: 'var(--text-soft)' }}>
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={salvarUnidadeComoFixo}
-                                                        onChange={handleSalvarUnidadeComoFixo}
-                                                    />
+                                                    <input type="checkbox" checked={salvarUnidadeComoFixo} onChange={handleSalvarUnidadeComoFixo} />
                                                     Salvar "{formData.unidade}" como unidade fixa
                                                 </label>
                                             )}
@@ -323,19 +294,11 @@ export default function Materiais() {
                 <section className="lista-clientes">
                     <div className="search-bar">
                         <h2>{materiaisFiltrados.length} {materiaisFiltrados.length !== 1 ? 'materiais' : 'material'}</h2>
-                        <input
-                            type="text"
-                            placeholder="Pesquisar por nome ou categoria..."
-                            value={termoBusca}
-                            onChange={(e) => setTermoBusca(e.target.value)}
-                        />
+                        <input type="text" placeholder="Pesquisar por nome ou categoria..." value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)} />
                     </div>
-
                     <div id="listaMateriais">
                         {materiaisFiltrados.length === 0 ? (
-                            <p style={{ textAlign: 'center', padding: '20px', color: 'var(--text-soft)' }}>
-                                Nenhum material encontrado.
-                            </p>
+                            <p style={{ textAlign: 'center', padding: '20px', color: 'var(--text-soft)' }}>Nenhum material encontrado.</p>
                         ) : (
                             <div className="grid-cards">
                                 {materiaisFiltrados.map((material) => (
@@ -344,7 +307,6 @@ export default function Materiais() {
                                         <p style={{ margin: '4px 0' }}><strong>Valor:</strong> {formatarMoeda(material.valor)}</p>
                                         <p style={{ margin: '4px 0' }}><strong>Categoria:</strong> {material.categoria || 'Não informada'}</p>
                                         <p style={{ margin: '4px 0' }}><strong>Unidade:</strong> {material.unidade || 'Não informada'}</p>
-
                                         <div className="card-actions" style={{ marginTop: '15px' }}>
                                             <button type="button" className="btn-action btn-edit" onClick={() => handleEditar(material)}>Editar</button>
                                             <button type="button" className="btn-action btn-delete" onClick={() => setMaterialParaExcluir(material.id)}>Excluir</button>

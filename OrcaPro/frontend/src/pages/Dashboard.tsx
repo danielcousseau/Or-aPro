@@ -12,12 +12,29 @@ import {
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { formatarMoeda } from '../utils/format';
+import { Orcamento } from '../types';
 
-// Registrando os componentes do gráfico
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
+interface Metricas {
+    projetosFechados: number;
+    orcamentosPendentes: number;
+    valorAguardando: number;
+    faturamentoConfirmado: number;
+    lucroProjetado: number;
+    taxaConversao: number;
+}
+
+const CORES_STATUS: Record<string, string> = {
+    'Aguardando': '#f39c12',
+    'Aprovado':   '#3498db',
+    'Produção':   '#9b59b6',
+    'Instalação': '#e67e22',
+    'Entregue':   '#27ae60'
+};
+
 export default function Dashboard() {
-    const [metricas, setMetricas] = useState({
+    const [metricas, setMetricas] = useState<Metricas>({
         projetosFechados: 0,
         orcamentosPendentes: 0,
         valorAguardando: 0,
@@ -26,37 +43,28 @@ export default function Dashboard() {
         taxaConversao: 0
     });
 
-    const [orcamentos, setOrcamentos] = useState([]);
+    const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
 
-    // Busca tudo do backend assim que a tela carrega
     useEffect(() => {
         carregarDados();
     }, []);
 
     const carregarDados = async () => {
         try {
-            // Promise.all faz as duas buscas ao mesmo tempo pra ficar mais rápido
-            const [resClientes, resOrcamentos] = await Promise.all([
+            const [, resOrcamentos] = await Promise.all([
                 api.get('/clientes'),
                 api.get('/orcamentos')
             ]);
 
-            const clientesData = resClientes.data;
-            const orcamentosData = resOrcamentos.data;
-
+            const orcamentosData: Orcamento[] = resOrcamentos.data;
             setOrcamentos(orcamentosData);
 
-            // STATUS REAIS DO KANBAN:
             const statusFechados = ['Aprovado', 'Produção', 'Instalação', 'Entregue'];
-            
-            // SEPARA OS ORÇAMENTOS POR REALIDADE COMERCIAL
-            const fechados = orcamentosData.filter(orc => statusFechados.includes(orc.status));
+            const fechados = orcamentosData.filter(orc => statusFechados.includes(orc.status ?? ''));
             const pendentes = orcamentosData.filter(orc => !orc.status || orc.status === 'Aguardando' || orc.status === 'analise');
 
-            // A MÁGICA: Só soma faturamento e lucro do que virou negócio (projetos fechados)
             const faturamento = fechados.reduce((acc, orc) => acc + Number(orc.totalFinal), 0);
-            
-            // [Bugfix] Extrai o lucro real (R$) do Valor Final com base na regra de precificação usada
+
             const lucro = fechados.reduce((acc, orc) => {
                 const lucroBase = Number(orc.lucroValor) || 0;
                 const final = Number(orc.totalFinal) || 0;
@@ -68,19 +76,16 @@ export default function Dashboard() {
                     const subtotal = final / (1 + (lucroBase / 100));
                     lucroReal = final - subtotal;
                 } else if (orc.tipoLucro === 'multiplicador') {
-                    const subtotal = final / (lucroBase || 1); // Evita divisão por zero
+                    const subtotal = final / (lucroBase || 1);
                     lucroReal = final - subtotal;
-                } else { // diária ou hora
+                } else {
                     const qtde = Number(orc.lucroQtde) || 1;
                     lucroReal = lucroBase * qtde;
                 }
-                return acc + Math.max(0, lucroReal); // Evita mostrar lucros negativos caso ocorra anomalia
+                return acc + Math.max(0, lucroReal);
             }, 0);
-            
-            // Valor na mesa: Quanto de dinheiro o marceneiro tá esperando os clientes aprovarem?
+
             const valorNaMesa = pendentes.reduce((acc, orc) => acc + Number(orc.totalFinal), 0);
-            
-            // Taxa de conversão: (Fechados / Total de Orçamentos) * 100
             const conversao = orcamentosData.length > 0 ? (fechados.length / orcamentosData.length) * 100 : 0;
 
             setMetricas({
@@ -97,8 +102,7 @@ export default function Dashboard() {
         }
     };
 
-    // Montando os dados para o Gráfico (Separando orçamentos por Ambiente)
-    const ambientes = orcamentos.reduce((acc, orc) => {
+    const ambientes = orcamentos.reduce<Record<string, number>>((acc, orc) => {
         const amb = orc.ambiente || 'Não Informado';
         acc[amb] = (acc[amb] || 0) + 1;
         return acc;
@@ -108,29 +112,17 @@ export default function Dashboard() {
 
     const dataGrafico = {
         labels: ambientesOrdenados.map(([k]) => k),
-        datasets: [
-            {
-                label: 'Projetos',
-                data: ambientesOrdenados.map(([, v]) => v),
-                backgroundColor: 'rgba(0, 86, 163, 0.8)',
-                borderColor: '#0056A3',
-                borderWidth: 2,
-                borderRadius: 6,
-            },
-        ],
+        datasets: [{
+            label: 'Projetos',
+            data: ambientesOrdenados.map(([, v]) => v),
+            backgroundColor: 'rgba(0, 86, 163, 0.8)',
+            borderColor: '#0056A3',
+            borderWidth: 2,
+            borderRadius: 6,
+        }],
     };
 
-    // Montando dados para o Gráfico de Status (Doughnut)
-    // Agora associando uma cor FIXA para cada status para não embaralhar visualmente
-    const CORES_STATUS = {
-        'Aguardando': '#f39c12', // Laranja/Amarelado (Na mesa)
-        'Aprovado': '#3498db',   // Azul (Fechado, vai começar)
-        'Produção': '#9b59b6',   // Roxo (Mão na massa)
-        'Instalação': '#e67e22', // Laranja Escuro (Na rua)
-        'Entregue': '#27ae60'    // Verde (Sucesso/Dinheiro no bolso)
-    };
-
-    const statusCount = orcamentos.reduce((acc, orc) => {
+    const statusCount = orcamentos.reduce<Record<string, number>>((acc, orc) => {
         const status = (!orc.status || orc.status === 'analise') ? 'Aguardando' : orc.status;
         acc[status] = (acc[status] || 0) + 1;
         return acc;
@@ -154,7 +146,6 @@ export default function Dashboard() {
                 </div>
             </section>
 
-            {/* CARDS DE RESUMO */}
             <section className="dashboard-grid">
                 <div className="dashboard-card">
                     <span className="dashboard-label">Projetos Fechados</span>
@@ -182,7 +173,6 @@ export default function Dashboard() {
                 </div>
             </section>
 
-            {/* SESSÃO DE GRÁFICOS LADO A LADO */}
             <div className="dashboard-grid-2">
                 <section className="dashboard-card">
                     <h3 className="text-center">Projetos por Ambiente</h3>

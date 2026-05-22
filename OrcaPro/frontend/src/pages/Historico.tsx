@@ -1,28 +1,26 @@
-// Repare que adicionei o useNavigate na linha de baixo junto com os imports do React
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { formatarMoeda } from '../utils/format';
+import { Orcamento } from '../types';
+
+const CORES_STATUS: Record<string, string> = {
+    'Aguardando': '#f39c12',
+    'Aprovado':   '#3498db',
+    'Produção':   '#9b59b6',
+    'Instalação': '#e67e22',
+    'Entregue':   '#27ae60'
+};
 
 export default function Historico() {
-    const [orcamentos, setOrcamentos] = useState([]);
-    const [orcamentoParaExcluir, setOrcamentoParaExcluir] = useState(null);
+    const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
+    const [orcamentoParaExcluir, setOrcamentoParaExcluir] = useState<number | null>(null);
     const [termoBusca, setTermoBusca] = useState('');
     const [carregando, setCarregando] = useState(true);
     const [excluindo, setExcluindo] = useState(false);
-    const [materiaisAbertos, setMateriaisAbertos] = useState(new Set());
-    
-    // [Clean Code] Importando a mesma paleta de cores usada no Dashboard para criar identidade visual
-    const CORES_STATUS = {
-        'Aguardando': '#f39c12',
-        'Aprovado': '#3498db',
-        'Produção': '#9b59b6',
-        'Instalação': '#e67e22',
-        'Entregue': '#27ae60'
-    };
+    const [materiaisAbertos, setMateriaisAbertos] = useState<Set<number>>(new Set());
 
-    // Essa é a variável que faz a mágica de mudar de página
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -44,14 +42,12 @@ export default function Historico() {
 
     const confirmarExclusao = async () => {
         if (!orcamentoParaExcluir || excluindo) return;
-        
         setExcluindo(true);
-        
         try {
             await api.delete(`/orcamentos/${orcamentoParaExcluir}`);
             toast.success('Orçamento excluído com sucesso!');
-            setOrcamentoParaExcluir(null); // Fecha o modal
-            carregarOrcamentos(); // Atualiza a lista na tela
+            setOrcamentoParaExcluir(null);
+            carregarOrcamentos();
         } catch (error) {
             console.error("Erro ao excluir orçamento", error);
             toast.error('Erro ao excluir orçamento.');
@@ -61,7 +57,7 @@ export default function Historico() {
         }
     };
 
-    const toggleMateriais = (id) => {
+    const toggleMateriais = (id: number) => {
         setMateriaisAbertos(prev => {
             const next = new Set(prev);
             next.has(id) ? next.delete(id) : next.add(id);
@@ -69,7 +65,6 @@ export default function Historico() {
         });
     };
 
-    // [Clean Code] Lógica para filtrar a lista antes de renderizar
     const orcamentosFiltrados = orcamentos.filter(orc => {
         const termo = termoBusca.toLowerCase();
         return (
@@ -91,7 +86,7 @@ export default function Historico() {
                     onChange={(e) => setTermoBusca(e.target.value)}
                 />
             </div>
-            
+
             <section className="lista-clientes">
                 {carregando ? (
                     <p className="text-center text-soft" style={{ padding: '20px' }}>Carregando orçamentos...</p>
@@ -101,7 +96,6 @@ export default function Historico() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                         {orcamentosFiltrados.map(orc => (
                             <div key={orc.id} className="cliente-card highlight-primary">
-                                
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
                                     <div>
                                         <h3 style={{ marginBottom: '5px' }}>{orc.titulo}</h3>
@@ -122,7 +116,7 @@ export default function Historico() {
                                     <p><strong>Móvel:</strong> {orc.tipoMovel || '-'}</p>
                                     <p><strong>Ambiente:</strong> {orc.ambiente || '-'}</p>
                                     <div>
-                                        {orc.materiais?.length > 0 ? (
+                                        {orc.materiais && orc.materiais.length > 0 ? (
                                             <button
                                                 type="button"
                                                 className="btn-ghost"
@@ -137,7 +131,7 @@ export default function Historico() {
                                         ) : (
                                             <p><strong>Materiais:</strong> nenhum</p>
                                         )}
-                                        {materiaisAbertos.has(orc.id) && (
+                                        {materiaisAbertos.has(orc.id) && orc.materiais && (
                                             <ul style={{ margin: '6px 0 0 0', paddingLeft: '16px', fontSize: '0.85rem', color: 'var(--text-soft)', lineHeight: '1.7' }}>
                                                 {orc.materiais.map(m => (
                                                     <li key={m.id}>{m.quantidade}× {m.nome} — {formatarMoeda(m.valor)}</li>
@@ -145,28 +139,20 @@ export default function Historico() {
                                             </ul>
                                         )}
                                     </div>
-                                    <p><strong>Status:</strong> <span style={{ background: CORES_STATUS[orc.status] || CORES_STATUS['Aguardando'], color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold' }}>{(!orc.status || orc.status === 'analise') ? 'Aguardando' : orc.status}</span></p>
+                                    <p><strong>Status:</strong> <span style={{ background: CORES_STATUS[orc.status ?? ''] || CORES_STATUS['Aguardando'], color: '#fff', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 'bold' }}>{(!orc.status || orc.status === 'analise') ? 'Aguardando' : orc.status}</span></p>
                                 </div>
 
                                 <div className="card-actions">
-                                    <button type="button" className="btn-action btn-edit" onClick={() => navigate(`/orcamento/${orc.id}`)}>
-                                        Editar
-                                    </button>
-                                    <button type="button" className="btn-action" style={{ background: 'var(--success)', color: '#fff', border: '1px solid var(--success)' }} onClick={() => navigate(`/imprimir/${orc.id}`)}>
-                                        Ver / Imprimir
-                                    </button>
-                                    <button type="button" className="btn-action btn-delete" onClick={() => setOrcamentoParaExcluir(orc.id)}>
-                                        Excluir
-                                    </button>
+                                    <button type="button" className="btn-action btn-edit" onClick={() => navigate(`/orcamento/${orc.id}`)}>Editar</button>
+                                    <button type="button" className="btn-action" style={{ background: 'var(--success)', color: '#fff', border: '1px solid var(--success)' }} onClick={() => navigate(`/imprimir/${orc.id}`)}>Ver / Imprimir</button>
+                                    <button type="button" className="btn-action btn-delete" onClick={() => setOrcamentoParaExcluir(orc.id)}>Excluir</button>
                                 </div>
-
                             </div>
                         ))}
                     </div>
                 )}
             </section>
 
-            {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO */}
             {orcamentoParaExcluir && (
                 <div className="modal-overlay">
                     <div className="modal-content">

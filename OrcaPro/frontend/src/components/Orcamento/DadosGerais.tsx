@@ -1,28 +1,37 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
+import { Cliente, OrcamentoFormData } from '../../types';
+
+type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
+type FakeEvent = { target: { name: string; value: string } };
+
+interface Props {
+    orcamento: OrcamentoFormData;
+    clientes: Cliente[];
+    onChange: (e: ChangeEvent | FakeEvent) => void;
+}
 
 const AMBIENTES_PADRAO = [
     'Cozinha', 'Quarto', 'Sala', 'Banheiro', 'Escritório',
     'Lavanderia', 'Varanda', 'Área de Serviço', 'Garagem'
 ];
 
-export default function DadosGerais({ orcamento, clientes, onChange }) {
-    const [opcoesCustomizadas, setOpcoesCustomizadas] = useState([]);
+export default function DadosGerais({ orcamento, clientes, onChange }: Props) {
+    const [opcoesCustomizadas, setOpcoesCustomizadas] = useState<string[]>([]);
 
     useEffect(() => {
         api.get('/opcoes-customizadas?tipo=ambiente')
-            .then(r => setOpcoesCustomizadas(r.data.map(o => o.nome)))
+            .then(r => setOpcoesCustomizadas(r.data.map((o: { nome: string }) => o.nome)))
             .catch(() => {});
     }, []);
 
     const todasOpcoes = [...AMBIENTES_PADRAO, ...opcoesCustomizadas.filter(o => !AMBIENTES_PADRAO.includes(o))];
 
     const isCustom = orcamento.ambiente && !AMBIENTES_PADRAO.includes(orcamento.ambiente);
-    const [usandoOutros, setUsandoOutros] = useState(isCustom);
+    const [usandoOutros, setUsandoOutros] = useState(Boolean(isCustom));
     const [salvarComoFixo, setSalvarComoFixo] = useState(false);
 
-    // Corrige o modo após carregar opções customizadas (ex: ao editar um orçamento)
     useEffect(() => {
         if (opcoesCustomizadas.length > 0 && orcamento.ambiente) {
             const all = [...AMBIENTES_PADRAO, ...opcoesCustomizadas];
@@ -30,7 +39,7 @@ export default function DadosGerais({ orcamento, clientes, onChange }) {
         }
     }, [opcoesCustomizadas, orcamento.ambiente]);
 
-    const handleAmbienteChange = (e) => {
+    const handleAmbienteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         if (e.target.value === 'Outros') {
             setUsandoOutros(true);
             setSalvarComoFixo(false);
@@ -42,19 +51,20 @@ export default function DadosGerais({ orcamento, clientes, onChange }) {
         }
     };
 
-    const handleTextoChange = (e) => {
+    const handleTextoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSalvarComoFixo(false);
         onChange(e);
     };
 
-    const handleSalvarComoFixo = async (e) => {
+    const handleSalvarComoFixo = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const checked = e.target.checked;
         setSalvarComoFixo(checked);
-        if (checked && orcamento.ambiente?.trim()) {
+        const ambienteAtual = String(orcamento.ambiente ?? '');
+        if (checked && ambienteAtual.trim()) {
             try {
-                await api.post('/opcoes-customizadas', { tipo: 'ambiente', nome: orcamento.ambiente.trim() });
-                setOpcoesCustomizadas(prev => [...new Set([...prev, orcamento.ambiente.trim()])]);
-                toast.success(`"${orcamento.ambiente}" salvo como opção fixa!`);
+                await api.post('/opcoes-customizadas', { tipo: 'ambiente', nome: ambienteAtual.trim() });
+                setOpcoesCustomizadas(prev => [...new Set([...prev, ambienteAtual.trim()])]);
+                toast.success(`"${ambienteAtual}" salvo como opção fixa!`);
             } catch {
                 setSalvarComoFixo(false);
                 toast.error('Erro ao salvar opção.');
@@ -95,7 +105,7 @@ export default function DadosGerais({ orcamento, clientes, onChange }) {
                                 style={{ marginTop: '8px' }}
                                 autoFocus
                             />
-                            {orcamento.ambiente?.trim() && (
+                            {String(orcamento.ambiente ?? '').trim() && (
                                 <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '8px', fontSize: '0.9rem', cursor: 'pointer', color: 'var(--text-soft)' }}>
                                     <input
                                         type="checkbox"

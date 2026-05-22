@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 export default function Menu() {
     const location = useLocation();
 
-    const isActive = (path) => {
+    const isActive = (path: string): React.CSSProperties => {
         if (location.pathname === path || (path === '/orcamento' && location.pathname.startsWith('/orcamento'))) {
             return { color: 'var(--primary)', background: 'var(--panel-soft)', borderColor: 'var(--border)' };
         }

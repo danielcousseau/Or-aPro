@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
+import { OrcamentoFormData, Totais, FormaPagamento } from '../../types';
+
+type ChangeEvent = React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
+type FakeEvent = { target: { name: string; value: string } };
+
+interface Props {
+    orcamento: OrcamentoFormData;
+    totais: Totais;
+    formasPagamento: FormaPagamento[];
+    onChange: (e: ChangeEvent | FakeEvent) => void;
+}
 
 const PAGAMENTOS_PADRAO = [
     'À vista (Pix ou Dinheiro)',
@@ -10,22 +21,22 @@ const PAGAMENTOS_PADRAO = [
     'Boleto Bancário',
 ];
 
-const PLACEHOLDER_VALOR = {
-    porcentagem:   'Ex: 15 (%)',
-    fixo:          'R$ 0,00',
-    multiplicador: 'Ex: 1.5 (×)',
-    diaria:        'R$ 0,00 / dia',
-    hora:          'R$ 0,00 / hora',
-    metro_linear:  'R$ 0,00 / m',
-    metro_quadrado:'R$ 0,00 / m²',
+const PLACEHOLDER_VALOR: Record<string, string> = {
+    porcentagem:    'Ex: 15 (%)',
+    fixo:           'R$ 0,00',
+    multiplicador:  'Ex: 1.5 (×)',
+    diaria:         'R$ 0,00 / dia',
+    hora:           'R$ 0,00 / hora',
+    metro_linear:   'R$ 0,00 / m',
+    metro_quadrado: 'R$ 0,00 / m²',
 };
 
-export default function ResumoValores({ orcamento, totais, formasPagamento, onChange }) {
-    const [opcoesCustomizadas, setOpcoesCustomizadas] = useState([]);
+export default function ResumoValores({ orcamento, totais, formasPagamento, onChange }: Props) {
+    const [opcoesCustomizadas, setOpcoesCustomizadas] = useState<string[]>([]);
 
     useEffect(() => {
         api.get('/opcoes-customizadas?tipo=pagamento')
-            .then(r => setOpcoesCustomizadas(r.data.map(o => o.nome)))
+            .then(r => setOpcoesCustomizadas(r.data.map((o: { nome: string }) => o.nome)))
             .catch(() => {});
     }, []);
 
@@ -42,7 +53,6 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
     const [usandoOutros, setUsandoOutros] = useState(isCustom);
     const [salvarComoFixo, setSalvarComoFixo] = useState(false);
 
-    // Corrige o modo após carregar opções customizadas (ex: ao editar um orçamento)
     useEffect(() => {
         if (opcoesCustomizadas.length > 0 && orcamento.pagamento) {
             const all = [...PAGAMENTOS_PADRAO, ...opcoesCustomizadas];
@@ -50,7 +60,7 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
         }
     }, [opcoesCustomizadas, orcamento.pagamento]);
 
-    const handlePagamentoChange = (e) => {
+    const handlePagamentoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         if (e.target.value === 'Outros') {
             setUsandoOutros(true);
             setSalvarComoFixo(false);
@@ -62,25 +72,28 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
         }
     };
 
-    const handleTextoChange = (e) => {
+    const handleTextoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSalvarComoFixo(false);
         onChange(e);
     };
 
-    const handleSalvarComoFixo = async (e) => {
+    const handleSalvarComoFixo = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const checked = e.target.checked;
         setSalvarComoFixo(checked);
-        if (checked && orcamento.pagamento?.trim()) {
+        const pagamentoAtual = String(orcamento.pagamento ?? '');
+        if (checked && pagamentoAtual.trim()) {
             try {
-                await api.post('/opcoes-customizadas', { tipo: 'pagamento', nome: orcamento.pagamento.trim() });
-                setOpcoesCustomizadas(prev => [...new Set([...prev, orcamento.pagamento.trim()])]);
-                toast.success(`"${orcamento.pagamento}" salvo como opção fixa!`);
+                await api.post('/opcoes-customizadas', { tipo: 'pagamento', nome: pagamentoAtual.trim() });
+                setOpcoesCustomizadas(prev => [...new Set([...prev, pagamentoAtual.trim()])]);
+                toast.success(`"${pagamentoAtual}" salvo como opção fixa!`);
             } catch {
                 setSalvarComoFixo(false);
                 toast.error('Erro ao salvar opção.');
             }
         }
     };
+
+    const fmt = (valor: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
 
     return (
         <>
@@ -149,19 +162,19 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
             <div className="dashboard-grid">
                 <div className="dashboard-card">
                     <span className="dashboard-label">Custo Materiais</span>
-                    <h2 style={{ fontWeight: 'bold' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totais.materiais)}</h2>
+                    <h2 style={{ fontWeight: 'bold' }}>{fmt(totais.materiais)}</h2>
                 </div>
                 <div className="dashboard-card">
                     <span className="dashboard-label">Mão de Obra</span>
-                    <h2 style={{ fontWeight: 'bold' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totais.maoDeObra)}</h2>
+                    <h2 style={{ fontWeight: 'bold' }}>{fmt(totais.maoDeObra)}</h2>
                 </div>
                 <div className="dashboard-card">
                     <span className="dashboard-label">Lucro</span>
-                    <h2 style={{ fontWeight: 'bold' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totais.lucro)}</h2>
+                    <h2 style={{ fontWeight: 'bold' }}>{fmt(totais.lucro)}</h2>
                 </div>
                 <div className="dashboard-card highlight-primary">
                     <span className="dashboard-label">Total do Orçamento</span>
-                    <h2 className="text-primary" style={{ fontWeight: 'bold', fontSize: '1.8rem' }}>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totais.final)}</h2>
+                    <h2 className="text-primary" style={{ fontWeight: 'bold', fontSize: '1.8rem' }}>{fmt(totais.final)}</h2>
                 </div>
             </div>
 
@@ -186,7 +199,7 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
                                     style={{ marginTop: '8px' }}
                                     autoFocus
                                 />
-                                {orcamento.pagamento?.trim() && (
+                                {String(orcamento.pagamento ?? '').trim() && (
                                     <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '8px', fontSize: '0.9rem', cursor: 'pointer', color: 'var(--text-soft)' }}>
                                         <input
                                             type="checkbox"
@@ -226,7 +239,7 @@ export default function ResumoValores({ orcamento, totais, formasPagamento, onCh
                 </div>
                 <section className="form-section" style={{ marginTop: '15px' }}>
                     <label>Observações Adicionais</label>
-                    <textarea name="observacoes" value={orcamento.observacoes} onChange={onChange} rows="3" placeholder="Garantia, condições de instalação, etc..."></textarea>
+                    <textarea name="observacoes" value={orcamento.observacoes} onChange={onChange} rows={3} placeholder="Garantia, condições de instalação, etc..."></textarea>
                 </section>
             </div>
         </>

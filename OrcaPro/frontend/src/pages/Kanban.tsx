@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
+import { Orcamento } from '../types';
 
 const COLUNAS = ['Aguardando', 'Aprovado', 'Produção', 'Instalação', 'Entregue'];
 
-const COR_COLUNA = {
+const COR_COLUNA: Record<string, string> = {
     'Aguardando': '#f59e0b',
     'Aprovado':   '#3b82f6',
     'Produção':   '#8b5cf6',
@@ -13,7 +14,7 @@ const COR_COLUNA = {
 };
 
 export default function Kanban() {
-    const [orcamentos, setOrcamentos] = useState([]);
+    const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
     const [termoBusca, setTermoBusca] = useState('');
 
     useEffect(() => {
@@ -29,11 +30,11 @@ export default function Kanban() {
         }
     };
 
-    const mudarStatus = async (id, novoStatus) => {
+    const mudarStatus = async (id: number, novoStatus: string) => {
         try {
             await api.patch(`/orcamentos/${id}/status`, { status: novoStatus });
             carregarOrcamentos();
-        } catch (error) {
+        } catch {
             toast.error("Erro ao atualizar status do projeto.");
         }
     };

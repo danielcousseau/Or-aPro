@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { AuditLog } from '../types';
 
-const CORES_ACAO = {
+const CORES_ACAO: Record<string, { bg: string; color: string }> = {
     'criou':            { bg: '#dcfce7', color: '#166534' },
     'atualizou':        { bg: '#dbeafe', color: '#1e40af' },
     'atualizou status': { bg: '#e0e7ff', color: '#3730a3' },
@@ -10,7 +11,7 @@ const CORES_ACAO = {
     'login':            { bg: '#fef9c3', color: '#854d0e' },
 };
 
-function formatarData(iso) {
+function formatarData(iso: string): string {
     return new Date(iso).toLocaleString('pt-BR', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
@@ -18,7 +19,7 @@ function formatarData(iso) {
 }
 
 export default function Admin() {
-    const [logs, setLogs] = useState([]);
+    const [logs, setLogs] = useState<AuditLog[]>([]);
     const [carregando, setCarregando] = useState(true);
     const [filtroUsuario, setFiltroUsuario] = useState('');
     const [filtroRecurso, setFiltroRecurso] = useState('');
@@ -33,7 +34,7 @@ export default function Admin() {
             .finally(() => setCarregando(false));
     }, []);
 
-    const usuarios = [...new Set(logs.map(l => l.user?.usuario).filter(Boolean))].sort();
+    const usuarios = [...new Set(logs.map(l => l.user?.usuario).filter(Boolean))].sort() as string[];
     const recursos = [...new Set(logs.map(l => l.recurso).filter(Boolean))].sort();
 
     const logsFiltrados = logs.filter(l => {

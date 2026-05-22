@@ -3,15 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { formatarMoeda } from '../utils/format';
 import { toast } from 'react-toastify';
+import { Orcamento, User } from '../types';
 
 export default function ImprimirOrcamento() {
-    const { id } = useParams();
+    const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [orc, setOrc] = useState(null);
+    const [orc, setOrc] = useState<Orcamento | null>(null);
     const [erro, setErro] = useState(false);
-    const [numeroLocal, setNumeroLocal] = useState('');
+    const [numeroLocal, setNumeroLocal] = useState<string | number>('');
     const [gerando, setGerando] = useState(false);
-    const contentRef = useRef(null);
+    const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         Promise.all([
@@ -20,9 +21,11 @@ export default function ImprimirOrcamento() {
         ])
             .then(([resOrc, resTodos]) => {
                 setOrc(resOrc.data);
-                const listaCrescente = resTodos.data.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+                const listaCrescente: Orcamento[] = resTodos.data.sort(
+                    (a: Orcamento, b: Orcamento) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+                );
                 const index = listaCrescente.findIndex(o => o.id === Number(id));
-                setNumeroLocal(index !== -1 ? index + 1 : id);
+                setNumeroLocal(index !== -1 ? index + 1 : id ?? '');
             })
             .catch(err => {
                 console.error("Erro ao carregar orçamento para impressão:", err);
@@ -33,7 +36,7 @@ export default function ImprimirOrcamento() {
     useEffect(() => {
         if (orc) {
             const tituloOriginal = document.title;
-            const nomeClienteFormatado = orc.cliente.nome.replace(/\s+/g, '_');
+            const nomeClienteFormatado = orc.cliente?.nome.replace(/\s+/g, '_') ?? '';
             document.title = `Orcamento_${numeroLocal || orc.id}_${nomeClienteFormatado}`;
             return () => { document.title = tituloOriginal; };
         }
@@ -46,7 +49,7 @@ export default function ImprimirOrcamento() {
         setGerando(true);
         try {
             const html2pdf = (await import('html2pdf.js')).default;
-            const nomeCliente = orc.cliente.nome.replace(/\s+/g, '_');
+            const nomeCliente = orc.cliente?.nome.replace(/\s+/g, '_') ?? '';
             await html2pdf().set({
                 margin: 10,
                 filename: `Orcamento_${numeroLocal || id}_${nomeCliente}.pdf`,
@@ -63,7 +66,7 @@ export default function ImprimirOrcamento() {
     };
 
     const enviarWhatsApp = async () => {
-        if (!orc.cliente.telefone) {
+        if (!orc.cliente?.telefone) {
             toast.warn("Este cliente não possui um telefone cadastrado.");
             return;
         }
@@ -81,7 +84,7 @@ export default function ImprimirOrcamento() {
                 telefoneFormatado = '55' + telefoneFormatado;
             }
 
-            const userStorage = JSON.parse(localStorage.getItem('@OrcaPro:user') || '{}');
+            const userStorage = JSON.parse(localStorage.getItem('@OrcaPro:user') || '{}') as User;
             const nomeMarcenaria = userStorage.nomeMarcenaria;
             const identificacao = nomeMarcenaria ? `da ${nomeMarcenaria}` : 'da Marcenaria';
             const mensagem = `Olá, *${orc.cliente.nome}*!\n\nAqui é ${identificacao}. Finalizamos o seu orçamento para o projeto *${orc.titulo}*.\n\nVocê pode visualizar os detalhes de forma segura através deste link exclusivo:\n${linkProposta}\n\nQualquer dúvida, estou à disposição!`;
@@ -116,9 +119,9 @@ export default function ImprimirOrcamento() {
                 <section className="print-data-grid">
                     <div>
                         <h3 style={{ borderBottom: '1px solid #ddd', paddingBottom: '6px' }}>Dados do Cliente</h3>
-                        <p><strong>Nome:</strong> {orc.cliente.nome}</p>
-                        <p><strong>Telefone:</strong> {orc.cliente.telefone}</p>
-                        <p><strong>Cidade:</strong> {orc.cliente.cidade || '-'}</p>
+                        <p><strong>Nome:</strong> {orc.cliente?.nome}</p>
+                        <p><strong>Telefone:</strong> {orc.cliente?.telefone}</p>
+                        <p><strong>Cidade:</strong> {orc.cliente?.cidade || '-'}</p>
                     </div>
                     <div>
                         <h3 style={{ borderBottom: '1px solid #ddd', paddingBottom: '6px' }}>Projeto</h3>
@@ -143,158 +146,33 @@ export default function ImprimirOrcamento() {
             </div>
 
             <style>{`
-                /* === Layout base === */
-                .print-container {
-                    max-width: 900px;
-                    margin: 0 auto;
-                    padding: 0 0 40px;
-                }
-
-                .print-action-bar {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 10px;
-                    padding: 16px 20px;
-                    background: #f8f9fa;
-                    border-bottom: 1px solid #e0e0e0;
-                    position: sticky;
-                    top: 0;
-                    z-index: 10;
-                }
-
-                .print-action-bar button {
-                    flex: 1 1 auto;
-                    min-width: 120px;
-                    white-space: nowrap;
-                }
-
-                .print-page {
-                    background: white;
-                    color: #333;
-                    padding: 32px 36px 28px;
-                    border: 1px solid #ddd;
-                    box-shadow: 0 0 12px rgba(0,0,0,0.08);
-                    margin: 20px;
-                }
-
-                /* === Cabeçalho === */
-                .print-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    border-bottom: 2px solid #333;
-                    padding-bottom: 14px;
-                    gap: 12px;
-                }
-
-                .print-header-info {
-                    text-align: right;
-                }
-
-                /* === Grid de dados (2 colunas) === */
-                .print-data-grid {
-                    margin-top: 22px;
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 24px;
-                }
-
-                .print-data-grid p {
-                    margin: 6px 0;
-                }
-
-                /* === Box de total === */
-                .print-total-section {
-                    margin-top: 28px;
-                    display: flex;
-                    justify-content: flex-end;
-                }
-
-                .print-total-box {
-                    min-width: 260px;
-                    max-width: 100%;
-                    border: 2px solid #333;
-                    padding: 16px 20px;
-                    border-radius: 8px;
-                }
-
-                /* === Rodapé === */
-                .print-footer {
-                    margin-top: 32px;
-                    padding-top: 16px;
-                    border-top: 1px solid #eee;
-                    font-size: 0.82rem;
-                    color: #777;
-                }
-
-                .print-footer p {
-                    margin: 4px 0;
-                }
-
-                /* === Responsivo mobile === */
+                .print-container { max-width: 900px; margin: 0 auto; padding: 0 0 40px; }
+                .print-action-bar { display: flex; flex-wrap: wrap; gap: 10px; padding: 16px 20px; background: #f8f9fa; border-bottom: 1px solid #e0e0e0; position: sticky; top: 0; z-index: 10; }
+                .print-action-bar button { flex: 1 1 auto; min-width: 120px; white-space: nowrap; }
+                .print-page { background: white; color: #333; padding: 32px 36px 28px; border: 1px solid #ddd; box-shadow: 0 0 12px rgba(0,0,0,0.08); margin: 20px; }
+                .print-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 14px; gap: 12px; }
+                .print-header-info { text-align: right; }
+                .print-data-grid { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+                .print-data-grid p { margin: 6px 0; }
+                .print-total-section { margin-top: 28px; display: flex; justify-content: flex-end; }
+                .print-total-box { min-width: 260px; max-width: 100%; border: 2px solid #333; padding: 16px 20px; border-radius: 8px; }
+                .print-footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #eee; font-size: 0.82rem; color: #777; }
+                .print-footer p { margin: 4px 0; }
                 @media (max-width: 600px) {
-                    .print-action-bar {
-                        padding: 10px 12px;
-                        gap: 8px;
-                    }
-
-                    .print-action-bar button {
-                        flex: 1 1 calc(50% - 4px);
-                        min-width: 0;
-                        font-size: 0.8rem;
-                        padding: 10px 6px;
-                    }
-
-                    .print-page {
-                        margin: 10px;
-                        padding: 20px 16px 20px;
-                    }
-
-                    .print-header {
-                        flex-direction: column;
-                        align-items: flex-start;
-                    }
-
-                    .print-header-info {
-                        text-align: left;
-                    }
-
-                    .print-data-grid {
-                        grid-template-columns: 1fr;
-                        gap: 12px;
-                    }
-
-                    .print-total-section {
-                        justify-content: stretch;
-                    }
-
-                    .print-total-box {
-                        min-width: unset;
-                        width: 100%;
-                    }
+                    .print-action-bar { padding: 10px 12px; gap: 8px; }
+                    .print-action-bar button { flex: 1 1 calc(50% - 4px); min-width: 0; font-size: 0.8rem; padding: 10px 6px; }
+                    .print-page { margin: 10px; padding: 20px 16px 20px; }
+                    .print-header { flex-direction: column; align-items: flex-start; }
+                    .print-header-info { text-align: left; }
+                    .print-data-grid { grid-template-columns: 1fr; gap: 12px; }
+                    .print-total-section { justify-content: stretch; }
+                    .print-total-box { min-width: unset; width: 100%; }
                 }
-
-                /* === Impressão === */
                 @media print {
                     @page { size: A4; margin: 0; }
-
-                    .print-container {
-                        margin: 0 !important;
-                        padding: 0 !important;
-                        max-width: 100% !important;
-                    }
-
-                    .print-page {
-                        border: none !important;
-                        box-shadow: none !important;
-                        margin: 0 !important;
-                        padding: 15mm !important;
-                        page-break-after: avoid;
-                    }
-
-                    .print-footer {
-                        page-break-inside: avoid;
-                    }
+                    .print-container { margin: 0 !important; padding: 0 !important; max-width: 100% !important; }
+                    .print-page { border: none !important; box-shadow: none !important; margin: 0 !important; padding: 15mm !important; page-break-after: avoid; }
+                    .print-footer { page-break-inside: avoid; }
                 }
             `}</style>
         </div>
