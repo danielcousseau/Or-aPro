@@ -39,6 +39,7 @@ export default function Perfil() {
     const [user, setUser] = useState({});
     const [nome, setNome] = useState('');
     const [email, setEmail] = useState('');
+    const [nomeMarcenaria, setNomeMarcenaria] = useState('');
     const [salvandoPerfil, setSalvandoPerfil] = useState(false);
     const [fotoPreview, setFotoPreview] = useState(null);
     const [senhaAtual, setSenhaAtual] = useState('');
@@ -61,6 +62,7 @@ export default function Perfil() {
             setUser(data);
             setNome(data.nome || '');
             setEmail(data.email || '');
+            setNomeMarcenaria(data.nomeMarcenaria || '');
             if (data.avatar) setFotoPreview(data.avatar);
         }).catch(() => {
             const userStorage = localStorage.getItem('@OrcaPro:user');
@@ -69,6 +71,7 @@ export default function Perfil() {
                 setUser(parsed);
                 setNome(parsed.nome || '');
                 setEmail(parsed.email || '');
+                setNomeMarcenaria(parsed.nomeMarcenaria || '');
             }
         });
     }, []);
@@ -112,10 +115,11 @@ export default function Perfil() {
         e.preventDefault();
         setSalvandoPerfil(true);
         try {
-            const response = await api.put('/usuarios/perfil', { nome, email });
-            const updated = { ...user, email: response.data.email, nome: response.data.nome };
+            const response = await api.put('/usuarios/perfil', { nome, email, nomeMarcenaria });
+            const updated = { ...user, email: response.data.email, nome: response.data.nome, nomeMarcenaria: response.data.nomeMarcenaria };
             setUser(updated);
             setNome(response.data.nome || '');
+            setNomeMarcenaria(response.data.nomeMarcenaria || '');
             localStorage.setItem('@OrcaPro:user', JSON.stringify(updated));
             toast.success('Perfil atualizado com sucesso!');
         } catch (error) {
@@ -226,6 +230,18 @@ export default function Perfil() {
                             />
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-soft)', marginTop: '6px' }}>
                                 Usado para recuperação de senha. Não será exibido a clientes.
+                            </p>
+                        </section>
+                        <section className="form-section" style={{ background: 'transparent', border: 'none', padding: 0, marginBottom: '16px' }}>
+                            <label>Nome da Marcenaria</label>
+                            <input
+                                type="text"
+                                value={nomeMarcenaria}
+                                onChange={(e) => setNomeMarcenaria(e.target.value)}
+                                placeholder="Ex: Marcenaria Silva"
+                            />
+                            <p style={{ fontSize: '0.75rem', color: 'var(--text-soft)', marginTop: '6px' }}>
+                                Aparece na mensagem do WhatsApp enviada ao cliente.
                             </p>
                         </section>
                         <button type="submit" disabled={salvandoPerfil} style={{ width: '100%', opacity: salvandoPerfil ? 0.7 : 1, cursor: salvandoPerfil ? 'not-allowed' : 'pointer' }}>

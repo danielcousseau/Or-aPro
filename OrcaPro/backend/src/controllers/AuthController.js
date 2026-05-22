@@ -54,7 +54,7 @@ module.exports = {
 
             // Tokens também no body: necessário para Safari/iOS (ITP bloqueia cookies cross-domain)
             return res.json({
-                user: { id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null },
+                user: { id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null },
                 accessToken,
                 refreshToken,
             });
@@ -90,10 +90,10 @@ module.exports = {
         try {
             const user = await prisma.user.findUnique({
                 where: { id: req.userId },
-                select: { id: true, usuario: true, name: true, email: true, avatar: true }
+                select: { id: true, usuario: true, name: true, email: true, avatar: true, nomeMarcenaria: true }
             });
             if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
-            return res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null });
+            return res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ error: 'Erro interno no servidor' });
@@ -147,15 +147,16 @@ module.exports = {
 
     async atualizarPerfil(req, res) {
         try {
-            const { nome, email, avatar } = req.body;
+            const { nome, email, avatar, nomeMarcenaria } = req.body;
             const data = { name: nome, email: email || null };
-            if (avatar !== undefined) data.avatar = avatar; // null limpa, string salva, undefined não toca
+            if (avatar !== undefined) data.avatar = avatar;
+            if (nomeMarcenaria !== undefined) data.nomeMarcenaria = nomeMarcenaria || null;
             const user = await prisma.user.update({
                 where: { id: req.userId },
                 data,
-                select: { id: true, usuario: true, name: true, email: true, avatar: true }
+                select: { id: true, usuario: true, name: true, email: true, avatar: true, nomeMarcenaria: true }
             });
-            return res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null });
+            return res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null });
         } catch (error) {
             if (error.code === 'P2002') {
                 return res.status(409).json({ error: 'Este e-mail já está em uso por outra conta.' });
