@@ -6,7 +6,7 @@
   "scripts": {
     "test": "NODE_ENV=test jest --forceExit",
     "dev": "nodemon src/server.js",
-    "build": "npx prisma generate",
+    "build": "npx prisma generate && npx prisma db push",
     "start": "node src/server.js",
     "postinstall": "npx prisma generate"
   },
