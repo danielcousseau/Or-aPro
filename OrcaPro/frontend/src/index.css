@@ -992,3 +992,29 @@ input[type="number"] {
     border-left: 4px solid var(--success);
 }
 
+/* =============================================
+   ESTILOS GLOBAIS DE IMPRESSÃO
+   Centralizados aqui para garantir aplicação
+   em todos os navegadores, inclusive mobile.
+   ============================================= */
+@media print {
+    .no-print,
+    .menu {
+        display: none !important;
+    }
+
+    body {
+        background: white !important;
+        min-height: 0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Remove espaço extra do wrapper externo da Proposta */
+    .proposta-outer {
+        background: white !important;
+        padding: 0 !important;
+        min-height: 0 !important;
+    }
+}
+

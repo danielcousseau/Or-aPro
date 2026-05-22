@@ -44,16 +44,16 @@ export default function ImprimirOrcamento() {
     const baixarPDF = async () => {
         setGerando(true);
         try {
-            const response = await api.get(`/orcamentos/${id}/pdf`, { responseType: 'blob' });
-            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-            const link = document.createElement('a');
-            link.href = url;
+            const html2pdf = (await import('html2pdf.js')).default;
             const nomeCliente = orc.cliente.nome.replace(/\s+/g, '_');
-            link.setAttribute('download', `Orcamento_${numeroLocal || id}_${nomeCliente}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
+            await html2pdf().set({
+                margin: 10,
+                filename: `Orcamento_${numeroLocal || id}_${nomeCliente}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: 'avoid-all' }
+            }).from(contentRef.current).save();
         } catch {
             toast.error('Erro ao gerar o PDF. Tente novamente.');
         } finally {
@@ -101,7 +101,7 @@ export default function ImprimirOrcamento() {
                 <button onClick={() => navigate('/historico')} style={{ background: '#7f8c8d' }}>← Voltar</button>
             </div>
 
-            <div className="print-page">
+            <div ref={contentRef} className="print-page">
                 <header className="print-header">
                     <div>
                         <img src="/logo-orcapro.png" alt="Logo da Empresa" style={{ maxWidth: '200px', height: 'auto' }} />
@@ -273,23 +273,9 @@ export default function ImprimirOrcamento() {
                     }
                 }
 
-                /* === Impressão (Ctrl+P / window.print) === */
+                /* === Impressão === */
                 @media print {
-                    @page {
-                        size: A4;
-                        margin: 0; /* Remove cabeçalho/rodapé nativos do navegador (nome do arquivo, URL) */
-                    }
-
-                    .no-print,
-                    .menu {
-                        display: none !important;
-                    }
-
-                    body {
-                        background: white !important;
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
-                    }
+                    @page { size: A4; margin: 0; }
 
                     .print-container {
                         margin: 0 !important;
@@ -301,7 +287,7 @@ export default function ImprimirOrcamento() {
                         border: none !important;
                         box-shadow: none !important;
                         margin: 0 !important;
-                        padding: 15mm !important; /* Margem interna substitui a @page margin */
+                        padding: 15mm !important;
                         page-break-after: avoid;
                     }
 
