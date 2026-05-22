@@ -61,7 +61,11 @@ function LayoutSistema({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         if (user) {
             api.get('/me').then(({ data }: { data: User }) => {
-                if (data.avatar) setAvatarUrl(data.avatar);
+                if (data.avatar) {
+                    setAvatarUrl(data.avatar);
+                    const stored = localStorage.getItem('@OrcaPro:user');
+                    if (stored) localStorage.setItem('@OrcaPro:user', JSON.stringify({ ...JSON.parse(stored) as User, avatar: data.avatar }));
+                }
             }).catch(() => {});
         }
     }, []);
