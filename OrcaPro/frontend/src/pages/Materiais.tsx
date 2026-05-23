@@ -227,9 +227,10 @@ export default function Materiais() {
             limparFormulario();
             carregarMateriais();
             setAbaAtiva('consulta');
-        } catch (error) {
-            console.error("Erro detalhado do backend:", error);
-            toast.error('Erro ao salvar material. Verifique o console.');
+        } catch (error: unknown) {
+            const msg = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
+            toast.error(msg || 'Erro ao salvar material.');
+            console.error("Erro ao salvar material:", error);
         } finally {
             setSalvando(false);
         }

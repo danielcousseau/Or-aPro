@@ -11,11 +11,9 @@ export default {
                 orderBy: { createdAt: 'desc' }
             });
 
-            const nomesExistentes = new Set(materiais.map(m => m.nome));
-            const faltando = MATERIAIS_PADRAO.filter(m => !nomesExistentes.has(m.nome));
-            if (faltando.length > 0) {
+            if (materiais.length === 0) {
                 await prisma.material.createMany({
-                    data: faltando.map(m => ({ ...m, userId: req.userId! }))
+                    data: MATERIAIS_PADRAO.map(m => ({ ...m, userId: req.userId! }))
                 });
                 materiais = await prisma.material.findMany({
                     where: { userId: req.userId },
@@ -54,10 +52,10 @@ export default {
                 return;
             }
 
-            const dados = req.body;
+            const { nome, categoria, valor, unidade, quantidadeEstoque, estoqueMinimo } = req.body;
             const materialAtualizado = await prisma.material.update({
                 where: { id: Number(id) },
-                data: dados
+                data: { nome, categoria, valor, unidade, quantidadeEstoque, estoqueMinimo }
             });
             await registrar(req.userId!, 'atualizou', 'Material', materialAtualizado.id, materialAtualizado.nome);
             res.json(materialAtualizado);

@@ -416,13 +416,13 @@ button {
     font-weight: 700;
     letter-spacing: 0.35px;
     transition: 0.25s ease;
-    box-shadow: 0 4px 12px rgba(247, 147, 30, 0.2);
+    box-shadow: none;
     font-family: 'Montserrat', sans-serif;
 }
 
 button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(247, 147, 30, 0.3);
+    box-shadow: none;
     filter: brightness(0.95);
 }
 
@@ -883,6 +883,11 @@ input[type="number"] {
     min-height: auto;
     border-radius: var(--radius-sm);
     font-weight: 600;
+    box-shadow: none;
+}
+
+.btn-action:hover {
+    box-shadow: none;
 }
 
 .btn-edit {
