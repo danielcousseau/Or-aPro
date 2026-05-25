@@ -126,12 +126,18 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - [x] PWA: ícones, manifest, service worker com `skipWaiting: true`
 - [x] Testes automatizados: `__tests__/auth.test.js` + `__tests__/crossTenant.test.js`
 
-### Fixes e melhorias sessão 24/05/2026
+### Fixes e melhorias sessão 25/05/2026
 
+- [x] **Bug raiz do estoque encontrado e corrigido** — o `validate.ts` importava `ZodSchema` e `ZodIssue` do Zod, que **não existem mais no Zod v4** (`"zod": "^4.4.3"`). Isso causava falha silenciosa no `tsc` durante o build do Render, mantendo o servidor rodando uma versão antiga do código (sem rota PATCH e sem campos de estoque no controller). Fix: substituído `ZodSchema` por `z.ZodTypeAny` e removida a anotação explícita de `ZodIssue` — TypeScript infere automaticamente. Arquivo: `backend/src/middlewares/validate.ts`.
+- [x] **`prisma db push` na produção** — executado com a `DIRECT_URL` correta do Neon.tech. Colunas `quantidadeEstoque Float?` e `estoqueMinimo Float?` criadas no banco de produção (sessão anterior havia rodado o push contra URL errada ou sem o directUrl).
 - [x] **Sombra laranja removida dos botões** — removida a `box-shadow` laranja do seletor base `button {}` no `index.css`. Corrige de uma vez os botões "Estoque", "Ver/Imprimir", "Remover foto" e qualquer outro botão sem classe específica. Botões com shadow própria (`.btn-add`) continuam inalterados. `.btn-action` ganhou `box-shadow: none` explícito também.
 - [x] **Excluir materiais padrão** — `MaterialController.listar` agora só cria os padrões quando o usuário tem zero materiais (primeira vez). Antes recriava qualquer padrão deletado em toda listagem.
-- [ ] **Campos de estoque — fixes aplicados mas bug persiste** — foram aplicados: (1) `prisma db push` para criar as colunas; (2) controller desestrutura os campos explicitamente; (3) frontend usa resposta direta do PUT/POST/PATCH (sem GET extra). `handleChange` usa forma funcional do setState. Apesar dos fixes, os campos ainda não salvam em produção. Ver seção "Bugs abertos" para o que investigar.
 - [x] **`playing_with_neon` removida** — tabela de demo do Neon.tech removida do banco com o `db push` (não era dado do sistema).
+
+### Fixes e melhorias sessão 24/05/2026
+
+- [x] **Sombra laranja removida dos botões** — (detalhe acima).
+- [x] **Excluir materiais padrão** — (detalhe acima).
 
 ### Fixes e melhorias sessão 22/05/2026
 

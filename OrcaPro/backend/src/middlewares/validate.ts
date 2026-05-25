@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { ZodSchema, ZodError, ZodIssue } from 'zod';
+import { z, ZodError } from 'zod';
 
-export default function validate(schema: ZodSchema) {
+export default function validate(schema: z.ZodTypeAny) {
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         if (!schema) {
             res.status(500).json({ error: 'Erro interno: Schema de validação não definido ou importado incorretamente nas rotas.' });
@@ -16,7 +16,7 @@ export default function validate(schema: ZodSchema) {
             if (error instanceof ZodError) {
                 res.status(400).json({
                     error: 'Dados inválidos enviados no formulário',
-                    details: error.issues.map((issue: ZodIssue) => ({
+                    details: error.issues.map((issue) => ({
                         campo: issue.path.join('.'),
                         mensagem: issue.message
                     }))
