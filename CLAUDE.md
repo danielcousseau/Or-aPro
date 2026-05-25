@@ -126,6 +126,13 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - [x] PWA: ícones, manifest, service worker com `skipWaiting: true`
 - [x] Testes automatizados: `__tests__/auth.test.js` + `__tests__/crossTenant.test.js`
 
+### Fixes e melhorias sessão 24/05/2026
+
+- [x] **Sombra laranja removida dos botões** — removida a `box-shadow` laranja do seletor base `button {}` no `index.css`. Corrige de uma vez os botões "Estoque", "Ver/Imprimir", "Remover foto" e qualquer outro botão sem classe específica. Botões com shadow própria (`.btn-add`) continuam inalterados. `.btn-action` ganhou `box-shadow: none` explícito também.
+- [x] **Excluir materiais padrão** — `MaterialController.listar` agora só cria os padrões quando o usuário tem zero materiais (primeira vez). Antes recriava qualquer padrão deletado em toda listagem.
+- [x] **Campos de estoque salvando corretamente** — três causas combinadas: (1) `prisma db push` executado para criar as colunas `quantidadeEstoque` e `estoqueMinimo` que existiam no schema mas não no banco; (2) `atualizar` do controller agora desestrutura os campos explicitamente; (3) frontend passa a usar a resposta direta do PUT/POST/PATCH para atualizar o estado local, eliminando race condition com o pooler do Neon.tech (write numa conexão, read em outra antes do commit ser visível). `handleChange` também corrigido para usar forma funcional do setState.
+- [x] **`playing_with_neon` removida** — tabela de demo do Neon.tech removida do banco com o `db push` (não era dado do sistema).
+
 ### Fixes e melhorias sessão 22/05/2026
 
 - [x] **Layout desktop com sidebar lateral** — menu horizontal do topo convertido em sidebar fixa de 220px na esquerda (`--sidebar-width: 220px`). Conteúdo preenche toda a largura restante. Em telas ≤ 900px reverte para menu horizontal no topo (comportamento anterior). Estrutura: `.app-shell` (flex) → `Menu` sidebar + `.app-main`. Avatar e dropdown de perfil/logout movidos para dentro do `Menu.tsx` como props (`user`, `avatarUrl`, `onLogout`).
@@ -147,7 +154,7 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 
 ### 🔴 Bugs abertos
 
-Nenhum bug aberto no momento.
+- [ ] **Estoque — aguardando validação em produção** — fixes foram feitos (db push + código + estado local) mas ainda não confirmado que está funcionando no Render (deploy pode não ter completado). Testar na próxima sessão.
 
 ### ✅ Bugs resolvidos (histórico)
 
