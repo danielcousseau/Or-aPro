@@ -75,9 +75,9 @@ export default function Materiais() {
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let { name, value } = e.target;
-        if (name === 'valor') value = mascaraMoeda(value);
-        setFormData({ ...formData, [name]: value });
+        const { name } = e.target;
+        const value = name === 'valor' ? mascaraMoeda(e.target.value) : e.target.value;
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const limparFormulario = () => {
@@ -195,11 +195,11 @@ export default function Materiais() {
         }
         setAjustando(true);
         try {
-            await api.patch(`/materiais/${materialParaAjustar.id}/estoque`, { quantidadeEstoque: quantidade });
+            const { data: materialAtualizado } = await api.patch(`/materiais/${materialParaAjustar.id}/estoque`, { quantidadeEstoque: quantidade });
+            setMateriais(prev => prev.map(m => m.id === materialAtualizado.id ? materialAtualizado : m));
             toast.success(`Estoque de "${materialParaAjustar.nome}" atualizado para ${quantidade}!`);
             setMaterialParaAjustar(null);
             setValorAjuste('');
-            carregarMateriais();
         } catch {
             toast.error('Erro ao ajustar estoque.');
         } finally {
@@ -219,13 +219,14 @@ export default function Materiais() {
                 estoqueMinimo: formData.estoqueMinimo !== '' ? Number(formData.estoqueMinimo) : null,
             };
             if (materialEmEdicao) {
-                await api.put(`/materiais/${materialEmEdicao.id}`, dadosParaEnviar);
+                const { data: materialAtualizado } = await api.put(`/materiais/${materialEmEdicao.id}`, dadosParaEnviar);
+                setMateriais(prev => prev.map(m => m.id === materialAtualizado.id ? materialAtualizado : m));
             } else {
-                await api.post('/materiais', dadosParaEnviar);
+                const { data: novoMaterial } = await api.post('/materiais', dadosParaEnviar);
+                setMateriais(prev => [novoMaterial, ...prev]);
             }
             toast.success(`Material ${materialEmEdicao ? 'atualizado' : 'salvo'} com sucesso!`);
             limparFormulario();
-            carregarMateriais();
             setAbaAtiva('consulta');
         } catch (error: unknown) {
             const msg = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
