@@ -1,6 +1,6 @@
 # CLAUDE.md — Guia de Trabalho do Projeto OrcaPro
 
-> Leia este arquivo no início de TODA sessão. Ao terminar, atualize as seções "Estado Atual" e "Backlog".
+> Leia este arquivo no início de TODA sessão. Ao terminar, atualize as seções "Estado Atual" e "Backlog".º
 
 ---
 
