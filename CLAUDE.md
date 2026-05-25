@@ -130,7 +130,7 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 
 - [x] **Sombra laranja removida dos botões** — removida a `box-shadow` laranja do seletor base `button {}` no `index.css`. Corrige de uma vez os botões "Estoque", "Ver/Imprimir", "Remover foto" e qualquer outro botão sem classe específica. Botões com shadow própria (`.btn-add`) continuam inalterados. `.btn-action` ganhou `box-shadow: none` explícito também.
 - [x] **Excluir materiais padrão** — `MaterialController.listar` agora só cria os padrões quando o usuário tem zero materiais (primeira vez). Antes recriava qualquer padrão deletado em toda listagem.
-- [x] **Campos de estoque salvando corretamente** — três causas combinadas: (1) `prisma db push` executado para criar as colunas `quantidadeEstoque` e `estoqueMinimo` que existiam no schema mas não no banco; (2) `atualizar` do controller agora desestrutura os campos explicitamente; (3) frontend passa a usar a resposta direta do PUT/POST/PATCH para atualizar o estado local, eliminando race condition com o pooler do Neon.tech (write numa conexão, read em outra antes do commit ser visível). `handleChange` também corrigido para usar forma funcional do setState.
+- [ ] **Campos de estoque — fixes aplicados mas bug persiste** — foram aplicados: (1) `prisma db push` para criar as colunas; (2) controller desestrutura os campos explicitamente; (3) frontend usa resposta direta do PUT/POST/PATCH (sem GET extra). `handleChange` usa forma funcional do setState. Apesar dos fixes, os campos ainda não salvam em produção. Ver seção "Bugs abertos" para o que investigar.
 - [x] **`playing_with_neon` removida** — tabela de demo do Neon.tech removida do banco com o `db push` (não era dado do sistema).
 
 ### Fixes e melhorias sessão 22/05/2026
@@ -154,7 +154,7 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 
 ### 🔴 Bugs abertos
 
-- [ ] **Estoque — aguardando validação em produção** — fixes foram feitos (db push + código + estado local) mas ainda não confirmado que está funcionando no Render (deploy pode não ter completado). Testar na próxima sessão.
+- [ ] **Estoque — campos quantidadeEstoque/estoqueMinimo não salvam em produção** — bug persiste após múltiplas tentativas de fix. Sintomas: (1) botão "Estoque" dá erro ao salvar via modal PATCH `/materiais/:id/estoque`; (2) formulário de edição diz "sucesso" mas os campos ficam em branco. O que já foi tentado: `prisma db push` (colunas existem no `schema.prisma` conforme confirmado — `quantidadeEstoque Float?`, `estoqueMinimo Float?`), controller desestrutura os campos explicitamente, frontend usa resposta direta do servidor (eliminando race condition do pooler). O que investigar na próxima sessão: (a) verificar logs do Render para ver o erro exato no PATCH; (b) atenção ao fato de que o projeto usa **Zod v4** (`"zod": "^4.4.3"` no `package.json`) — possível quebra de comportamento no `.optional().nullable()` comparado com v3; (c) confirmar se as colunas realmente existem no banco de produção (o `db push` pode ter sido executado contra a URL errada).
 
 ### ✅ Bugs resolvidos (histórico)
 
