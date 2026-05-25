@@ -172,8 +172,8 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 
 - [ ] **Melhoria do PDF de proposta** — o PDF já existe (`html2pdf.js`), mas o layout pode ser mais bonito: logo da marcenaria destacada, cores da marca, tabela de itens bem formatada. *(PDF básico já funciona — isso é refinamento)*
 - [ ] **Contrato gerado automaticamente** — quando o orçamento é aprovado no Kanban, gera um contrato simples com dados preenchidos (cliente, valor, prazo, descrição do serviço) pronto pra assinar
-- [ ] **Estoque básico de materiais** — marceneiro cadastra quantidade em estoque (MDF, ferragens, acessórios). Ao criar orçamento, o sistema desconta automaticamente do estoque
-- [ ] **Alerta de estoque baixo** — avisa quando um material está abaixo de um limite definido pelo marceneiro antes de fechar novo orçamento *(depende do estoque básico)*
+- [x] **Estoque básico de materiais** — implementado (commit `c0ae5fd`). Campos `quantidadeEstoque` e `estoqueMinimo` no cadastro de materiais. Bugs corrigidos na sessão 24/05/2026: colunas criadas no banco via `db push`, controller atualiza os campos explicitamente, frontend usa resposta do servidor direto (sem segunda leitura) para evitar race condition do pooler Neon.tech.
+- [ ] **Alerta de estoque baixo** — avisa quando um material está abaixo de um limite definido pelo marceneiro antes de fechar novo orçamento *(estoque básico concluído — pode implementar)*
 - [ ] **Financeiro básico — contas a receber** — por projeto: registrar sinal pago, parcelas, saldo restante. Visualizar situação de pagamento de cada obra
 
 #### 🟡 Fase 2 — Transforma o produto
