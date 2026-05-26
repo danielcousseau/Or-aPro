@@ -309,7 +309,7 @@ export default {
 
     async buscarContratoPorToken(req: Request, res: Response): Promise<void> {
         try {
-            const { token } = req.params;
+            const token = req.params.token as string;
 
             const orcamento = await prisma.orcamento.findUnique({
                 where: { contratoToken: token },
@@ -339,7 +339,7 @@ export default {
 
     async aceitarContrato(req: Request, res: Response): Promise<void> {
         try {
-            const { token } = req.params;
+            const token = req.params.token as string;
 
             const orcamento = await prisma.orcamento.findUnique({ where: { contratoToken: token } });
             if (!orcamento) {
