@@ -61,8 +61,10 @@ html {
     left: 0;
     display: flex;
     flex-direction: column;
-    background: var(--panel);
-    border-right: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255, 255, 255, 0.55);
     padding: 16px 12px;
     z-index: 20;
 }
@@ -227,8 +229,10 @@ html {
     bottom: calc(100% + 8px);
     left: 0;
     right: 0;
-    background: var(--panel);
-    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: var(--radius-md);
     padding: 12px;
     box-shadow: var(--shadow-main);
@@ -947,19 +951,23 @@ input[type="number"] {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(30, 41, 59, 0.6);
+    background: rgba(15, 23, 42, 0.45);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 }
 
 .modal-content {
-    background: var(--panel);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.65);
     padding: 24px 30px;
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-main);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
     width: 100%;
     max-width: 450px;
     text-align: center;
