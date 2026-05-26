@@ -1271,8 +1271,8 @@ input[type="number"] {
 }
 
 .doc-logo {
-    max-height: 64px;
-    max-width: 180px;
+    max-height: 100px;
+    max-width: 240px;
     object-fit: contain;
 }
 
@@ -1405,11 +1405,33 @@ input[type="number"] {
 
 /* Mobile */
 @media (max-width: 600px) {
-    .doc-page { padding: 24px 18px; }
-    .doc-grid { grid-template-columns: 1fr; gap: 16px; }
-    .doc-total-box { flex-direction: column; align-items: flex-start; }
+    .doc-wrapper { padding: 0 0 32px; }
+
+    .doc-toolbar { padding: 10px 12px; gap: 8px; }
+    .doc-toolbar button { flex: 1 1 calc(50% - 4px); font-size: 0.8rem; padding: 10px 6px; }
+
+    .doc-page { padding: 20px 16px; border-radius: 0; box-shadow: none; }
+
+    /* Cabeçalho empilha verticalmente no mobile */
+    .doc-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+        padding-bottom: 16px;
+        margin-bottom: 20px;
+    }
+    .doc-logo { max-height: 70px; }
+    .doc-header-right { text-align: center; }
+
+    .doc-saudacao { font-size: 0.88rem; }
+
+    .doc-grid { grid-template-columns: 1fr; gap: 16px; margin-bottom: 20px; }
+    .doc-section p { font-size: 0.88rem; }
+
+    .doc-total-box { flex-direction: column; align-items: flex-start; gap: 14px; padding: 16px 18px; }
     .doc-total-valor-area { text-align: left; }
-    .doc-total-valor { font-size: 1.6rem; }
+    .doc-total-valor { font-size: 1.7rem; }
 }
 
 /* =============================================
