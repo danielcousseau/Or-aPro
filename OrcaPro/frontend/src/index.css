@@ -419,19 +419,20 @@ button {
     font-size: 0.94rem;
     font-weight: 700;
     letter-spacing: 0.35px;
-    transition: 0.25s ease;
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.18s ease;
     box-shadow: none;
     font-family: 'Montserrat', sans-serif;
 }
 
 button:hover {
-    transform: translateY(-2px);
+    transform: scale(1.02);
+    filter: brightness(0.96);
     box-shadow: none;
-    filter: brightness(0.95);
 }
 
 button:active {
-    transform: translateY(0);
+    transform: scale(0.97);
+    filter: brightness(0.92);
 }
 
 .btn-ghost:hover,
@@ -516,7 +517,12 @@ a:focus {
     margin-bottom: 16px;
     box-shadow: var(--shadow-soft);
     position: relative;
-    transition: 0.3s ease;
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s ease;
+}
+
+.cliente-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 86, 163, 0.1);
 }
 
 .card-actions {
@@ -945,6 +951,22 @@ input[type="number"] {
     box-shadow: 0 6px 16px rgba(0, 86, 163, 0.35);
 }
 
+@keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -958,6 +980,7 @@ input[type="number"] {
     z-index: 1000;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
+    animation: overlayFadeIn 0.2s ease;
 }
 
 .modal-content {
@@ -971,6 +994,7 @@ input[type="number"] {
     width: 100%;
     max-width: 450px;
     text-align: center;
+    animation: modalSlideUp 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .modal-content h3 {
