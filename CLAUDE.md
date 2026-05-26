@@ -44,6 +44,7 @@ OrcaPro/
 │       ├── src/
 │       │   ├── pages/        # uma tela por arquivo (.tsx)
 │       │   ├── components/   # componentes reutilizáveis (.tsx)
+│       │   ├── constants/    # constantes compartilhadas (ex: status.ts com CORES_STATUS)
 │       │   ├── services/     # api.ts (Axios com interceptor de refresh token)
 │       │   ├── utils/        # format.ts, masks.ts, validators.ts
 │       │   ├── types.ts      # todas as interfaces compartilhadas do frontend
@@ -126,6 +127,15 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - [x] PWA: ícones, manifest, service worker com `skipWaiting: true`
 - [x] Testes automatizados: `__tests__/auth.test.js` + `__tests__/crossTenant.test.js`
 - [x] Estoque básico de materiais — `quantidadeEstoque` e `estoqueMinimo` por material, modal de ajuste via PATCH, alerta visual (⚠️) nos cards e toast ao salvar orçamentos quando materiais ficam abaixo do mínimo
+
+### Fixes e melhorias sessão 26/05/2026 (noite)
+
+- [x] **Clean code — remoção de duplicações e bugs silenciosos** — refactor em 6 arquivos, nada deletado:
+  - `Dashboard.tsx`: removida chamada desnecessária a `GET /clientes` que era ignorada (economiza 1 request por abertura do dashboard)
+  - `src/constants/status.ts`: criado arquivo de constantes compartilhadas com `CORES_STATUS` — `Dashboard.tsx` e `Historico.tsx` agora importam daqui (fim da duplicata)
+  - `Clientes.tsx`: corrigido bug silencioso — `setSalvando(true)` nunca era chamado, então o botão "Salvar" nunca ficava desabilitado durante o envio; adicionado guard `if (salvando) return` para evitar duplo submit
+  - `Historico.tsx`, `Clientes.tsx`, `Materiais.tsx`: filtros e listas derivadas agora usam `useMemo` — só recalculam quando os dados mudam; `todasCategorias` e `todasUnidades` também memoizados no `Materiais.tsx`
+  - `OrcamentoController.ts` (backend): lógica idêntica de "atualizar estoque + coletar alertas" extraída para helper `aplicarMudancasEstoque`; `descontarEstoque` e `ajustarDiffEstoque` agora delegam para ele
 
 ### Fixes e melhorias sessão 26/05/2026 (tarde)
 
