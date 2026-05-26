@@ -130,11 +130,26 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 
 ### Fixes e melhorias sessão 26/05/2026 (noite — segunda parte)
 
-- [x] **Contrato automático ao aprovar orçamento** — quando o marceneiro move um orçamento para "Aprovado" no Kanban, o backend gera automaticamente um `contratoToken` (UUID único) e salva no banco com `contratoGeradoEm`. Novas rotas públicas: `GET /api/orcamentos/contrato/:token` (busca dados) e `PATCH /api/orcamentos/contrato/:token/aceitar` (cliente confirma). Página pública `/contrato/:token` com tabela de materiais, condições gerais, botão de aceite verde — ao clicar registra `contratoAceito = true` e `contratoAceitoEm` no banco. Após aceite, exibe confirmação com data/hora e desabilita botão.
+- [x] **Contrato automático ao aprovar orçamento** — quando o marceneiro move um orçamento para "Aprovado" no Kanban, o backend gera automaticamente um `contratoToken` (UUID único) e salva no banco com `contratoGeradoEm`. Novas rotas públicas: `GET /api/orcamentos/contrato/:token` (busca dados) e `PATCH /api/orcamentos/contrato/:token/aceitar` (cliente confirma). Rota autenticada: `POST /api/orcamentos/:id/gerar-contrato` (para orçamentos que já eram Aprovados antes da feature). Página pública `/contrato/:token` com tabela de materiais, condições gerais, botão de aceite verde — ao clicar registra `contratoAceito = true` e `contratoAceitoEm` no banco. Após aceite, exibe confirmação com data/hora e desabilita botão.
 - [x] **Drag-and-drop no Kanban** — arrastar e soltar cards entre colunas usando a API HTML5 nativa (sem biblioteca). Coluna alvo fica destacada (borda tracejada colorida + fundo suave) durante o arraste. Card arrastado fica translúcido. Status salvo no banco ao soltar.
 - [x] **Botão "Compartilhar Contrato" no Kanban** — aparece nos cards com status "Aprovado" que já têm contrato gerado. Abre WhatsApp com mensagem pré-formatada (nome do cliente + link do contrato). Indica se o contrato já foi aceito pelo cliente. TODO EvolutionAPI marcado no código para integração futura.
 - [x] **Fix html2pdf.d.ts** — tipo `margin` corrigido para aceitar `number | number[]` (estava só `number`, causando erro de TypeScript em 3 páginas).
 - [x] **Schema do banco** — 4 novos campos no model `Orcamento`: `contratoToken String? @unique`, `contratoGeradoEm DateTime?`, `contratoAceito Boolean @default(false)`, `contratoAceitoEm DateTime?`. `prisma db push` executado em produção.
+- [x] **Fix máscara de telefone** — `mascaraTelefone` agora strip do prefixo DDI 55 ao colar (ex: "5551995154309" → "(51) 99515-4309"). Máscara aplicada só no `onBlur` (saída do campo) em vez de a cada tecla — elimina bug do cursor pulando pro final ao editar no meio do número. Arquivo: `masks.ts` + `Clientes.tsx`.
+
+### 🔴 BUG ABERTO — prioridade alta para próxima sessão
+
+**Botão "Gerar Contrato" retorna 404** — `POST /api/orcamentos/:id/gerar-contrato` retorna 404 no Render. O frontend está correto (Vercel deployou). O problema é o **backend no Render ainda rodando código antigo** — sinal de que o build do Render está falhando por erro de TypeScript.
+
+**Diagnóstico já feito:**
+- O erro original era `Record<string, unknown>` passado como `data` no `prisma.orcamento.update` dentro de `atualizarStatus` — o Prisma exige tipo específico, então o `tsc` falhava silenciosamente e o Render continuava com o executável antigo.
+- Fix foi commitado em `6ba3fc6`: substituído por `{ status: string; contratoToken?: string; contratoGeradoEm?: Date }`.
+
+**O que fazer na próxima sessão:**
+1. Verificar no painel do Render se o build do commit `6ba3fc6` (ou `4cf1887`) passou ou falhou.
+2. Se ainda falhar: há provavelmente **outro erro de TypeScript** no backend que não conseguimos detectar localmente (TypeScript não está instalado na máquina do Victor, então `tsc --noEmit` não rodou no backend).
+3. Solução definitiva: instalar o TypeScript no backend localmente (`npm install` no diretório do backend) e rodar `npx tsc --noEmit` para ver todos os erros de uma vez.
+4. Alternativamente: ver os logs de build do Render no dashboard — eles mostram exatamente qual linha do `tsc` está falhando.
 
 ### Fixes e melhorias sessão 26/05/2026 (noite — primeira parte)
 
@@ -201,7 +216,7 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 
 ### 🔴 Bugs abertos
 
-*(nenhum no momento)*
+- **`POST /api/orcamentos/:id/gerar-contrato` retorna 404** — backend Render rodando código antigo por falha no build do TypeScript. Ver seção "BUG ABERTO" acima para diagnóstico completo e passos para resolver.
 
 ### 🎨 Design — em andamento
 
@@ -226,7 +241,7 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 #### 🔴 Fase 1 — Sem isso o sistema é incompleto
 
 - [x] **Melhoria do PDF de proposta** — layout unificado entre PDF, impressão e tela. Componente `DocumentoOrcamento.tsx` compartilhado. Logo da marcenaria personalizável. Concluído em 26/05/2026.
-- [x] **Contrato gerado automaticamente** — implementado em 26/05/2026 (noite). UUID gerado ao aprovar, página pública `/contrato/:token` com aceite digital, botão WhatsApp no Kanban.
+- [x] **Contrato gerado automaticamente** — frontend 100% OK. Backend com bug de deploy (ver seção Bugs Abertos). Implementado em 26/05/2026 (noite).
 - [x] **Estoque básico de materiais** — implementado e funcionando em produção (25/05/2026). Campos `quantidadeEstoque` e `estoqueMinimo` no cadastro/edição de materiais. Modal "Estoque" via PATCH. Alerta visual (⚠️) quando abaixo do mínimo.
 - [x] **Alerta de estoque baixo** — implementado em dois pontos: (1) na página de Materiais, os cards exibem ⚠️ e o número em vermelho quando `quantidadeEstoque < estoqueMinimo`; (2) ao salvar um orçamento, o backend calcula quais materiais ficaram abaixo do mínimo após o desconto e retorna `alertasEstoque` — o frontend exibe um toast de aviso com os nomes dos materiais afetados.
 - [ ] **Financeiro básico — contas a receber** — por projeto: registrar sinal pago, parcelas, saldo restante. Visualizar situação de pagamento de cada obra
