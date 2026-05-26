@@ -18,6 +18,27 @@ function formatarData(iso: string): string {
     });
 }
 
+const comprimirLogo = (file: File): Promise<string> => new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+        const MAX_W = 600;
+        const MAX_H = 200;
+        let { width: w, height: h } = img;
+        const ratio = Math.min(MAX_W / w, MAX_H / h, 1);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => reject(new Error('Erro ao processar imagem'));
+    img.src = url;
+});
+
 const comprimirImagem = (file: File): Promise<string> => new Promise((resolve) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -43,6 +64,8 @@ export default function Perfil() {
     const [nomeMarcenaria, setNomeMarcenaria] = useState('');
     const [salvandoPerfil, setSalvandoPerfil] = useState(false);
     const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [salvandoLogo, setSalvandoLogo] = useState(false);
     const [senhaAtual, setSenhaAtual] = useState('');
     const [novaSenha, setNovaSenha] = useState('');
     const [confirmarSenha, setConfirmarSenha] = useState('');
@@ -65,6 +88,7 @@ export default function Perfil() {
             setEmail(data.email || '');
             setNomeMarcenaria(data.nomeMarcenaria || '');
             if (data.avatar) setFotoPreview(data.avatar);
+            if (data.logoMarcenaria) setLogoPreview(data.logoMarcenaria);
         }).catch(() => {
             const userStorage = localStorage.getItem('@OrcaPro:user');
             if (userStorage) {
@@ -73,9 +97,47 @@ export default function Perfil() {
                 setNome(parsed.nome || '');
                 setEmail(parsed.email || '');
                 setNomeMarcenaria(parsed.nomeMarcenaria || '');
+                if (parsed.logoMarcenaria) setLogoPreview(parsed.logoMarcenaria);
             }
         });
     }, []);
+
+    const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.size > 1 * 1024 * 1024) {
+            toast.error('Arquivo muito grande. Escolha uma imagem de até 1MB.');
+            return;
+        }
+        setSalvandoLogo(true);
+        try {
+            const base64 = await comprimirLogo(file);
+            setLogoPreview(base64);
+            await api.put('/usuarios/perfil', { nome, email, logoMarcenaria: base64 });
+            const stored = localStorage.getItem('@OrcaPro:user');
+            if (stored) localStorage.setItem('@OrcaPro:user', JSON.stringify({ ...JSON.parse(stored) as User, logoMarcenaria: base64 }));
+            toast.success('Logo da marcenaria atualizada!');
+        } catch {
+            toast.error('Erro ao salvar logo. Tente novamente.');
+        } finally {
+            setSalvandoLogo(false);
+        }
+    };
+
+    const handleRemoverLogo = async () => {
+        setSalvandoLogo(true);
+        try {
+            await api.put('/usuarios/perfil', { nome, email, logoMarcenaria: null });
+            setLogoPreview(null);
+            const stored = localStorage.getItem('@OrcaPro:user');
+            if (stored) localStorage.setItem('@OrcaPro:user', JSON.stringify({ ...JSON.parse(stored) as User, logoMarcenaria: null }));
+            toast.success('Logo removida. O padrão do OrcaPro será usado.');
+        } catch {
+            toast.error('Erro ao remover logo.');
+        } finally {
+            setSalvandoLogo(false);
+        }
+    };
 
     const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -203,6 +265,31 @@ export default function Perfil() {
                                 {salvandoPerfil ? 'Salvando...' : 'Salvar Perfil'}
                             </button>
                         </form>
+                    </div>
+
+                    <div className="cliente-card">
+                        <h2 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '12px', marginBottom: '20px', fontSize: '1.2rem' }}>Logo da Marcenaria</h2>
+                        <p style={{ fontSize: '0.82rem', color: 'var(--text-soft)', marginBottom: '16px', lineHeight: '1.5' }}>
+                            Aparece nos PDFs e propostas enviadas ao cliente. Tamanho recomendado: <strong>600×200px</strong>. Máximo: 1MB. Formatos: JPG ou PNG.
+                        </p>
+                        <div style={{ background: 'var(--panel-soft)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80px' }}>
+                            <img
+                                src={logoPreview || '/logo-orcapro.png'}
+                                alt="Logo da marcenaria"
+                                style={{ maxHeight: '80px', maxWidth: '100%', objectFit: 'contain' }}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                            <label style={{ flex: 1, minWidth: '120px', background: 'var(--primary)', color: '#fff', padding: '10px 16px', borderRadius: '6px', cursor: salvandoLogo ? 'not-allowed' : 'pointer', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center', opacity: salvandoLogo ? 0.7 : 1 }}>
+                                {salvandoLogo ? 'Salvando...' : 'Trocar Logo'}
+                                <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleLogoChange} disabled={salvandoLogo} />
+                            </label>
+                            {logoPreview && (
+                                <button type="button" onClick={handleRemoverLogo} disabled={salvandoLogo} style={{ background: 'transparent', border: '1px solid var(--border)', padding: '10px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-soft)' }}>
+                                    Usar padrão OrcaPro
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     <div className="cliente-card">

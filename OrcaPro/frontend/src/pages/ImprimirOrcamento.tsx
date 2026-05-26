@@ -16,6 +16,7 @@ export default function ImprimirOrcamento() {
 
     const userStorage = JSON.parse(localStorage.getItem('@OrcaPro:user') || '{}') as User;
     const nomeMarcenaria = userStorage.nomeMarcenaria;
+    const logoMarcenaria = userStorage.logoMarcenaria;
 
     useEffect(() => {
         Promise.all([
@@ -112,6 +113,7 @@ export default function ImprimirOrcamento() {
                 modo="interno"
                 numero={numeroLocal}
                 nomeMarcenaria={nomeMarcenaria}
+                logoMarcenaria={logoMarcenaria}
             />
         </div>
     );

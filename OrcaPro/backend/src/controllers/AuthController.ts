@@ -52,7 +52,7 @@ export default {
             await registrar(user.id, 'login', 'Sessão', null, null);
 
             res.json({
-                user: { id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null },
+                user: { id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null, logoMarcenaria: user.logoMarcenaria || null },
                 accessToken,
                 refreshToken,
             });
@@ -88,13 +88,13 @@ export default {
         try {
             const user = await prisma.user.findUnique({
                 where: { id: req.userId },
-                select: { id: true, usuario: true, name: true, email: true, avatar: true, nomeMarcenaria: true }
+                select: { id: true, usuario: true, name: true, email: true, avatar: true, nomeMarcenaria: true, logoMarcenaria: true }
             });
             if (!user) {
                 res.status(404).json({ error: 'Usuário não encontrado.' });
                 return;
             }
-            res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null });
+            res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null, logoMarcenaria: user.logoMarcenaria || null });
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro interno no servidor' });
@@ -149,16 +149,17 @@ export default {
 
     async atualizarPerfil(req: Request, res: Response): Promise<void> {
         try {
-            const { nome, email, avatar, nomeMarcenaria } = req.body;
+            const { nome, email, avatar, nomeMarcenaria, logoMarcenaria } = req.body;
             const data: Record<string, unknown> = { name: nome, email: email || null };
             if (avatar !== undefined) data.avatar = avatar;
             if (nomeMarcenaria !== undefined) data.nomeMarcenaria = nomeMarcenaria || null;
+            if (logoMarcenaria !== undefined) data.logoMarcenaria = logoMarcenaria || null;
             const user = await prisma.user.update({
                 where: { id: req.userId },
                 data,
-                select: { id: true, usuario: true, name: true, email: true, avatar: true, nomeMarcenaria: true }
+                select: { id: true, usuario: true, name: true, email: true, avatar: true, nomeMarcenaria: true, logoMarcenaria: true }
             });
-            res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null });
+            res.json({ id: user.id, usuario: user.usuario, nome: user.name, email: user.email, avatar: user.avatar || null, nomeMarcenaria: user.nomeMarcenaria || null, logoMarcenaria: user.logoMarcenaria || null });
         } catch (error: unknown) {
             if (typeof error === 'object' && error !== null && 'code' in error && (error as { code: string }).code === 'P2002') {
                 res.status(409).json({ error: 'Este e-mail já está em uso por outra conta.' });

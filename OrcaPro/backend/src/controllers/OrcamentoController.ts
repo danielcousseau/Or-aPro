@@ -453,14 +453,22 @@ export default {
 
             const orcamento = await prisma.orcamento.findUnique({
                 where: { id: Number(decoded.orcamentoId) },
-                include: { cliente: true }
+                include: {
+                    cliente: true,
+                    user: { select: { nomeMarcenaria: true, logoMarcenaria: true } }
+                }
             });
 
             if (!orcamento) {
                 res.status(404).json({ error: 'Orçamento não encontrado.' });
                 return;
             }
-            res.json(orcamento);
+            const { user: marcenaria, ...dadosOrcamento } = orcamento;
+            res.json({
+                ...dadosOrcamento,
+                nomeMarcenaria: marcenaria?.nomeMarcenaria || null,
+                logoMarcenaria: marcenaria?.logoMarcenaria || null,
+            });
         } catch (error) {
             console.error(error);
             res.status(401).json({ error: 'Link inválido ou expirado.' });

@@ -7,13 +7,20 @@ import DocumentoOrcamento from '../components/DocumentoOrcamento';
 export default function Proposta() {
     const { token } = useParams<{ token: string }>();
     const [orcamento, setOrcamento] = useState<Orcamento | null>(null);
+    const [nomeMarcenaria, setNomeMarcenaria] = useState<string | undefined>();
+    const [logoMarcenaria, setLogoMarcenaria] = useState<string | null>(null);
     const [erro, setErro] = useState('');
     const [gerando, setGerando] = useState(false);
     const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         api.get(`/orcamentos/proposta/${token}`)
-            .then(res => setOrcamento(res.data))
+            .then(res => {
+                const { nomeMarcenaria: nm, logoMarcenaria: lm, ...orc } = res.data;
+                setOrcamento(orc);
+                setNomeMarcenaria(nm || undefined);
+                setLogoMarcenaria(lm || null);
+            })
             .catch(() => setErro('Este link é inválido, expirou ou o orçamento foi removido.'));
     }, [token]);
 
@@ -61,6 +68,8 @@ export default function Proposta() {
                 ref={contentRef}
                 orcamento={orcamento}
                 modo="cliente"
+                nomeMarcenaria={nomeMarcenaria}
+                logoMarcenaria={logoMarcenaria}
             />
         </div>
     );

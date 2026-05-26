@@ -7,18 +7,20 @@ interface Props {
     modo: 'interno' | 'cliente';
     numero?: string | number;
     nomeMarcenaria?: string;
+    logoMarcenaria?: string | null;
 }
 
 const DocumentoOrcamento = forwardRef<HTMLDivElement, Props>(
-    ({ orcamento, modo, numero, nomeMarcenaria }, ref) => {
+    ({ orcamento, modo, numero, nomeMarcenaria, logoMarcenaria }, ref) => {
         const dataFormatada = new Date(orcamento.createdAt).toLocaleDateString('pt-BR');
         const nomeExibicao = nomeMarcenaria || 'Marcenaria';
+        const logoSrc = logoMarcenaria || '/logo-orcapro.png';
 
         return (
             <div ref={ref} className="doc-page">
                 {/* Cabeçalho */}
                 <header className="doc-header">
-                    <img src="/logo-orcapro.png" alt="Logo" className="doc-logo" />
+                    <img src={logoSrc} alt="Logo" className="doc-logo" />
                     <div className="doc-header-right">
                         <p className="doc-marcenaria">{nomeExibicao}</p>
                         {modo === 'interno' && numero != null && (

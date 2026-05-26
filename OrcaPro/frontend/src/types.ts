@@ -110,4 +110,5 @@ export interface User {
   email?: string;
   avatar?: string | null;
   nomeMarcenaria?: string;
+  logoMarcenaria?: string | null;
 }

@@ -19,6 +19,7 @@ model User {
   password        String
   isAdmin         Boolean  @default(false)
   nomeMarcenaria  String?
+  logoMarcenaria  String?
   createdAt       DateTime @default(now())
 
   // Relacionamentos: O que pertence a este usuário
