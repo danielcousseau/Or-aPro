@@ -131,8 +131,8 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 
 - [x] **Glassmorphism** — sidebar com `backdrop-filter: blur(20px)` e fundo translúcido, modais com efeito de vidro fosco e sombra profunda, dropdown do usuário com blur. Commit: `97fb51a`.
 - [x] **Micro-interações** — botões escalam com `scale(1.02)` no hover e encolhem no clique (`scale(0.97)`), transição com curva cúbica spring. Cards levitam `translateY(-3px)` no hover com sombra azulada. Modais surgem com `fadeIn` + `slideUp` animado. Commit: `a8ef84b`.
-- [ ] **Whitespace** — espaçamentos mais generosos *(próxima sessão)*
-- [ ] **Bento Grid no Dashboard** — cards assimétricos estilo Apple *(próxima sessão)*
+- [ ] **Whitespace** — tentado em 26/05/2026, revertido a pedido do Victor (estava bom antes). Não tentar de novo sem proposta visual concreta primeiro.
+- [x] **Bento Grid no Dashboard** — grid de 4 colunas com cards assimétricos estilo Apple. Faturamento Confirmado ocupa 2 colunas com destaque (gradiente sutil + número maior). Gráfico de Ambientes ocupa 3 colunas. Mobile: 2 colunas em ≤900px, 1 coluna em ≤600px. Classes: `.bento-grid`, `.bento-span-2`, `.bento-span-3`, `.bento-card-featured`. Commit: `11bd615`.
 
 ### Fixes e melhorias sessão 25/05/2026
 
@@ -177,8 +177,8 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 
 - [x] Glassmorphism — sidebar, modais, dropdown
 - [x] Micro-interações — botões, cards, modais
-- [ ] Whitespace — espaçamentos mais generosos
-- [ ] Bento Grid — Dashboard com cards assimétricos
+- [x] Bento Grid — Dashboard com cards assimétricos
+- [ ] Whitespace — não aplicar sem proposta visual concreta; Victor reverteu a última tentativa
 
 ### ✅ Bugs resolvidos (histórico)
 
