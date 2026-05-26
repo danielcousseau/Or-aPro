@@ -81,6 +81,49 @@ export default {
         }
     },
 
+    async listarRentabilidade(req: Request, res: Response): Promise<void> {
+        try {
+            const orcamentos = await prisma.orcamento.findMany({
+                where: { userId: req.userId },
+                select: {
+                    id: true,
+                    titulo: true,
+                    totalFinal: true,
+                    status: true,
+                    createdAt: true,
+                    cliente: { select: { nome: true } },
+                    materiais: { select: { valor: true, quantidade: true } },
+                    pagamentos: { select: { valor: true } }
+                },
+                orderBy: { createdAt: 'desc' }
+            });
+
+            const resultado = orcamentos.map(o => {
+                const custoMateriais = o.materiais.reduce((acc, m) => acc + m.valor * m.quantidade, 0);
+                const valorRecebido = o.pagamentos.reduce((acc, p) => acc + p.valor, 0);
+                const lucro = o.totalFinal - custoMateriais;
+                const margem = o.totalFinal > 0 ? (lucro / o.totalFinal) * 100 : 0;
+                return {
+                    id: o.id,
+                    titulo: o.titulo,
+                    cliente: o.cliente,
+                    status: o.status,
+                    createdAt: o.createdAt,
+                    totalFinal: o.totalFinal,
+                    custoMateriais,
+                    valorRecebido,
+                    lucro,
+                    margem: Math.round(margem * 10) / 10
+                };
+            });
+
+            res.json(resultado);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Erro ao calcular rentabilidade' });
+        }
+    },
+
     async listarTodos(req: Request, res: Response): Promise<void> {
         try {
             const orcamentos = await prisma.orcamento.findMany({
