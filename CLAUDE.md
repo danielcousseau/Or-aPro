@@ -125,6 +125,7 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - [x] Audit Log de ações (criar/editar/excluir/login) — card no Perfil + painel Admin
 - [x] PWA: ícones, manifest, service worker com `skipWaiting: true`
 - [x] Testes automatizados: `__tests__/auth.test.js` + `__tests__/crossTenant.test.js`
+- [x] Estoque básico de materiais — `quantidadeEstoque` e `estoqueMinimo` por material, modal de ajuste via PATCH, alerta visual (⚠️) nos cards e toast ao salvar orçamentos quando materiais ficam abaixo do mínimo
 
 ### Fixes e melhorias sessão 25/05/2026
 
@@ -133,6 +134,7 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - [x] **Sombra laranja removida dos botões** — removida a `box-shadow` laranja do seletor base `button {}` no `index.css`. Corrige de uma vez os botões "Estoque", "Ver/Imprimir", "Remover foto" e qualquer outro botão sem classe específica. Botões com shadow própria (`.btn-add`) continuam inalterados. `.btn-action` ganhou `box-shadow: none` explícito também.
 - [x] **Excluir materiais padrão** — `MaterialController.listar` agora só cria os padrões quando o usuário tem zero materiais (primeira vez). Antes recriava qualquer padrão deletado em toda listagem.
 - [x] **`playing_with_neon` removida** — tabela de demo do Neon.tech removida do banco com o `db push` (não era dado do sistema).
+- [x] **Alerta de estoque baixo** — implementado em dois pontos: (1) página de Materiais mostra ⚠️ e número em vermelho nos cards quando `quantidadeEstoque < estoqueMinimo`; (2) ao salvar orçamento, o backend retorna `alertasEstoque` com os materiais que ficaram abaixo do mínimo após o desconto — frontend exibe toast de aviso.
 
 ### Fixes e melhorias sessão 24/05/2026
 
@@ -182,7 +184,7 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - [ ] **Melhoria do PDF de proposta** — o PDF já existe (`html2pdf.js`), mas o layout pode ser mais bonito: logo da marcenaria destacada, cores da marca, tabela de itens bem formatada. *(PDF básico já funciona — isso é refinamento)*
 - [ ] **Contrato gerado automaticamente** — quando o orçamento é aprovado no Kanban, gera um contrato simples com dados preenchidos (cliente, valor, prazo, descrição do serviço) pronto pra assinar
 - [x] **Estoque básico de materiais** — implementado e funcionando em produção (25/05/2026). Campos `quantidadeEstoque` e `estoqueMinimo` no cadastro/edição de materiais. Modal "Estoque" via PATCH. Alerta visual (⚠️) quando abaixo do mínimo.
-- [ ] **Alerta de estoque baixo** — avisa quando um material está abaixo de um limite definido pelo marceneiro antes de fechar novo orçamento *(estoque básico concluído — pode implementar)*
+- [x] **Alerta de estoque baixo** — implementado em dois pontos: (1) na página de Materiais, os cards exibem ⚠️ e o número em vermelho quando `quantidadeEstoque < estoqueMinimo`; (2) ao salvar um orçamento, o backend calcula quais materiais ficaram abaixo do mínimo após o desconto e retorna `alertasEstoque` — o frontend exibe um toast de aviso com os nomes dos materiais afetados.
 - [ ] **Financeiro básico — contas a receber** — por projeto: registrar sinal pago, parcelas, saldo restante. Visualizar situação de pagamento de cada obra
 
 #### 🟡 Fase 2 — Transforma o produto
