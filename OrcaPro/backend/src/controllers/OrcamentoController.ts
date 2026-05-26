@@ -279,6 +279,34 @@ export default {
         }
     },
 
+    async gerarContrato(req: Request, res: Response): Promise<void> {
+        try {
+            const { id } = req.params;
+
+            const pertence = await prisma.orcamento.findFirst({
+                where: { id: Number(id), userId: req.userId }
+            });
+            if (!pertence) {
+                res.status(403).json({ error: 'Acesso negado' });
+                return;
+            }
+            if (pertence.contratoToken) {
+                res.json(pertence);
+                return;
+            }
+
+            const atualizado = await prisma.orcamento.update({
+                where: { id: Number(id) },
+                data: { contratoToken: randomUUID(), contratoGeradoEm: new Date() }
+            });
+
+            res.json(atualizado);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Erro ao gerar contrato.' });
+        }
+    },
+
     async buscarContratoPorToken(req: Request, res: Response): Promise<void> {
         try {
             const { token } = req.params;

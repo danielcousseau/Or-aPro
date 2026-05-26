@@ -19,6 +19,7 @@ router.get('/:id/pdf', OrcamentoController.gerarPDF);
 router.get('/:id', OrcamentoController.buscarPorId);
 router.put('/:id', validate(orcamentoSchema), OrcamentoController.atualizar);
 router.patch('/:id/status', OrcamentoController.atualizarStatus);
+router.post('/:id/gerar-contrato', OrcamentoController.gerarContrato);
 router.delete('/:id', OrcamentoController.excluir);
 router.post('/:id/link-publico', OrcamentoController.gerarTokenPublico);
 

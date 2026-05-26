@@ -91,6 +91,17 @@ export default function Kanban() {
         dragOver.current = null;
     };
 
+    // --- Gerar contrato para orçamentos Aprovados sem token ---
+    const gerarContrato = async (id: number) => {
+        try {
+            const res = await api.post(`/orcamentos/${id}/gerar-contrato`);
+            setOrcamentos(prev => prev.map(o => o.id === id ? { ...o, ...res.data } : o));
+            toast.success('Contrato gerado! Agora você pode compartilhar.');
+        } catch {
+            toast.error('Erro ao gerar contrato.');
+        }
+    };
+
     // --- WhatsApp do contrato ---
     const compartilharContrato = (orc: OrcamentoComContrato) => {
         if (!orc.contratoToken) return;
@@ -185,11 +196,31 @@ export default function Kanban() {
                                         {COLUNAS.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
 
-                                    {/* Botão de contrato — só aparece em cards Aprovados */}
+                                    {/* Botões de contrato — só aparecem em cards Aprovados */}
+                                    {orc.status === 'Aprovado' && !orc.contratoToken && (
+                                        <button
+                                            onClick={() => gerarContrato(orc.id)}
+                                            style={{
+                                                marginTop: '8px',
+                                                background: '#3b82f6',
+                                                color: '#fff',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                padding: '6px 10px',
+                                                fontSize: '0.78rem',
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                width: '100%'
+                                            }}
+                                        >
+                                            📄 Gerar Contrato
+                                        </button>
+                                    )}
+
                                     {orc.status === 'Aprovado' && orc.contratoToken && (
                                         <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: orc.contratoAceito ? '#10b981' : '#3b82f6' }}>
-                                                <span>{orc.contratoAceito ? '✓ Contrato aceito' : '📄 Contrato gerado'}</span>
+                                            <div style={{ fontSize: '0.78rem', color: orc.contratoAceito ? '#10b981' : '#3b82f6' }}>
+                                                {orc.contratoAceito ? '✓ Contrato aceito' : '📄 Contrato gerado'}
                                             </div>
                                             <button
                                                 onClick={() => compartilharContrato(orc)}
@@ -202,9 +233,7 @@ export default function Kanban() {
                                                     fontSize: '0.78rem',
                                                     fontWeight: 600,
                                                     cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '4px'
+                                                    width: '100%'
                                                 }}
                                             >
                                                 {/* TODO: EvolutionAPI - quando integrado, substituir o envio manual abaixo
