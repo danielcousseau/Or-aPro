@@ -127,6 +127,13 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 - [x] Testes automatizados: `__tests__/auth.test.js` + `__tests__/crossTenant.test.js`
 - [x] Estoque básico de materiais — `quantidadeEstoque` e `estoqueMinimo` por material, modal de ajuste via PATCH, alerta visual (⚠️) nos cards e toast ao salvar orçamentos quando materiais ficam abaixo do mínimo
 
+### Melhorias de design sessão 25/05/2026 (tarde)
+
+- [x] **Glassmorphism** — sidebar com `backdrop-filter: blur(20px)` e fundo translúcido, modais com efeito de vidro fosco e sombra profunda, dropdown do usuário com blur. Commit: `97fb51a`.
+- [x] **Micro-interações** — botões escalam com `scale(1.02)` no hover e encolhem no clique (`scale(0.97)`), transição com curva cúbica spring. Cards levitam `translateY(-3px)` no hover com sombra azulada. Modais surgem com `fadeIn` + `slideUp` animado. Commit: `a8ef84b`.
+- [ ] **Whitespace** — espaçamentos mais generosos *(próxima sessão)*
+- [ ] **Bento Grid no Dashboard** — cards assimétricos estilo Apple *(próxima sessão)*
+
 ### Fixes e melhorias sessão 25/05/2026
 
 - [x] **Bug raiz do estoque encontrado e corrigido** — o `validate.ts` importava `ZodSchema` e `ZodIssue` do Zod, que **não existem mais no Zod v4** (`"zod": "^4.4.3"`). Isso causava falha silenciosa no `tsc` durante o build do Render, mantendo o servidor rodando uma versão antiga do código (sem rota PATCH e sem campos de estoque no controller). Fix: substituído `ZodSchema` por `z.ZodTypeAny` e removida a anotação explícita de `ZodIssue` — TypeScript infere automaticamente. Arquivo: `backend/src/middlewares/validate.ts`.
@@ -165,6 +172,13 @@ Tudo que já foi implementado e está funcionando em produção (salvo indicaç�
 ### 🔴 Bugs abertos
 
 *(nenhum no momento)*
+
+### 🎨 Design — em andamento
+
+- [x] Glassmorphism — sidebar, modais, dropdown
+- [x] Micro-interações — botões, cards, modais
+- [ ] Whitespace — espaçamentos mais generosos
+- [ ] Bento Grid — Dashboard com cards assimétricos
 
 ### ✅ Bugs resolvidos (histórico)
 
