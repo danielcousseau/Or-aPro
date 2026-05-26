@@ -108,7 +108,7 @@ export default function Kanban() {
         const link = `${window.location.origin}/contrato/${orc.contratoToken}`;
         const telefone = orc.cliente?.telefone?.replace(/\D/g, '') || '';
         const mensagem = encodeURIComponent(
-            `Olá ${orc.cliente?.nome || ''}! \n\nSeu projeto foi aprovado! 🎉\n\nSegue o link do contrato para você revisar e confirmar:\n${link}\n\nQualquer dúvida, estou à disposição!`
+            `Olá ${orc.cliente?.nome?.trim() || ''}!\n\nSeu projeto foi aprovado!\n\nSegue o link do contrato para você revisar e confirmar:\n${link}\n\nQualquer dúvida, estou à disposição!`
         );
         const url = telefone
             ? `https://wa.me/55${telefone}?text=${mensagem}`
@@ -240,7 +240,7 @@ export default function Kanban() {
                                                     por envio automático via POST /message/sendText na instância configurada.
                                                     Dados necessários: número do cliente, link do contrato, nome do marceneiro.
                                                     Ref: https://doc.evolution-api.com/v2/pt/messages/send-messages */}
-                                                📲 Compartilhar Contrato
+                                                Compartilhar Contrato
                                             </button>
                                         </div>
                                     )}

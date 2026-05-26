@@ -89,7 +89,7 @@ export default function ImprimirOrcamento() {
             }
 
             const identificacao = nomeMarcenaria ? `da ${nomeMarcenaria}` : 'da Marcenaria';
-            const mensagem = `Olá, *${orc.cliente.nome}*!\n\nAqui é ${identificacao}. Finalizamos o seu orçamento para o projeto *${orc.titulo}*.\n\nVocê pode visualizar os detalhes de forma segura através deste link exclusivo:\n${linkProposta}\n\nQualquer dúvida, estou à disposição!`;
+            const mensagem = `Olá, *${orc.cliente.nome.trim()}*!\n\nAqui é ${identificacao}. Finalizamos o seu orçamento para o projeto *${orc.titulo.trim()}*.\n\nVocê pode visualizar os detalhes de forma segura através deste link exclusivo:\n${linkProposta}\n\nQualquer dúvida, estou à disposição!`;
             window.open(`https://wa.me/${telefoneFormatado}?text=${encodeURIComponent(mensagem)}`, '_blank');
         } catch {
             toast.error("Erro ao gerar link seguro para envio.");
