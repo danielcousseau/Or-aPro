@@ -1,17 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { formatarMoeda } from '../utils/format';
 import { Orcamento } from '../types';
-
-const CORES_STATUS: Record<string, string> = {
-    'Aguardando': '#f39c12',
-    'Aprovado':   '#3498db',
-    'Produção':   '#9b59b6',
-    'Instalação': '#e67e22',
-    'Entregue':   '#27ae60'
-};
+import { CORES_STATUS } from '../constants/status';
 
 export default function Historico() {
     const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
@@ -65,14 +58,14 @@ export default function Historico() {
         });
     };
 
-    const orcamentosFiltrados = orcamentos.filter(orc => {
+    const orcamentosFiltrados = useMemo(() => {
         const termo = termoBusca.toLowerCase();
-        return (
+        return orcamentos.filter(orc =>
             (orc.titulo && orc.titulo.toLowerCase().includes(termo)) ||
             (orc.cliente?.nome && orc.cliente.nome.toLowerCase().includes(termo)) ||
             (orc.status && orc.status.toLowerCase().includes(termo))
         );
-    });
+    }, [orcamentos, termoBusca]);
 
     return (
         <div>

@@ -18,56 +18,10 @@ interface MatLineInput {
     materialId?: number | null;
 }
 
-async function descontarEstoque(materiais: MatLineInput[], userId: number): Promise<string[]> {
-    const descontos = new Map<number, number>();
-    for (const mat of materiais) {
-        if (mat.materialId) {
-            descontos.set(mat.materialId, (descontos.get(mat.materialId) ?? 0) + mat.quantidade);
-        }
-    }
-
+async function aplicarMudancasEstoque(mudancas: Map<number, number>, userId: number): Promise<string[]> {
     const alertas: string[] = [];
-    for (const [materialId, qtd] of descontos) {
-        const material = await prisma.material.findFirst({ where: { id: materialId, userId } });
-        if (material && material.quantidadeEstoque !== null) {
-            const novoEstoque = Math.max(0, material.quantidadeEstoque - qtd);
-            await prisma.material.update({ where: { id: materialId }, data: { quantidadeEstoque: novoEstoque } });
-            if (material.estoqueMinimo !== null && novoEstoque < material.estoqueMinimo) {
-                alertas.push(material.nome);
-            }
-        }
-    }
-    return alertas;
-}
-
-async function ajustarDiffEstoque(
-    materiaisAntes: { materialId: number | null; quantidade: number }[],
-    materiaisDepois: MatLineInput[],
-    userId: number
-): Promise<string[]> {
-    const beforeMap = new Map<number, number>();
-    for (const m of materiaisAntes) {
-        if (m.materialId) {
-            beforeMap.set(m.materialId, (beforeMap.get(m.materialId) ?? 0) + m.quantidade);
-        }
-    }
-
-    const afterMap = new Map<number, number>();
-    for (const m of materiaisDepois) {
-        if (m.materialId) {
-            afterMap.set(m.materialId, (afterMap.get(m.materialId) ?? 0) + m.quantidade);
-        }
-    }
-
-    const allIds = new Set([...beforeMap.keys(), ...afterMap.keys()]);
-    const alertas: string[] = [];
-
-    for (const materialId of allIds) {
-        const before = beforeMap.get(materialId) ?? 0;
-        const after = afterMap.get(materialId) ?? 0;
-        const diff = after - before;
+    for (const [materialId, diff] of mudancas) {
         if (diff === 0) continue;
-
         const material = await prisma.material.findFirst({ where: { id: materialId, userId } });
         if (material && material.quantidadeEstoque !== null) {
             const novoEstoque = Math.max(0, material.quantidadeEstoque - diff);
@@ -78,6 +32,36 @@ async function ajustarDiffEstoque(
         }
     }
     return alertas;
+}
+
+async function descontarEstoque(materiais: MatLineInput[], userId: number): Promise<string[]> {
+    const mudancas = new Map<number, number>();
+    for (const mat of materiais) {
+        if (mat.materialId) {
+            mudancas.set(mat.materialId, (mudancas.get(mat.materialId) ?? 0) + mat.quantidade);
+        }
+    }
+    return aplicarMudancasEstoque(mudancas, userId);
+}
+
+async function ajustarDiffEstoque(
+    materiaisAntes: { materialId: number | null; quantidade: number }[],
+    materiaisDepois: MatLineInput[],
+    userId: number
+): Promise<string[]> {
+    const beforeMap = new Map<number, number>();
+    for (const m of materiaisAntes) {
+        if (m.materialId) beforeMap.set(m.materialId, (beforeMap.get(m.materialId) ?? 0) + m.quantidade);
+    }
+    const afterMap = new Map<number, number>();
+    for (const m of materiaisDepois) {
+        if (m.materialId) afterMap.set(m.materialId, (afterMap.get(m.materialId) ?? 0) + m.quantidade);
+    }
+    const mudancas = new Map<number, number>();
+    for (const id of new Set([...beforeMap.keys(), ...afterMap.keys()])) {
+        mudancas.set(id, (afterMap.get(id) ?? 0) - (beforeMap.get(id) ?? 0));
+    }
+    return aplicarMudancasEstoque(mudancas, userId);
 }
 
 export default {

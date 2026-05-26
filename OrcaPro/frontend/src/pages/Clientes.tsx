@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { mascaraCpfCnpj, mascaraTelefone, mascaraCep } from '../utils/masks';
@@ -135,12 +135,14 @@ export default function Clientes() {
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (salvando) return;
 
         if (formData.cpfCnpj && !validarCpfCnpj(formData.cpfCnpj)) {
             toast.error('O CPF ou CNPJ informado é inválido. Verifique os números.');
             return;
         }
 
+        setSalvando(true);
         try {
             clienteEmEdicao
                 ? await api.put(`/clientes/${clienteEmEdicao.id}`, formData)
@@ -158,15 +160,15 @@ export default function Clientes() {
         }
     };
 
-    const clientesFiltrados = clientes.filter(cliente => {
+    const clientesFiltrados = useMemo(() => {
         const termo = termoBusca.toLowerCase();
-        return (
+        return clientes.filter(cliente =>
             (cliente.nome && cliente.nome.toLowerCase().includes(termo)) ||
             (cliente.telefone && cliente.telefone.includes(termo)) ||
             (cliente.email && cliente.email.toLowerCase().includes(termo)) ||
             (cliente.cpfCnpj && cliente.cpfCnpj.includes(termo))
         );
-    });
+    }, [clientes, termoBusca]);
 
     return (
         <div>

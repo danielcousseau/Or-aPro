@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 import { formatarMoeda } from '../utils/format';
@@ -79,8 +79,14 @@ export default function Materiais() {
         }
     }, [unidadesCustomizadas]);
 
-    const todasCategorias = [...CATEGORIAS_PADRAO, ...categoriasCustomizadas.filter(o => !CATEGORIAS_PADRAO.includes(o))];
-    const todasUnidades = [...UNIDADES_PADRAO, ...unidadesCustomizadas.filter(o => !UNIDADES_PADRAO.includes(o))];
+    const todasCategorias = useMemo(
+        () => [...CATEGORIAS_PADRAO, ...categoriasCustomizadas.filter(o => !CATEGORIAS_PADRAO.includes(o))],
+        [categoriasCustomizadas]
+    );
+    const todasUnidades = useMemo(
+        () => [...UNIDADES_PADRAO, ...unidadesCustomizadas.filter(o => !UNIDADES_PADRAO.includes(o))],
+        [unidadesCustomizadas]
+    );
 
     const carregarMateriais = async () => {
         try {
@@ -254,13 +260,13 @@ export default function Materiais() {
         }
     };
 
-    const materiaisFiltrados = materiais.filter(material => {
+    const materiaisFiltrados = useMemo(() => {
         const termo = termoBusca.toLowerCase();
-        return (
+        return materiais.filter(material =>
             (material.nome && material.nome.toLowerCase().includes(termo)) ||
             (material.categoria && material.categoria.toLowerCase().includes(termo))
         );
-    });
+    }, [materiais, termoBusca]);
 
     const estoqueEmAlerta = (m: Material) =>
         m.quantidadeEstoque != null && m.estoqueMinimo != null && m.quantidadeEstoque < m.estoqueMinimo;

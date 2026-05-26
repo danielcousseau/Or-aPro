@@ -13,6 +13,7 @@ import {
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { formatarMoeda } from '../utils/format';
 import { Orcamento } from '../types';
+import { CORES_STATUS } from '../constants/status';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
@@ -24,14 +25,6 @@ interface Metricas {
     lucroProjetado: number;
     taxaConversao: number;
 }
-
-const CORES_STATUS: Record<string, string> = {
-    'Aguardando': '#f39c12',
-    'Aprovado':   '#3498db',
-    'Produção':   '#9b59b6',
-    'Instalação': '#e67e22',
-    'Entregue':   '#27ae60'
-};
 
 export default function Dashboard() {
     const [metricas, setMetricas] = useState<Metricas>({
@@ -51,10 +44,7 @@ export default function Dashboard() {
 
     const carregarDados = async () => {
         try {
-            const [, resOrcamentos] = await Promise.all([
-                api.get('/clientes'),
-                api.get('/orcamentos')
-            ]);
+            const resOrcamentos = await api.get('/orcamentos');
 
             const orcamentosData: Orcamento[] = resOrcamentos.data;
             setOrcamentos(orcamentosData);
