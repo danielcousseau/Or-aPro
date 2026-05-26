@@ -64,7 +64,13 @@ export default function Perfil() {
     const [nomeMarcenaria, setNomeMarcenaria] = useState('');
     const [salvandoPerfil, setSalvandoPerfil] = useState(false);
     const [fotoPreview, setFotoPreview] = useState<string | null>(null);
-    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(() => {
+        try {
+            const stored = localStorage.getItem('@OrcaPro:user');
+            if (stored) return (JSON.parse(stored) as User).logoMarcenaria || null;
+        } catch { /* */ }
+        return null;
+    });
     const [salvandoLogo, setSalvandoLogo] = useState(false);
     const [logoInputKey, setLogoInputKey] = useState(0);
     const [senhaAtual, setSenhaAtual] = useState('');
