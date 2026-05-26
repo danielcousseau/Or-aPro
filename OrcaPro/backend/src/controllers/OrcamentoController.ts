@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import { randomUUID } from 'crypto';
 import PDFDocument from 'pdfkit';
 import path from 'path';
 import fs from 'fs';
@@ -257,9 +258,16 @@ export default {
                 return;
             }
 
+            // Gera token do contrato ao aprovar (só se ainda não tiver um)
+            const dadosExtra: Record<string, unknown> = { status };
+            if (status === 'Aprovado' && !pertence.contratoToken) {
+                dadosExtra.contratoToken = randomUUID();
+                dadosExtra.contratoGeradoEm = new Date();
+            }
+
             const orcamentoAtualizado = await prisma.orcamento.update({
                 where: { id: Number(id) },
-                data: { status }
+                data: dadosExtra
             });
 
             await registrar(req.userId!, 'atualizou status', 'Orçamento', orcamentoAtualizado.id, `${orcamentoAtualizado.titulo} → ${status}`);
@@ -268,6 +276,62 @@ export default {
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Erro ao atualizar status' });
+        }
+    },
+
+    async buscarContratoPorToken(req: Request, res: Response): Promise<void> {
+        try {
+            const { token } = req.params;
+
+            const orcamento = await prisma.orcamento.findUnique({
+                where: { contratoToken: token },
+                include: {
+                    cliente: true,
+                    materiais: true,
+                    user: { select: { nomeMarcenaria: true, logoMarcenaria: true } }
+                }
+            });
+
+            if (!orcamento) {
+                res.status(404).json({ error: 'Contrato não encontrado ou link inválido.' });
+                return;
+            }
+
+            const { user: marcenaria, ...dadosOrcamento } = orcamento;
+            res.json({
+                ...dadosOrcamento,
+                nomeMarcenaria: marcenaria?.nomeMarcenaria || null,
+                logoMarcenaria: marcenaria?.logoMarcenaria || null,
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Erro ao buscar contrato.' });
+        }
+    },
+
+    async aceitarContrato(req: Request, res: Response): Promise<void> {
+        try {
+            const { token } = req.params;
+
+            const orcamento = await prisma.orcamento.findUnique({ where: { contratoToken: token } });
+            if (!orcamento) {
+                res.status(404).json({ error: 'Contrato não encontrado.' });
+                return;
+            }
+            if (orcamento.contratoAceito) {
+                res.json({ message: 'Contrato já foi aceito anteriormente.', contratoAceitoEm: orcamento.contratoAceitoEm });
+                return;
+            }
+
+            const atualizado = await prisma.orcamento.update({
+                where: { contratoToken: token },
+                data: { contratoAceito: true, contratoAceitoEm: new Date() }
+            });
+
+            res.json({ message: 'Contrato aceito com sucesso!', contratoAceitoEm: atualizado.contratoAceitoEm });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Erro ao aceitar contrato.' });
         }
     },
 

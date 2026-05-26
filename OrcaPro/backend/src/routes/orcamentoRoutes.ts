@@ -6,8 +6,10 @@ import { orcamentoSchema } from '../schemas/orcamentoSchema';
 
 const router = Router();
 
-// [SecOps] Rota PÚBLICA — deve ficar ANTES do authMiddleware
+// [SecOps] Rotas PÚBLICAS — devem ficar ANTES do authMiddleware
 router.get('/proposta/:token', OrcamentoController.buscarPorTokenPublico);
+router.get('/contrato/:token', OrcamentoController.buscarContratoPorToken);
+router.patch('/contrato/:token/aceitar', OrcamentoController.aceitarContrato);
 
 router.use(authMiddleware);
 

@@ -98,6 +98,12 @@ model Orcamento {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  // Contrato gerado automaticamente ao aprovar
+  contratoToken    String?   @unique
+  contratoGeradoEm DateTime?
+  contratoAceito   Boolean   @default(false)
+  contratoAceitoEm DateTime?
+
   // Etiqueta de dono (SaaS)
   userId          Int
   user            User     @relation(fields: [userId], references: [id])

@@ -13,6 +13,7 @@ import Login from './pages/Login';
 import Cadastro from './pages/Cadastro';
 import Perfil from './pages/Perfil';
 import Proposta from './pages/Proposta';
+import Contrato from './pages/Contrato';
 import EsqueciSenha from './pages/EsqueciSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
 import Admin from './pages/Admin';
@@ -43,7 +44,7 @@ function LayoutSistema({ children }: { children: React.ReactNode }) {
     const isLoginPage = location.pathname === '/login';
     const isCadastroPage = location.pathname === '/cadastro';
     const isPrintPage = location.pathname.startsWith('/imprimir/');
-    const isPropostaPage = location.pathname.startsWith('/proposta/');
+    const isPropostaPage = location.pathname.startsWith('/proposta/') || location.pathname.startsWith('/contrato/');
     const isAuthAuxPage = location.pathname === '/esqueci-senha' || location.pathname === '/redefinir-senha';
     const isPublicPage = isLoginPage || isCadastroPage || isPrintPage || isPropostaPage || isAuthAuxPage;
 
@@ -110,6 +111,7 @@ export default function App() {
                         <Route path="/login" element={<Login />} />
                         <Route path="/cadastro" element={<Cadastro />} />
                         <Route path="/proposta/:token" element={<Proposta />} />
+                        <Route path="/contrato/:token" element={<Contrato />} />
                         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
                         <Route path="/redefinir-senha" element={<RedefinirSenha />} />
 

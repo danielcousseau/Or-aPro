@@ -93,6 +93,10 @@ export interface Orcamento {
   maoDeObraValor?: number;
   maoDeObraQtde?: number;
   medidas?: string;
+  contratoToken?: string | null;
+  contratoGeradoEm?: string | null;
+  contratoAceito?: boolean;
+  contratoAceitoEm?: string | null;
 }
 
 export interface AuditLog {
