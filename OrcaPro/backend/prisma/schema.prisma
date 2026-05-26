@@ -95,6 +95,7 @@ model Orcamento {
   observacoes     String?
   
   materiais       OrcamentoMaterial[]
+  pagamentos      Pagamento[]
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -133,6 +134,18 @@ model OpcaoCustomizada {
 
   @@unique([tipo, nome, userId])
   @@index([userId])
+}
+
+model Pagamento {
+  id            Int       @id @default(autoincrement())
+  orcamentoId   Int
+  orcamento     Orcamento @relation(fields: [orcamentoId], references: [id], onDelete: Cascade)
+  descricao     String
+  valor         Float
+  dataPagamento DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+
+  @@index([orcamentoId])
 }
 
 model AuditLog {

@@ -1479,3 +1479,240 @@ input[type="number"] {
     }
 }
 
+/* =============================================
+   FINANCEIRO
+   ============================================= */
+
+.financeiro-page {
+    padding: 0 0 40px;
+}
+
+.financeiro-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.financeiro-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.financeiro-resumo {
+    display: flex;
+    gap: 12px;
+}
+
+.resumo-card {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    min-width: 150px;
+    background: var(--panel);
+    box-shadow: var(--shadow-soft);
+}
+
+.resumo-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-soft);
+    margin-bottom: 4px;
+}
+
+.resumo-receber .resumo-valor { color: var(--warning); font-size: 1.25rem; font-weight: 700; }
+.resumo-recebido .resumo-valor { color: var(--success); font-size: 1.25rem; font-weight: 700; }
+
+.financeiro-filtros {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filtro-btn {
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--panel);
+    color: var(--text-soft);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.filtro-btn:hover { border-color: var(--primary); color: var(--primary); }
+.filtro-btn--ativo { background: var(--primary); border-color: var(--primary); color: white; }
+
+.financeiro-vazio {
+    color: var(--text-soft);
+    text-align: center;
+    padding: 40px;
+}
+
+.financeiro-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.fin-card {
+    background: var(--panel);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    box-shadow: var(--shadow-soft);
+    border: 1.5px solid var(--border);
+    transition: box-shadow 0.2s;
+}
+
+.fin-card:hover { box-shadow: var(--shadow-main); }
+.fin-card--pago { border-color: #d1fae5; background: #f0fdf4; }
+
+.fin-card-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.fin-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fin-cliente { font-weight: 700; color: var(--text-main); font-size: 1rem; }
+.fin-titulo { color: var(--text-soft); font-size: 0.9rem; }
+.fin-data { color: var(--text-muted); font-size: 0.8rem; }
+
+.fin-card-direita {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.fin-status-badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.fin-badge-pago {
+    background: var(--success);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.fin-progress-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.fin-progress-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.fin-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+.fin-progress-pct {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-soft);
+    min-width: 36px;
+    text-align: right;
+}
+
+.fin-valores {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.fin-valor-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.fin-valor-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+.fin-valor-num { font-size: 1rem; font-weight: 700; color: var(--text-main); }
+.fin-valor-recebido { color: var(--success); }
+.fin-valor-falta { color: var(--warning); }
+
+.fin-acoes {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.fin-pagamentos-lista {
+    margin-top: 14px;
+    border-top: 1.5px solid var(--border);
+    padding-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fin-pagamento-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: var(--panel-soft);
+    border-radius: var(--radius-sm);
+    font-size: 0.88rem;
+}
+
+.fin-pag-data { color: var(--text-muted); min-width: 82px; }
+.fin-pag-desc { flex: 1; color: var(--text-main); }
+.fin-pag-valor { font-weight: 700; color: var(--success); min-width: 90px; text-align: right; }
+
+.fin-pag-excluir {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: color 0.15s;
+}
+
+.fin-pag-excluir:hover { color: var(--danger); }
+
+@media (max-width: 600px) {
+    .financeiro-header { flex-direction: column; align-items: flex-start; }
+    .financeiro-resumo { width: 100%; }
+    .resumo-card { flex: 1; }
+    .fin-valores { gap: 14px; }
+}
+

@@ -18,6 +18,7 @@ import EsqueciSenha from './pages/EsqueciSenha';
 import RedefinirSenha from './pages/RedefinirSenha';
 import Admin from './pages/Admin';
 import FormasPagamento from './pages/FormasPagamento';
+import Financeiro from './pages/Financeiro';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { User } from './types';
@@ -126,6 +127,7 @@ export default function App() {
                         <Route path="/kanban" element={<RotaProtegida><Kanban /></RotaProtegida>} />
                         <Route path="/admin" element={<RotaProtegida><Admin /></RotaProtegida>} />
                         <Route path="/formas-pagamento" element={<RotaProtegida><FormasPagamento /></RotaProtegida>} />
+                        <Route path="/financeiro" element={<RotaProtegida><Financeiro /></RotaProtegida>} />
                     </Routes>
                 </LayoutSistema>
             </BrowserRouter>

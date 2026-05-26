@@ -9,6 +9,7 @@ import materialRoutes from './routes/materialRoutes';
 import orcamentoRoutes from './routes/orcamentoRoutes';
 import auditRoutes from './routes/auditRoutes';
 import opcaoCustomizadaRoutes from './routes/opcaoCustomizadaRoutes';
+import pagamentoRoutes from './routes/pagamentoRoutes';
 import AuthController from './controllers/AuthController';
 import authMiddleware from './middlewares/auth';
 import errorHandler from './middlewares/errorHandler';
@@ -71,6 +72,7 @@ app.use('/api/materiais', materialRoutes);
 app.use('/api/orcamentos', orcamentoRoutes);
 app.use('/api/audit-log', auditRoutes);
 app.use('/api/opcoes-customizadas', opcaoCustomizadaRoutes);
+app.use('/api/pagamentos', pagamentoRoutes);
 
 app.get('/api/telegram/pendentes', authMiddleware, async (_req: Request, res: Response) => {
     const mensagens = await buscarPendentes();
