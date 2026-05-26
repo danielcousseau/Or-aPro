@@ -66,6 +66,7 @@ export default function Perfil() {
     const [fotoPreview, setFotoPreview] = useState<string | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [salvandoLogo, setSalvandoLogo] = useState(false);
+    const [logoInputKey, setLogoInputKey] = useState(0);
     const [senhaAtual, setSenhaAtual] = useState('');
     const [novaSenha, setNovaSenha] = useState('');
     const [confirmarSenha, setConfirmarSenha] = useState('');
@@ -113,9 +114,11 @@ export default function Perfil() {
         try {
             const base64 = await comprimirLogo(file);
             setLogoPreview(base64);
+            setUser(prev => ({ ...prev, logoMarcenaria: base64 }));
             await api.put('/usuarios/perfil', { nome, email, logoMarcenaria: base64 });
             const stored = localStorage.getItem('@OrcaPro:user');
             if (stored) localStorage.setItem('@OrcaPro:user', JSON.stringify({ ...JSON.parse(stored) as User, logoMarcenaria: base64 }));
+            setLogoInputKey(k => k + 1); // reseta o input para aceitar o mesmo arquivo novamente
             toast.success('Logo da marcenaria atualizada!');
         } catch {
             toast.error('Erro ao salvar logo. Tente novamente.');
@@ -129,8 +132,10 @@ export default function Perfil() {
         try {
             await api.put('/usuarios/perfil', { nome, email, logoMarcenaria: null });
             setLogoPreview(null);
+            setUser(prev => ({ ...prev, logoMarcenaria: null }));
             const stored = localStorage.getItem('@OrcaPro:user');
             if (stored) localStorage.setItem('@OrcaPro:user', JSON.stringify({ ...JSON.parse(stored) as User, logoMarcenaria: null }));
+            setLogoInputKey(k => k + 1); // reseta o input para aceitar upload imediatamente
             toast.success('Logo removida. O padrão do OrcaPro será usado.');
         } catch {
             toast.error('Erro ao remover logo.');
@@ -179,7 +184,13 @@ export default function Perfil() {
         setSalvandoPerfil(true);
         try {
             const response = await api.put('/usuarios/perfil', { nome, email, nomeMarcenaria });
-            const updated: User = { ...user, email: response.data.email, nome: response.data.nome, nomeMarcenaria: response.data.nomeMarcenaria };
+            const updated: User = {
+                ...user,
+                email: response.data.email,
+                nome: response.data.nome,
+                nomeMarcenaria: response.data.nomeMarcenaria,
+                logoMarcenaria: response.data.logoMarcenaria ?? user.logoMarcenaria,
+            };
             setUser(updated);
             setNome(response.data.nome || '');
             setNomeMarcenaria(response.data.nomeMarcenaria || '');
@@ -282,7 +293,7 @@ export default function Perfil() {
                         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                             <label style={{ flex: 1, minWidth: '120px', background: 'var(--primary)', color: '#fff', padding: '10px 16px', borderRadius: '6px', cursor: salvandoLogo ? 'not-allowed' : 'pointer', fontSize: '0.9rem', fontWeight: 'bold', textAlign: 'center', opacity: salvandoLogo ? 0.7 : 1 }}>
                                 {salvandoLogo ? 'Salvando...' : 'Trocar Logo'}
-                                <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleLogoChange} disabled={salvandoLogo} />
+                                <input key={logoInputKey} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleLogoChange} disabled={salvandoLogo} />
                             </label>
                             {logoPreview && (
                                 <button type="button" onClick={handleRemoverLogo} disabled={salvandoLogo} style={{ background: 'transparent', border: '1px solid var(--border)', padding: '10px 16px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-soft)' }}>
