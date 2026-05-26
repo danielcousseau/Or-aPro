@@ -259,15 +259,15 @@ export default {
             }
 
             // Gera token do contrato ao aprovar (só se ainda não tiver um)
-            const dadosExtra: Record<string, unknown> = { status };
+            const updateData: { status: string; contratoToken?: string; contratoGeradoEm?: Date } = { status };
             if (status === 'Aprovado' && !pertence.contratoToken) {
-                dadosExtra.contratoToken = randomUUID();
-                dadosExtra.contratoGeradoEm = new Date();
+                updateData.contratoToken = randomUUID();
+                updateData.contratoGeradoEm = new Date();
             }
 
             const orcamentoAtualizado = await prisma.orcamento.update({
                 where: { id: Number(id) },
-                data: dadosExtra
+                data: updateData
             });
 
             await registrar(req.userId!, 'atualizou status', 'Orçamento', orcamentoAtualizado.id, `${orcamentoAtualizado.titulo} → ${status}`);
