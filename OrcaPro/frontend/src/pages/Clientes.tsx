@@ -50,9 +50,14 @@ export default function Clientes() {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         let { name, value } = e.target;
         if (name === 'cpfCnpj') value = mascaraCpfCnpj(value);
-        else if (name === 'telefone') value = mascaraTelefone(value);
         else if (name === 'cep') value = mascaraCep(value);
+        // telefone: máscara aplicada só no onBlur para evitar cursor pulando
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleTelefoneBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const formatado = mascaraTelefone(e.target.value);
+        setFormData(prev => ({ ...prev, telefone: formatado }));
     };
 
     const limparFormulario = () => {
@@ -209,7 +214,7 @@ export default function Clientes() {
                                 </div>
                                 <div>
                                     <label>Telefone *</label>
-                                    <input type="text" name="telefone" value={formData.telefone} onChange={handleChange} required />
+                                    <input type="text" name="telefone" value={formData.telefone} onChange={handleChange} onBlur={handleTelefoneBlur} placeholder="(51) 99515-4309" required />
                                 </div>
                             </div>
                         </section>
