@@ -146,7 +146,22 @@ export default function Dashboard() {
                 </div>
             </section>
 
-            <section className="dashboard-grid">
+            <div className="bento-grid">
+                {/* Linha 1 */}
+                <div className="dashboard-card bento-span-2 bento-card-featured highlight-primary">
+                    <span className="dashboard-label">Faturamento Confirmado</span>
+                    <h2 className="text-primary">{formatarMoeda(metricas.faturamentoConfirmado)}</h2>
+                </div>
+                <div className="dashboard-card highlight-success">
+                    <span className="dashboard-label">Lucro Projetado</span>
+                    <h2 className="text-success">{formatarMoeda(metricas.lucroProjetado)}</h2>
+                </div>
+                <div className="dashboard-card">
+                    <span className="dashboard-label">Taxa de Conversão</span>
+                    <h2>{metricas.taxaConversao.toFixed(1)}%</h2>
+                </div>
+
+                {/* Linha 2 */}
                 <div className="dashboard-card">
                     <span className="dashboard-label">Projetos Fechados</span>
                     <h2>{metricas.projetosFechados}</h2>
@@ -155,27 +170,14 @@ export default function Dashboard() {
                     <span className="dashboard-label">Orçamentos Pendentes</span>
                     <h2>{metricas.orcamentosPendentes}</h2>
                 </div>
-                <div className="dashboard-card">
-                    <span className="dashboard-label">Taxa de Conversão</span>
-                    <h2>{metricas.taxaConversao.toFixed(1)}%</h2>
-                </div>
-                <div className="dashboard-card" style={{ borderLeft: '4px solid #f39c12' }}>
+                <div className="dashboard-card bento-span-2" style={{ borderLeft: '4px solid #f39c12' }}>
                     <span className="dashboard-label">Valor em Negociação</span>
                     <h2 style={{ color: '#f39c12' }}>{formatarMoeda(metricas.valorAguardando)}</h2>
                 </div>
-                <div className="dashboard-card highlight-primary">
-                    <span className="dashboard-label">Faturamento Confirmado</span>
-                    <h2 className="text-primary">{formatarMoeda(metricas.faturamentoConfirmado)}</h2>
-                </div>
-                <div className="dashboard-card highlight-success">
-                    <span className="dashboard-label">Lucro Projetado</span>
-                    <h2 className="text-success">{formatarMoeda(metricas.lucroProjetado)}</h2>
-                </div>
-            </section>
 
-            <div className="dashboard-grid-2">
-                <section className="dashboard-card">
-                    <h3 className="text-center">Projetos por Ambiente</h3>
+                {/* Linha 3 — Gráficos */}
+                <div className="dashboard-card bento-span-3">
+                    <h3>Projetos por Ambiente</h3>
                     {orcamentos.length > 0 ? (
                         <div style={{ position: 'relative', height: `${Math.max(200, ambientesOrdenados.length * 48)}px`, width: '100%' }}>
                             <Bar data={dataGrafico} options={{
@@ -189,9 +191,8 @@ export default function Dashboard() {
                     ) : (
                         <p className="text-center text-soft">Cadastre orçamentos para visualizar o gráfico.</p>
                     )}
-                </section>
-
-                <section className="dashboard-card">
+                </div>
+                <div className="dashboard-card">
                     <h3 className="text-center">Status dos Orçamentos</h3>
                     {orcamentos.length > 0 ? (
                         <div style={{ position: 'relative', height: '280px', width: '100%', maxWidth: '320px', margin: '0 auto' }}>
@@ -200,7 +201,7 @@ export default function Dashboard() {
                     ) : (
                         <p className="text-center text-soft">Sem dados de status.</p>
                     )}
-                </section>
+                </div>
             </div>
         </div>
     );
