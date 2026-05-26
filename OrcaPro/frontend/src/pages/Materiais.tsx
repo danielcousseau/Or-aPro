@@ -8,6 +8,23 @@ import { Material } from '../types';
 const CATEGORIAS_PADRAO = ['Chapas', 'Fixação', 'Ferragens', 'Acabamento'];
 const UNIDADES_PADRAO = ['Chapa', 'Unidade', 'Metro', 'Metro Linear', 'Metro Quadrado', 'Caixa', 'Par', 'Rolo', 'Litro', 'Kg'];
 
+const PLURAIS: Record<string, string> = {
+    'chapa': 'chapas', 'unidade': 'unidades', 'metro': 'metros',
+    'metro linear': 'metros lineares', 'metro quadrado': 'metros quadrados',
+    'caixa': 'caixas', 'par': 'pares', 'rolo': 'rolos', 'litro': 'litros',
+};
+
+const pluralizarUnidade = (unidade: string | undefined, quantidade: number): string => {
+    if (!unidade) return quantidade === 1 ? 'unid.' : 'unid.';
+    const u = unidade.toLowerCase();
+    if (quantidade === 1) return u;
+    if (PLURAIS[u]) return PLURAIS[u];
+    if (u.endsWith('r') || u.endsWith('z')) return u + 'es';
+    if (u.endsWith('ão')) return u.slice(0, -2) + 'ões';
+    if (u.endsWith('m')) return u.slice(0, -1) + 'ns';
+    return u + 's';
+};
+
 interface MaterialFormData {
     nome: string;
     categoria: string;
@@ -365,8 +382,8 @@ export default function Materiais() {
                                             <strong>Estoque:</strong>{' '}
                                             {material.quantidadeEstoque != null ? (
                                                 <span style={{ color: estoqueEmAlerta(material) ? 'var(--danger)' : 'inherit', fontWeight: estoqueEmAlerta(material) ? 600 : 400 }}>
-                                                    {material.quantidadeEstoque} {material.unidade || 'unid.'}
-                                                    {material.estoqueMinimo != null && <span style={{ color: 'var(--text-soft)', fontWeight: 400 }}> (mín: {material.estoqueMinimo})</span>}
+                                                    {material.quantidadeEstoque} {pluralizarUnidade(material.unidade, material.quantidadeEstoque!)}
+                                                    {material.estoqueMinimo != null && <span style={{ color: 'var(--text-soft)', fontWeight: 400 }}> (mín: {material.estoqueMinimo} {pluralizarUnidade(material.unidade, material.estoqueMinimo)})</span>}
                                                 </span>
                                             ) : (
                                                 <span style={{ color: 'var(--text-soft)' }}>Não controlado</span>
