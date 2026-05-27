@@ -19,6 +19,7 @@ import RedefinirSenha from './pages/RedefinirSenha';
 import Admin from './pages/Admin';
 import FormasPagamento from './pages/FormasPagamento';
 import Financeiro from './pages/Financeiro';
+import OrdemProducao from './pages/OrdemProducao';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { User } from './types';
@@ -44,7 +45,7 @@ function LayoutSistema({ children }: { children: React.ReactNode }) {
 
     const isLoginPage = location.pathname === '/login';
     const isCadastroPage = location.pathname === '/cadastro';
-    const isPrintPage = location.pathname.startsWith('/imprimir/');
+    const isPrintPage = location.pathname.startsWith('/imprimir/') || location.pathname.startsWith('/ordem-producao/');
     const isPropostaPage = location.pathname.startsWith('/proposta/') || location.pathname.startsWith('/contrato/');
     const isAuthAuxPage = location.pathname === '/esqueci-senha' || location.pathname === '/redefinir-senha';
     const isPublicPage = isLoginPage || isCadastroPage || isPrintPage || isPropostaPage || isAuthAuxPage;
@@ -128,6 +129,7 @@ export default function App() {
                         <Route path="/admin" element={<RotaProtegida><Admin /></RotaProtegida>} />
                         <Route path="/formas-pagamento" element={<RotaProtegida><FormasPagamento /></RotaProtegida>} />
                         <Route path="/financeiro" element={<RotaProtegida><Financeiro /></RotaProtegida>} />
+                        <Route path="/ordem-producao/:id" element={<RotaProtegida><OrdemProducao /></RotaProtegida>} />
                     </Routes>
                 </LayoutSistema>
             </BrowserRouter>

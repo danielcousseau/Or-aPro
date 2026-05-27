@@ -80,6 +80,23 @@ export default {
         }
     },
 
+    async emProducao(req: Request, res: Response): Promise<void> {
+        try {
+            const orcamentos = await prisma.orcamento.findMany({
+                where: {
+                    userId: req.userId,
+                    status: { in: ['Aprovado', 'Produção', 'Instalação'] }
+                },
+                include: { cliente: true, materiais: true },
+                orderBy: { createdAt: 'desc' }
+            });
+            res.json(orcamentos);
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Erro ao listar orçamentos em produção' });
+        }
+    },
+
     async criar(req: Request, res: Response): Promise<void> {
         try {
             const {

@@ -14,6 +14,7 @@ router.patch('/contrato/:token/aceitar', OrcamentoController.aceitarContrato);
 router.use(authMiddleware);
 
 router.get('/', OrcamentoController.listar);
+router.get('/em-producao', OrcamentoController.emProducao);
 router.post('/', validate(orcamentoSchema), OrcamentoController.criar);
 router.get('/:id/pdf', OrcamentoController.gerarPDF);
 router.get('/:id', OrcamentoController.buscarPorId);

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import {
   Chart as ChartJS,
@@ -27,6 +28,7 @@ interface Metricas {
 }
 
 export default function Dashboard() {
+    const navigate = useNavigate();
     const [metricas, setMetricas] = useState<Metricas>({
         projetosFechados: 0,
         orcamentosPendentes: 0,
@@ -37,9 +39,13 @@ export default function Dashboard() {
     });
 
     const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
+    const [emProducao, setEmProducao] = useState<Orcamento[]>([]);
 
     useEffect(() => {
         carregarDados();
+        api.get<Orcamento[]>('/orcamentos/em-producao')
+            .then(({ data }) => setEmProducao(data))
+            .catch(() => {});
     }, []);
 
     const carregarDados = async () => {
@@ -193,6 +199,37 @@ export default function Dashboard() {
                     )}
                 </div>
             </div>
+
+            {emProducao.length > 0 && (
+                <section className="em-producao-section">
+                    <h2 className="em-producao-titulo">Em Produção</h2>
+                    <div className="em-producao-lista">
+                        {emProducao.map(orc => (
+                            <div key={orc.id} className="em-producao-card">
+                                <div className="em-producao-info">
+                                    <span className="em-producao-cliente">{orc.cliente?.nome}</span>
+                                    <span className="em-producao-projeto">{orc.titulo}</span>
+                                    {orc.prazo && <span className="em-producao-prazo">Prazo: {orc.prazo}</span>}
+                                </div>
+                                <div className="em-producao-direita">
+                                    <span
+                                        className="fin-status-badge"
+                                        style={{ background: CORES_STATUS[orc.status ?? ''] || '#999' }}
+                                    >
+                                        {orc.status}
+                                    </span>
+                                    <button
+                                        className="btn-op"
+                                        onClick={() => navigate(`/ordem-producao/${orc.id}`)}
+                                    >
+                                        Ver Ordem de Produção
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
         </div>
     );
 }
