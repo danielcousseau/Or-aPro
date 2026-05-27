@@ -1607,6 +1607,7 @@ input[type="number"] {
     color: white;
     font-size: 0.75rem;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .fin-badge-pago {
@@ -1617,6 +1618,7 @@ input[type="number"] {
     font-size: 0.78rem;
     font-weight: 700;
     letter-spacing: 0.03em;
+    white-space: nowrap;
 }
 
 .fin-progress-area {
@@ -1760,6 +1762,7 @@ input[type="number"] {
     font-weight: 700;
     letter-spacing: 0.02em;
     text-align: center;
+    white-space: nowrap;
 }
 
 .rent-barra-wrap { margin: 10px 0 4px; }
