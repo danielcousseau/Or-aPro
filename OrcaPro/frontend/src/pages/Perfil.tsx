@@ -355,6 +355,7 @@ export default function Perfil() {
             flexDirection: "column",
             alignItems: "center",
             justifySelf: "start",
+            alignSelf: "start",
             width: "100%",
           }}
         >
