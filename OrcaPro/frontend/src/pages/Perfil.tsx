@@ -106,6 +106,7 @@ export default function Perfil() {
   const [salvandoSenha, setSalvandoSenha] = useState(false);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [carregandoLogs, setCarregandoLogs] = useState(false);
+  const [logsAbertos, setLogsAbertos] = useState(false);
   const [opcoes, setOpcoes] = useState<OpcoesPorTipo>({
     ambiente: [],
     pagamento: [],
@@ -736,111 +737,6 @@ export default function Perfil() {
             fontSize: "1.2rem",
           }}
         >
-          Histórico de Atividade
-        </h2>
-
-        {carregandoLogs ? (
-          <p
-            style={{
-              color: "var(--text-soft)",
-              textAlign: "center",
-              padding: "20px",
-            }}
-          >
-            Carregando...
-          </p>
-        ) : logs.length === 0 ? (
-          <p
-            style={{
-              color: "var(--text-soft)",
-              textAlign: "center",
-              padding: "20px",
-            }}
-          >
-            Nenhuma atividade registrada ainda.
-          </p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {logs.map((log) => {
-              const estilo = CORES_ACAO[log.acao] || {
-                bg: "var(--panel-soft)",
-                color: "var(--text-main)",
-              };
-              return (
-                <div
-                  key={log.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "10px 14px",
-                    borderRadius: "8px",
-                    background: "var(--panel-soft)",
-                    border: "1px solid var(--border)",
-                  }}
-                >
-                  <span
-                    style={{
-                      padding: "3px 10px",
-                      borderRadius: "999px",
-                      fontSize: "0.75rem",
-                      fontWeight: "bold",
-                      background: estilo.bg,
-                      color: estilo.color,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {log.acao}
-                  </span>
-                  <span
-                    style={{
-                      fontWeight: "600",
-                      color: "var(--text-main)",
-                      fontSize: "0.9rem",
-                    }}
-                  >
-                    {log.recurso}
-                  </span>
-                  {log.detalhe && (
-                    <span
-                      style={{
-                        color: "var(--text-soft)",
-                        fontSize: "0.85rem",
-                        flex: 1,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {log.detalhe}
-                    </span>
-                  )}
-                  <span
-                    style={{
-                      color: "var(--text-soft)",
-                      fontSize: "0.75rem",
-                      whiteSpace: "nowrap",
-                      marginLeft: "auto",
-                    }}
-                  >
-                    {formatarData(log.criadoEm)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div className="cliente-card" style={{ marginTop: "24px" }}>
-        <h2
-          style={{
-            borderBottom: "1px solid var(--border)",
-            paddingBottom: "12px",
-            marginBottom: "20px",
-            fontSize: "1.2rem",
-          }}
-        >
           Opções Personalizadas
         </h2>
         <p
@@ -921,6 +817,136 @@ export default function Perfil() {
             )}
           </div>
         ))}
+      </div>
+
+      <div className="cliente-card" style={{ marginTop: "24px" }}>
+        <button
+          type="button"
+          onClick={() => setLogsAbertos((v) => !v)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+            background: "none",
+            border: "none",
+            padding: "0",
+            cursor: "pointer",
+            color: "var(--text-main)",
+          }}
+        >
+          <h2 style={{ fontSize: "1.2rem", margin: 0 }}>
+            Histórico de Atividade
+          </h2>
+          <span
+            style={{
+              fontSize: "1.2rem",
+              color: "var(--text-soft)",
+              transition: "transform 0.2s",
+              transform: logsAbertos ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+          >
+            ▾
+          </span>
+        </button>
+
+        {logsAbertos && (
+          <div style={{ marginTop: "20px" }}>
+            {carregandoLogs ? (
+              <p
+                style={{
+                  color: "var(--text-soft)",
+                  textAlign: "center",
+                  padding: "20px",
+                }}
+              >
+                Carregando...
+              </p>
+            ) : logs.length === 0 ? (
+              <p
+                style={{
+                  color: "var(--text-soft)",
+                  textAlign: "center",
+                  padding: "20px",
+                }}
+              >
+                Nenhuma atividade registrada ainda.
+              </p>
+            ) : (
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+              >
+                {logs.map((log) => {
+                  const estilo = CORES_ACAO[log.acao] || {
+                    bg: "var(--panel-soft)",
+                    color: "var(--text-main)",
+                  };
+                  return (
+                    <div
+                      key={log.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "10px 14px",
+                        borderRadius: "8px",
+                        background: "var(--panel-soft)",
+                        border: "1px solid var(--border)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          padding: "3px 10px",
+                          borderRadius: "999px",
+                          fontSize: "0.75rem",
+                          fontWeight: "bold",
+                          background: estilo.bg,
+                          color: estilo.color,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {log.acao}
+                      </span>
+                      <span
+                        style={{
+                          fontWeight: "600",
+                          color: "var(--text-main)",
+                          fontSize: "0.9rem",
+                        }}
+                      >
+                        {log.recurso}
+                      </span>
+                      {log.detalhe && (
+                        <span
+                          style={{
+                            color: "var(--text-soft)",
+                            fontSize: "0.85rem",
+                            flex: 1,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {log.detalhe}
+                        </span>
+                      )}
+                      <span
+                        style={{
+                          color: "var(--text-soft)",
+                          fontSize: "0.75rem",
+                          whiteSpace: "nowrap",
+                          marginLeft: "auto",
+                        }}
+                      >
+                        {formatarData(log.criadoEm)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
