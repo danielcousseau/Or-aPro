@@ -33,6 +33,9 @@ interface Metricas {
   faturamentoConfirmado: number;
   lucroProjetado: number;
   taxaConversao: number;
+  ticketMedio: number;
+  fechadosNoMes: number;
+  valorFechadosNoMes: number;
 }
 
 export default function Dashboard() {
@@ -44,6 +47,9 @@ export default function Dashboard() {
     faturamentoConfirmado: 0,
     lucroProjetado: 0,
     taxaConversao: 0,
+    ticketMedio: 0,
+    fechadosNoMes: 0,
+    valorFechadosNoMes: 0,
   });
 
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
@@ -109,6 +115,20 @@ export default function Dashboard() {
           ? (fechados.length / orcamentosData.length) * 100
           : 0;
 
+      const ticketMedio =
+        fechados.length > 0 ? faturamento / fechados.length : 0;
+
+      const inicioMes = new Date();
+      inicioMes.setDate(1);
+      inicioMes.setHours(0, 0, 0, 0);
+      const fechadosNoMes = fechados.filter(
+        (orc) => new Date(orc.createdAt) >= inicioMes,
+      );
+      const valorFechadosNoMes = fechadosNoMes.reduce(
+        (acc, orc) => acc + Number(orc.totalFinal),
+        0,
+      );
+
       setMetricas({
         projetosFechados: fechados.length,
         orcamentosPendentes: pendentes.length,
@@ -116,6 +136,9 @@ export default function Dashboard() {
         faturamentoConfirmado: faturamento,
         lucroProjetado: lucro,
         taxaConversao: conversao,
+        ticketMedio,
+        fechadosNoMes: fechadosNoMes.length,
+        valorFechadosNoMes,
       });
     } catch (error) {
       console.error("Erro ao carregar dashboard", error);
@@ -215,7 +238,31 @@ export default function Dashboard() {
           </h2>
         </div>
 
-        {/* Linha 3 — Gráficos */}
+        {/* Linha 3 — Funil do mês */}
+        <div
+          className="dashboard-card bento-span-2"
+          style={{ borderLeft: "4px solid #27ae60" }}
+        >
+          <span className="dashboard-label">Fechados este mês</span>
+          <h2 style={{ color: "#27ae60" }}>
+            {metricas.fechadosNoMes}{" "}
+            <span style={{ fontSize: "1rem", fontWeight: 400 }}>
+              projeto{metricas.fechadosNoMes !== 1 ? "s" : ""}
+            </span>
+          </h2>
+          <span className="dashboard-label" style={{ marginTop: 4 }}>
+            {formatarMoeda(metricas.valorFechadosNoMes)} em valor
+          </span>
+        </div>
+        <div className="dashboard-card bento-span-2">
+          <span className="dashboard-label">Ticket Médio</span>
+          <h2>{formatarMoeda(metricas.ticketMedio)}</h2>
+          <span className="dashboard-label" style={{ marginTop: 4 }}>
+            por projeto fechado
+          </span>
+        </div>
+
+        {/* Linha 4 — Gráficos */}
         <div className="dashboard-card bento-span-3">
           <h3>Projetos por Ambiente</h3>
           {orcamentos.length > 0 ? (
