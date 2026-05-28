@@ -351,7 +351,7 @@ export default function Perfil() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1.3fr",
+          gridTemplateColumns: "1fr 1fr",
           gap: "20px",
         }}
       >
