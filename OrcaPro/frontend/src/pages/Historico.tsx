@@ -37,6 +37,43 @@ export default function Historico() {
     }
   };
 
+  const duplicarOrcamento = async (orc: Orcamento) => {
+    try {
+      await api.post("/orcamentos", {
+        titulo: `${orc.titulo} (cópia)`,
+        clienteId: orc.clienteId,
+        tipoMaoDeObra: orc.tipoMaoDeObra,
+        maoDeObraValor: orc.maoDeObraValor,
+        maoDeObraQtde: orc.maoDeObraQtde,
+        tipoLucro: orc.tipoLucro,
+        lucroValor: orc.lucroValor,
+        lucroQtde: orc.lucroQtde,
+        totalFinal: orc.totalFinal,
+        tipoMovel: orc.tipoMovel,
+        ambiente: orc.ambiente,
+        medidas: orc.medidas,
+        prazo: orc.prazo,
+        pagamento: orc.pagamento,
+        validade: orc.validade,
+        observacoes: orc.observacoes,
+        materiais:
+          orc.materiais?.map((m) => ({
+            nome: m.nome,
+            valor: m.valor,
+            quantidade: m.quantidade,
+            materialId: m.materialId ?? null,
+          })) ?? [],
+      });
+      toast.success("Orçamento duplicado! Você pode editar o título.");
+      carregarOrcamentos();
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error || "Erro ao duplicar orçamento.";
+      toast.error(msg);
+    }
+  };
+
   const confirmarExclusao = async () => {
     if (!orcamentoParaExcluir || excluindo) return;
     setExcluindo(true);
@@ -282,6 +319,18 @@ export default function Historico() {
                     onClick={() => navigate(`/imprimir/${orc.id}`)}
                   >
                     Ver / Imprimir
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-action"
+                    style={{
+                      background: "#7c3aed",
+                      color: "#fff",
+                      border: "1px solid #7c3aed",
+                    }}
+                    onClick={() => duplicarOrcamento(orc)}
+                  >
+                    Duplicar
                   </button>
                   <button
                     type="button"
