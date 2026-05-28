@@ -239,6 +239,7 @@ export default function Kanban() {
                     value={orc.status || "Aguardando"}
                     onChange={(e) => mudarStatus(orc.id, e.target.value)}
                     style={{
+                      width: "100%",
                       marginBottom:
                         orc.status === "Aprovado" && orc.contratoToken
                           ? "8px"
@@ -316,18 +317,18 @@ export default function Kanban() {
                       onClick={() => navigate(`/ordem-producao/${orc.id}`)}
                       style={{
                         marginTop: "8px",
-                        background: "#7c3aed",
-                        color: "#fff",
-                        border: "none",
+                        background: "transparent",
+                        color: "#7c3aed",
+                        border: "1px solid #7c3aed",
                         borderRadius: "6px",
-                        padding: "6px 10px",
-                        fontSize: "0.78rem",
+                        padding: "4px 8px",
+                        fontSize: "0.75rem",
                         fontWeight: 600,
                         cursor: "pointer",
                         width: "100%",
                       }}
                     >
-                      🔨 Ver Ordem de Produção
+                      Ordem de Produção
                     </button>
                   )}
                 </div>
