@@ -56,6 +56,9 @@ npm run build        # gera versão de produção
 2. **Novo endpoint** → verificar filtro de tenant → implementar → testar
 3. **Feature nova** → criar spec em `specs/` → implementar → testar
 4. **Antes de declarar concluído** → `npx tsc --noEmit` (zero erros) + `npm test` (todos passando)
+5. **Após commit + push** → atualizar o Trello automaticamente (sem precisar ser pedido):
+   - Se existia card relacionado no Backlog/Sprint → mover para ✅ Concluído e adicionar comentário com o que foi feito
+   - Se não existia card → criar novo em ✅ Concluído com descrição da mudança, label correta (Back-end / Front-end / Full-Stack) e hash do commit
 
 ---
 

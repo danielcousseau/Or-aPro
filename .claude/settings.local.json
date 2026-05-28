@@ -38,7 +38,11 @@
       "Edit(/.claude/skills/evolution-whatsapp/**)",
       "Edit(/.claude/skills/billing-pagarme/**)",
       "Edit(/.claude/skills/audit-log/**)",
-      "Bash(xargs grep -l 'extension\\\\|Prisma\\\\.$extends')"
+      "Bash(xargs grep -l 'extension\\\\|Prisma\\\\.$extends')",
+      "mcp__trello__add_comment",
+      "Bash(xargs grep -l \"OpcaoCustomizada\\\\|opcoes-customizadas\")",
+      "mcp__Jam__getDetails",
+      "mcp__Jam__analyzeVideo"
     ],
     "additionalDirectories": [
       "c:\\Users\\victo\\.claude\\projects\\c--Users-victo-Documents-Github-OrcaPro\\memory"
