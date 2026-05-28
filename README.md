@@ -1,6 +1,6 @@
 # OrçaPro - Sistema de Gestão para Marcenarias (SaaS)
 
-Sistema web completo, responsivo e em nuvem para gestão de orçamentos, acompanhamento de projetos e emissão de propostas para marcenarias. Inclui cadastro de clientes, controle de materiais, cálculos de precificação (Markup/Mão de Obra/Lucros), dashboard gerencial, kanban de produção e geração de proposta para envio ao cliente.
+Sistema web SaaS completo para gestão de marcenarias. Inclui cadastro de clientes, orçamentos com materiais e mão de obra, controle de estoque, módulo financeiro (contas a receber, rentabilidade por projeto), dashboard gerencial, Kanban de produção com drag-and-drop, geração de proposta e contrato digital para o cliente, notificações automáticas via Telegram e geração de PDF personalizado com logo da marcenaria.
 
 ## Arquitetura e Hospedagem
 O projeto foi modernizado para uma arquitetura Cloud-First (SaaS):
@@ -13,7 +13,7 @@ O projeto foi modernizado para uma arquitetura Cloud-First (SaaS):
 
 ## Como acessar o sistema em produção
 Como o sistema agora está na nuvem e funciona no modelo de contas individuais (Multi-tenant):
-1. Acesse o link oficial do projeto na Vercel (Ex: https://seu-projeto.vercel.app).
+1. Acesse o link oficial: https://orca-pro-seven.vercel.app
 2. Clique em **"Criar Conta"** para registrar sua marcenaria.
 3. Faça login com suas novas credenciais.
 4. *(No celular)*: Clique em "Adicionar à Tela Inicial" pelo navegador para instalar o App do OrçaPro.
@@ -63,7 +63,8 @@ Caso deseje rodar o código no seu computador para adicionar novas funcionalidad
 O sistema possui fluxo de recuperação de senha via e-mail (Brevo): o usuário clica em "Esqueci a senha" na tela de login, recebe um link por e-mail e redefine a senha. O link expira assim que a senha é alterada.
 
 ## Tecnologias Utilizadas
-- **Frontend:** React, Vite, React Router Dom, Chart.js, Vite PWA Plugin, CSS puro (Design System próprio).
-- **Backend:** Node.js, Express, Prisma ORM, CORS, express-rate-limit.
-- **Segurança:** JWT com access token (15min) + refresh token (7d) em httpOnly cookies, BcryptJS (hash de senhas), rate limiting no login, isolamento multi-tenant por userId.
-- **E-mail:** Brevo (API REST) para recuperação de senha.
+- **Frontend:** React + TypeScript, Vite, React Router Dom, Chart.js, Vite PWA Plugin, html2pdf.js, CSS puro (Design System próprio).
+- **Backend:** Node.js + TypeScript, Express 5, Prisma ORM, Zod (validação), express-rate-limit, Helmet.js.
+- **Segurança:** JWT (access token 15min + refresh token 7d), BcryptJS, rate limiting, isolamento multi-tenant, Cloudflare Turnstile no cadastro, CSP via vercel.json.
+- **Integrações:** Brevo (e-mail de recuperação de senha), Telegram Bot API (notificações de status ao cliente).
+- **Infra:** Vercel (frontend) + Render (backend) + Neon.tech (PostgreSQL serverless) + GitHub Actions (CI/CD).
