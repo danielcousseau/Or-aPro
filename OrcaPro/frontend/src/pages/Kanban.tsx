@@ -317,9 +317,9 @@ export default function Kanban() {
                       onClick={() => navigate(`/ordem-producao/${orc.id}`)}
                       style={{
                         marginTop: "8px",
-                        background: "transparent",
-                        color: "#7c3aed",
-                        border: "1px solid #7c3aed",
+                        background: "#7c3aed",
+                        color: "#fff",
+                        border: "none",
                         borderRadius: "6px",
                         padding: "4px 8px",
                         fontSize: "0.75rem",
