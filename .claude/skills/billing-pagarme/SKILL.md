@@ -33,6 +33,7 @@ model Assinatura {
 ```
 
 ## Variáveis de ambiente
+
 ```env
 PAGARME_API_KEY=ak_live_xxxxxxxxxxxx    # chave de produção
 PAGARME_API_KEY_TEST=ak_test_xxxx       # chave de teste (desenvolvimento)
@@ -42,46 +43,47 @@ PAGARME_WEBHOOK_SECRET=xxxx             # para validar webhooks
 ## Serviço Pagar.me (`src/services/pagarme.ts`)
 
 ```typescript
-const BASE_URL = 'https://api.pagar.me/core/v5'
-const API_KEY = process.env.PAGARME_API_KEY!
+const BASE_URL = "https://api.pagar.me/core/v5";
+const API_KEY = process.env.PAGARME_API_KEY!;
 
 const headers = {
-  'Authorization': `Basic ${Buffer.from(API_KEY + ':').toString('base64')}`,
-  'Content-Type': 'application/json'
-}
+  Authorization: `Basic ${Buffer.from(API_KEY + ":").toString("base64")}`,
+  "Content-Type": "application/json",
+};
 
 // Criar assinatura recorrente
 export async function criarAssinatura(dados: {
-  nome: string
-  email: string
-  cpf: string
-  telefone: string
-  planoId: string          // ID do plano criado no painel Pagar.me
-}): Promise<string> {      // retorna ID da assinatura
+  nome: string;
+  email: string;
+  cpf: string;
+  telefone: string;
+  planoId: string; // ID do plano criado no painel Pagar.me
+}): Promise<string> {
+  // retorna ID da assinatura
   const res = await fetch(`${BASE_URL}/subscriptions`, {
-    method: 'POST',
+    method: "POST",
     headers,
     body: JSON.stringify({
       plan_id: dados.planoId,
       customer: {
         name: dados.nome,
         email: dados.email,
-        document: dados.cpf.replace(/\D/g, ''),
+        document: dados.cpf.replace(/\D/g, ""),
         phones: {
           mobile_phone: {
-            country_code: '55',
+            country_code: "55",
             area_code: dados.telefone.slice(0, 2),
-            number: dados.telefone.slice(2)
-          }
-        }
+            number: dados.telefone.slice(2),
+          },
+        },
       },
-      payment_method: 'boleto'   // ou 'credit_card' | 'pix'
-    })
-  })
+      payment_method: "boleto", // ou 'credit_card' | 'pix'
+    }),
+  });
 
-  const json = await res.json()
-  if (!res.ok) throw new Error(`Pagar.me: ${json.message}`)
-  return json.id
+  const json = await res.json();
+  if (!res.ok) throw new Error(`Pagar.me: ${json.message}`);
+  return json.id;
 }
 ```
 
@@ -89,55 +91,63 @@ export async function criarAssinatura(dados: {
 
 ```typescript
 // src/routes/webhookRoutes.ts
-router.post('/webhook/pagarme', express.raw({ type: 'application/json' }), async (req, res) => {
-  // Validar assinatura do webhook
-  const assinatura = req.headers['x-hub-signature'] as string
-  const payload = req.body.toString()
-  const esperado = `sha1=${crypto.createHmac('sha1', process.env.PAGARME_WEBHOOK_SECRET!).update(payload).digest('hex')}`
+router.post(
+  "/webhook/pagarme",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    // Validar assinatura do webhook
+    const assinatura = req.headers["x-hub-signature"] as string;
+    const payload = req.body.toString();
+    const esperado = `sha1=${crypto.createHmac("sha1", process.env.PAGARME_WEBHOOK_SECRET!).update(payload).digest("hex")}`;
 
-  if (assinatura !== esperado) {
-    return res.status(401).json({ error: 'Webhook inválido' })
-  }
+    if (assinatura !== esperado) {
+      return res.status(401).json({ error: "Webhook inválido" });
+    }
 
-  const evento = JSON.parse(payload)
+    const evento = JSON.parse(payload);
 
-  if (evento.type === 'subscription.status_changed') {
-    const pagarmeSubId = evento.data.id
-    const novoStatus = evento.data.status  // 'active' | 'canceled' | 'unpaid'
+    if (evento.type === "subscription.status_changed") {
+      const pagarmeSubId = evento.data.id;
+      const novoStatus = evento.data.status; // 'active' | 'canceled' | 'unpaid'
 
-    await prisma.assinatura.update({
-      where: { pagarmeSubId },
-      data: { status: mapearStatus(novoStatus) }
-    })
-  }
+      await prisma.assinatura.update({
+        where: { pagarmeSubId },
+        data: { status: mapearStatus(novoStatus) },
+      });
+    }
 
-  res.json({ ok: true })
-})
+    res.json({ ok: true });
+  },
+);
 ```
 
 ## Gating de features (freemium)
 
 ```typescript
 // middleware/plano.ts — verificar plano antes de liberar feature
-export async function exigirPlano(plano: 'pro') {
+export async function exigirPlano(plano: "pro") {
   return async (req: Request, res: Response, next: NextFunction) => {
     const assinatura = await prisma.assinatura.findUnique({
-      where: { userId: req.userId }
-    })
+      where: { userId: req.userId },
+    });
 
-    if (!assinatura || assinatura.plano !== plano || assinatura.status !== 'ativa') {
+    if (
+      !assinatura ||
+      assinatura.plano !== plano ||
+      assinatura.status !== "ativa"
+    ) {
       return res.status(403).json({
-        error: 'Recurso disponível apenas no plano Pro',
-        upgrade: true
-      })
+        error: "Recurso disponível apenas no plano Pro",
+        upgrade: true,
+      });
     }
 
-    next()
-  }
+    next();
+  };
 }
 
 // Uso nas rotas:
-router.post('/contratos', auth, exigirPlano('pro'), ContratoController.criar)
+router.post("/contratos", auth, exigirPlano("pro"), ContratoController.criar);
 ```
 
 ## Checklist antes de ativar billing

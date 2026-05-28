@@ -34,15 +34,18 @@ model AuditLog {
 ## Como registrar uma nova ação
 
 ```typescript
-import { registrarAuditoria } from '../services/audit'
+import { registrarAuditoria } from "../services/audit";
 
 // Dentro de um controller, após a operação principal:
 await registrarAuditoria({
   userId: req.userId,
-  acao: 'CRIAR_ORCAMENTO',
-  detalhes: JSON.stringify({ orcamentoId: novoOrcamento.id, titulo: novoOrcamento.titulo }),
-  ip: req.ip
-})
+  acao: "CRIAR_ORCAMENTO",
+  detalhes: JSON.stringify({
+    orcamentoId: novoOrcamento.id,
+    titulo: novoOrcamento.titulo,
+  }),
+  ip: req.ip,
+});
 ```
 
 > Não lançar erro se a auditoria falhar — ela é secundária. Usar try/catch separado ou deixar rejeição não tratada (não bloqueia a resposta principal).
@@ -75,17 +78,20 @@ Perfil:
 ## Quais ações DEVEM ser auditadas (LGPD)
 
 Obrigatório auditar:
+
 - Login e logout
 - Criação, edição e exclusão de qualquer dado de cliente
 - Aceite de contrato (registro legal)
 - Qualquer ação de admin (acesso ao painel admin)
 
 Recomendado auditar:
+
 - Criação e mudança de status de orçamentos
 - Ajustes de estoque
 - Registro e exclusão de pagamentos
 
 Não é necessário auditar:
+
 - Listagens e leituras (GET sem alteração)
 - Ações internas do sistema (lazy init de materiais padrão)
 
@@ -96,12 +102,15 @@ O `AuditLog` tem FK para `User`. Ao limpar dados de teste, **sempre deletar Audi
 ```typescript
 // helpers.ts
 export async function limparDadosTeste(emails: string[]) {
-  const users = await prisma.user.findMany({ where: { email: { in: emails } }, select: { id: true } })
-  const ids = users.map(u => u.id)
+  const users = await prisma.user.findMany({
+    where: { email: { in: emails } },
+    select: { id: true },
+  });
+  const ids = users.map((u) => u.id);
 
   // ORDEM OBRIGATÓRIA: AuditLog antes de User (FK constraint)
-  await prisma.auditLog.deleteMany({ where: { userId: { in: ids } } })
-  await prisma.user.deleteMany({ where: { id: { in: ids } } })
+  await prisma.auditLog.deleteMany({ where: { userId: { in: ids } } });
+  await prisma.user.deleteMany({ where: { id: { in: ids } } });
 }
 ```
 

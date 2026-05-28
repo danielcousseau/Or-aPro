@@ -1,29 +1,36 @@
-import { Request, Response, NextFunction } from 'express';
-import { z, ZodError } from 'zod';
+import { Request, Response, NextFunction } from "express";
+import { z, ZodError } from "zod";
 
 export default function validate(schema: z.ZodTypeAny) {
-    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-        if (!schema) {
-            res.status(500).json({ error: 'Erro interno: Schema de validação não definido ou importado incorretamente nas rotas.' });
-            return;
-        }
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    if (!schema) {
+      res.status(500).json({
+        error:
+          "Erro interno: Schema de validação não definido ou importado incorretamente nas rotas.",
+      });
+      return;
+    }
 
-        try {
-            // [SecOps] Usa parseAsync para não bloquear a thread principal (previne DoS).
-            req.body = await schema.parseAsync(req.body);
-            next();
-        } catch (error) {
-            if (error instanceof ZodError) {
-                res.status(400).json({
-                    error: 'Dados inválidos enviados no formulário',
-                    details: error.issues.map((issue) => ({
-                        campo: issue.path.join('.'),
-                        mensagem: issue.message
-                    }))
-                });
-                return;
-            }
-            next(error);
-        }
-    };
+    try {
+      // [SecOps] Usa parseAsync para não bloquear a thread principal (previne DoS).
+      req.body = await schema.parseAsync(req.body);
+      next();
+    } catch (error) {
+      if (error instanceof ZodError) {
+        res.status(400).json({
+          error: "Dados inválidos enviados no formulário",
+          details: error.issues.map((issue) => ({
+            campo: issue.path.join("."),
+            mensagem: issue.message,
+          })),
+        });
+        return;
+      }
+      next(error);
+    }
+  };
 }

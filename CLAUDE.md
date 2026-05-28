@@ -8,12 +8,12 @@ OrcaPro é um SaaS multi-tenant brasileiro de orçamentos para marcenarias.
 
 ## Stack
 
-| Camada | Tecnologia | Hospedagem |
-|---|---|---|
-| Frontend | React 18 + Vite + TypeScript + PWA | Vercel |
-| Backend | Node.js + Express 5 + Prisma ORM + TypeScript | Render |
-| Banco | PostgreSQL | Neon.tech (serverless) |
-| Auth | JWT (httpOnly cookie + refresh tokens 7 dias) | — |
+| Camada   | Tecnologia                                    | Hospedagem             |
+| -------- | --------------------------------------------- | ---------------------- |
+| Frontend | React 18 + Vite + TypeScript + PWA            | Vercel                 |
+| Backend  | Node.js + Express 5 + Prisma ORM + TypeScript | Render                 |
+| Banco    | PostgreSQL                                    | Neon.tech (serverless) |
+| Auth     | JWT (httpOnly cookie + refresh tokens 7 dias) | —                      |
 
 Detalhes completos: [docs/architecture.md](docs/architecture.md)
 
@@ -74,6 +74,7 @@ npm run build        # gera versão de produção
 ## Estado atual (o que está funcionando em produção)
 
 ### Segurança implementada
+
 - JWT httpOnly cookie + refresh tokens (15min / 7 dias)
 - Rate limit: 10 tentativas / 15 min por IP em `/login` e `/registrar`
 - Validação cross-tenant no `OrcamentoController`
@@ -81,6 +82,7 @@ npm run build        # gera versão de produção
 - Recuperação de senha via Brevo HTTP API
 
 ### Features implementadas
+
 - Clientes, Orçamentos (materiais + mão de obra + markup), Histórico
 - Kanban com drag-and-drop + notificações Telegram
 - Proposta ao cliente (PDF + WhatsApp) com logo da marcenaria
@@ -98,6 +100,7 @@ npm run build        # gera versão de produção
 **Trello completo:** https://trello.com/b/3IwYopQt/projeto-orcapro
 
 ### Próximas prioridades
+
 - [ ] Ordem de produção em 1 clique (criação automática ao aprovar + botão no Kanban)
 - [ ] Métricas do funil de vendas (conversão, valor médio, perdidos no mês)
 - [ ] Fluxo de caixa (projeção 30/60/90 dias)
@@ -105,6 +108,7 @@ npm run build        # gera versão de produção
 - [ ] Assinatura digital do contrato (ClickSign ou DocuSign)
 
 ### Bugs abertos
+
 Nenhum.
 
 ---

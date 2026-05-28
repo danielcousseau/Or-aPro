@@ -23,6 +23,7 @@ Marceneiro faz login
 ### 2. Middleware de autenticação extrai o userId
 
 Em `backend/src/middlewares/auth.ts`, todo request autenticado passa por uma verificação que:
+
 1. Lê o JWT do header `Authorization` (ou do cookie `accessToken`)
 2. Valida a assinatura e a validade
 3. Injeta `req.userId` na requisição para os controllers usarem
@@ -39,7 +40,7 @@ req.userId = jwtPayload.userId; // agora todos os controllers têm acesso
 ```typescript
 // CORRETO — garante isolamento
 const clientes = await prisma.cliente.findMany({
-  where: { userId: req.userId }
+  where: { userId: req.userId },
 });
 
 // ERRADO — vaza dados de todos os marceneiros
@@ -55,12 +56,12 @@ Quando um marceneiro tenta criar/editar um orçamento referenciando um cliente, 
 const cliente = await prisma.cliente.findFirst({
   where: {
     id: clienteId,
-    userId: req.userId  // ← confirma que o cliente é dono deste marceneiro
-  }
+    userId: req.userId, // ← confirma que o cliente é dono deste marceneiro
+  },
 });
 
 if (!cliente) {
-  throw new Error('Cliente não encontrado ou não pertence a você');
+  throw new Error("Cliente não encontrado ou não pertence a você");
 }
 ```
 
@@ -68,15 +69,15 @@ Sem essa verificação, um marceneiro poderia criar orçamentos usando o ID de u
 
 ## Tabelas e isolamento
 
-| Tabela | Campo de isolamento | Observação |
-|---|---|---|
-| `Cliente` | `userId` | Direto |
-| `Orcamento` | `userId` | Direto |
-| `Material` | `userId` | Direto |
-| `OpcaoCustomizada` | `userId` | Direto |
-| `Pagamento` | via `Orcamento.userId` | Indireto — buscar orçamento antes |
-| `AuditLog` | `userId` | Direto |
-| `User` | `id` | É o próprio tenant |
+| Tabela             | Campo de isolamento    | Observação                        |
+| ------------------ | ---------------------- | --------------------------------- |
+| `Cliente`          | `userId`               | Direto                            |
+| `Orcamento`        | `userId`               | Direto                            |
+| `Material`         | `userId`               | Direto                            |
+| `OpcaoCustomizada` | `userId`               | Direto                            |
+| `Pagamento`        | via `Orcamento.userId` | Indireto — buscar orçamento antes |
+| `AuditLog`         | `userId`               | Direto                            |
+| `User`             | `id`                   | É o próprio tenant                |
 
 ## Rotas públicas (sem autenticação)
 

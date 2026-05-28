@@ -30,7 +30,14 @@
       "Bash(git -C \"c:\\\\Users\\\\victo\\\\Documents\\\\Github\\\\OrcaPro\" diff CLAUDE.md README.md)",
       "Bash(git -C \"c:\\\\Users\\\\victo\\\\Documents\\\\Github\\\\OrcaPro\" add CLAUDE.md README.md)",
       "Bash(git -C 'c:\\\\Users\\\\victo\\\\Documents\\\\Github\\\\OrcaPro' commit -m ' *)",
-      "Bash(git -C \"c:\\\\Users\\\\victo\\\\Documents\\\\Github\\\\OrcaPro\" push origin main)"
+      "Bash(git -C \"c:\\\\Users\\\\victo\\\\Documents\\\\Github\\\\OrcaPro\" push origin main)",
+      "Bash(ls \"c:\\\\Users\\\\victo\\\\Documents\\\\Github\\\\OrcaPro\\\\\")",
+      "Read(//c/Users/victo/Documents/Github/**)",
+      "Edit(/.claude/skills/tenant-isolation/**)",
+      "Edit(/.claude/skills/gerar-pdf-orcamento/**)",
+      "Edit(/.claude/skills/evolution-whatsapp/**)",
+      "Edit(/.claude/skills/billing-pagarme/**)",
+      "Edit(/.claude/skills/audit-log/**)"
     ],
     "additionalDirectories": [
       "c:\\Users\\victo\\.claude\\projects\\c--Users-victo-Documents-Github-OrcaPro\\memory"

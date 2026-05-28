@@ -117,10 +117,12 @@ model OrcamentoMaterial {
 ### Backend
 
 **1. `MaterialController` — atualizar `criar` e `editar`**
+
 - Aceitar `quantidadeEstoque` e `estoqueMinimo` no body
 - Validar que são números positivos se informados
 
 **2. `OrcamentoController` — atualizar `criar`**
+
 - Após salvar o orçamento, para cada `OrcamentoMaterial` que tenha um `materialId` correspondente na tabela `Material`:
   - Buscar o `Material` do usuário pelo nome (matching por nome, pois `OrcamentoMaterial` não guarda `materialId`)
   - Se encontrar e o material tiver `quantidadeEstoque != null`, fazer: `quantidadeEstoque -= quantidade`
@@ -129,6 +131,7 @@ model OrcamentoMaterial {
 > **Atenção:** `OrcamentoMaterial` não guarda `materialId` hoje. Vamos adicionar esse campo (nullable) nesta feature. Quando o usuário selecionar do cadastro, o `materialId` é salvo junto. O desconto de estoque usa `materialId` — confiável. Materiais digitados manualmente ("Material avulso...") não têm `materialId` e simplesmente não afetam o estoque.
 
 **3. Nova rota `PATCH /api/materiais/:id/estoque`**
+
 - Body: `{ quantidadeEstoque: number }`
 - Permite ajuste manual sem precisar editar todos os outros campos do material
 - Protegida pelo middleware `auth`
@@ -136,15 +139,18 @@ model OrcamentoMaterial {
 ### Frontend
 
 **1. Tela `Materiais.tsx` — listagem**
+
 - Adicionar coluna/badge mostrando estoque: _"15 unid."_ ou _"—"_ se não configurado
 - Badge vermelho/laranja quando `quantidadeEstoque < estoqueMinimo`
 - Botão "Ajustar estoque" que abre um modal simples com campo numérico
 
 **2. Modal de criação/edição de material**
+
 - Adicionar campos: `Estoque atual` e `Estoque mínimo` (ambos opcionais, tipo número)
 - Placeholder explicativo: _"Deixe em branco para não controlar estoque"_
 
 **3. Tela `NovoOrcamento.tsx` / `EditarOrcamento.tsx`**
+
 - Após salvar com sucesso, checar na resposta se algum material ficou abaixo do mínimo
 - Se sim: exibir toast/alerta informativo (não bloqueante): _"Atenção: X materiais com estoque baixo"_
 
@@ -152,12 +158,12 @@ model OrcamentoMaterial {
 
 ## Riscos e dependências
 
-| Risco | Impacto | Mitigação |
-|---|---|---|
-| Marceneiro edita um orçamento e o sistema desconta de novo | Estoque vai ficando negativo ao longo do tempo | **Não descontar ao editar** — apenas na criação. Ajuste manual cobre correções |
-| Material deletado após ser usado num orçamento | `materialId` ficaria órfão | `onDelete: SetNull` no schema — `materialId` vira null, nome/valor preservados |
-| `quantidadeEstoque` pode ficar negativo se orçamento usar mais do que existe | Estoque mostra valor negativo | Aplicar `Math.max(0, atual - usado)` no backend |
-| Material avulso (sem `materialId`) não desconta estoque | Estoque não reflete consumo real | Comportamento esperado e documentado — material avulso = fora do controle de estoque |
+| Risco                                                                        | Impacto                                        | Mitigação                                                                            |
+| ---------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Marceneiro edita um orçamento e o sistema desconta de novo                   | Estoque vai ficando negativo ao longo do tempo | **Não descontar ao editar** — apenas na criação. Ajuste manual cobre correções       |
+| Material deletado após ser usado num orçamento                               | `materialId` ficaria órfão                     | `onDelete: SetNull` no schema — `materialId` vira null, nome/valor preservados       |
+| `quantidadeEstoque` pode ficar negativo se orçamento usar mais do que existe | Estoque mostra valor negativo                  | Aplicar `Math.max(0, atual - usado)` no backend                                      |
+| Material avulso (sem `materialId`) não desconta estoque                      | Estoque não reflete consumo real               | Comportamento esperado e documentado — material avulso = fora do controle de estoque |
 
 ---
 

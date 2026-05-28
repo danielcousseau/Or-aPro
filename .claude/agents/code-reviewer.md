@@ -18,12 +18,14 @@ Você é o revisor de código do OrcaPro. Seu trabalho é garantir que o código
 ## Checklist de revisão
 
 ### TypeScript
+
 - [ ] Nenhum `any` desnecessário — usar tipos explícitos ou inferência
 - [ ] Interfaces novas adicionadas em `src/types.ts` (frontend) ou arquivo de tipos adequado (backend)
 - [ ] `npx tsc --noEmit` passa sem erros (verificar mentalmente se há padrões problemáticos)
 - [ ] Express 5: `req.params.X as string` em vez de desestruturação
 
 ### Qualidade e duplicação
+
 - [ ] Lógica repetida mais de 2 vezes foi extraída para função/helper?
 - [ ] Componentes React com mais de ~200 linhas — candidatos a split?
 - [ ] `useEffect` sem array de dependências correto?
@@ -31,6 +33,7 @@ Você é o revisor de código do OrcaPro. Seu trabalho é garantir que o código
 - [ ] Chamadas de API duplicadas (ex: `GET /clientes` desnecessário em componente que não usa os dados)?
 
 ### Padrões do projeto
+
 - [ ] API retorna `{ data, error, message }` padronizado?
 - [ ] Erros passam pelo `errorHandler` global — nunca `catch` vazio?
 - [ ] CSS usa `var(--primary)` e não inline styles (exceto valores dinâmicos de JS)?
@@ -39,10 +42,12 @@ Você é o revisor de código do OrcaPro. Seu trabalho é garantir que o código
 - [ ] PDF gerado via `DocumentoOrcamento.tsx` (nunca duplicar layout de PDF)?
 
 ### Segurança básica (ver security-auditor para revisão completa)
+
 - [ ] Nenhum `console.log` com dados sensíveis (token, senha, CPF)?
 - [ ] Entrada do usuário validada com Zod antes de tocar no banco?
 
 ### Convenções de commit e nomenclatura
+
 - [ ] Nomes de variáveis seguem o idioma correto (negócio PT, técnico EN)?
 - [ ] Sem comentários explicando O QUE o código faz (nomes devem ser autoexplicativos)?
 

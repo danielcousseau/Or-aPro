@@ -2,21 +2,21 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.enviarEmailResetSenha = enviarEmailResetSenha;
 async function enviarEmailResetSenha(destinatario, nomeUsuario, linkReset) {
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: {
-            'accept': 'application/json',
-            'api-key': process.env.BREVO_API_KEY ?? '',
-            'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-            sender: {
-                name: 'OrcaPro',
-                email: process.env.EMAIL_FROM || 'noreply@orcapro.com',
-            },
-            to: [{ email: destinatario, name: nomeUsuario }],
-            subject: 'Redefinição de Senha — OrcaPro',
-            htmlContent: `
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "api-key": process.env.BREVO_API_KEY ?? "",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      sender: {
+        name: "OrcaPro",
+        email: process.env.EMAIL_FROM || "noreply@orcapro.com",
+      },
+      to: [{ email: destinatario, name: nomeUsuario }],
+      subject: "Redefinição de Senha — OrcaPro",
+      htmlContent: `
                 <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f8fafc; border-radius: 8px;">
                     <h2 style="color: #0056A3; margin-top: 0;">Redefinição de Senha</h2>
                     <p>Olá, <strong>${nomeUsuario}</strong>.</p>
@@ -35,10 +35,10 @@ async function enviarEmailResetSenha(destinatario, nomeUsuario, linkReset) {
                     <p style="color: #aaa; font-size: 0.78rem; margin: 0;">OrcaPro — Gestão de Orçamentos para Marcenarias</p>
                 </div>
             `,
-        }),
-    });
-    if (!response.ok) {
-        const erro = await response.text();
-        throw new Error(`Brevo API error ${response.status}: ${erro}`);
-    }
+    }),
+  });
+  if (!response.ok) {
+    const erro = await response.text();
+    throw new Error(`Brevo API error ${response.status}: ${erro}`);
+  }
 }

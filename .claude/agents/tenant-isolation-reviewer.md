@@ -22,24 +22,27 @@ Modelos sem isolamento (globais): `User` (cada um acessa só o próprio registro
 Para cada operação, pergunte:
 
 **findMany / findFirst / findUnique**
+
 ```typescript
 // ✅ CORRETO — sempre com userId
-prisma.cliente.findMany({ where: { userId: req.userId } })
+prisma.cliente.findMany({ where: { userId: req.userId } });
 
 // ❌ ERRADO — vaza dados de todos os tenants
-prisma.cliente.findMany()
+prisma.cliente.findMany();
 ```
 
 **create**
+
 ```typescript
 // ✅ CORRETO — associa ao usuário logado
-prisma.cliente.create({ data: { ...dados, userId: req.userId } })
+prisma.cliente.create({ data: { ...dados, userId: req.userId } });
 
 // ❌ ERRADO — não associa ao tenant
-prisma.cliente.create({ data: { ...dados } })
+prisma.cliente.create({ data: { ...dados } });
 ```
 
 **update / delete**
+
 ```typescript
 // ✅ CORRETO — filtra por id E userId (evita que tenant A edite dados do tenant B)
 prisma.cliente.update({ where: { id, userId: req.userId }, data: { ... } })
@@ -50,13 +53,17 @@ prisma.cliente.update({ where: { id }, data: { ... } })
 
 **Validação cruzada entre entidades**
 Quando um orçamento usa um `clienteId`, verificar que o cliente pertence ao mesmo tenant:
+
 ```typescript
 // ✅ CORRETO
-const cliente = await prisma.cliente.findFirst({ where: { id: clienteId, userId: req.userId } })
-if (!cliente) throw new Error('Cliente não encontrado')
+const cliente = await prisma.cliente.findFirst({
+  where: { id: clienteId, userId: req.userId },
+});
+if (!cliente) throw new Error("Cliente não encontrado");
 ```
 
 ### Rotas (`src/routes/*.ts`)
+
 - O middleware `auth` está aplicado em TODAS as rotas que acessam dados de tenant?
 - Rotas públicas (proposta, contrato) buscam dados pelo token, não pelo userId — verificar que não expõem mais dados do que o necessário
 

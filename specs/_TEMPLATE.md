@@ -45,12 +45,15 @@ _O que explicitamente NÃO será feito nesta versão._
 _Resumo das mudanças técnicas necessárias (backend, frontend, banco)._
 
 ### Backend
+
 - ...
 
 ### Frontend
+
 - ...
 
 ### Banco de dados
+
 - ...
 
 ## Riscos e dependências

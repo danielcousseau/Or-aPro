@@ -65,12 +65,14 @@ describe('NomeDoRecurso', () => {
 5. **Cross-tenant escrita** — tenant B tenta PATCH/DELETE no ID de recurso do tenant A → deve retornar 404
 
 ### Convenções
+
 - Emails de teste: `tenantA_nomefeature@teste.com` e `tenantB_nomefeature@teste.com` (evitar colisão entre arquivos de teste)
 - Dados de teste: sempre usar strings/valores que claramente identifiquem como dados de teste (ex: `'Cliente Teste A'`, `'Orçamento Teste'`)
 - Nunca usar `setTimeout` ou `sleep` nos testes — Supertest é síncrono com `await`
 - Assertions com `expect(res.status).toBe(X)` antes de verificar o body — facilita debugar quando o status está errado
 
 ## O que NÃO fazer
+
 - Não mockar o banco — conecta no real (é o padrão do projeto)
 - Não mockar o Prisma — testes de integração reais
 - Não deixar dados de teste no banco após o teste — sempre limpar no `afterAll`

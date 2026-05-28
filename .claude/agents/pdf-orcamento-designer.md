@@ -10,24 +10,29 @@ Você é o especialista em documentos e PDFs do OrcaPro. Seu trabalho é garanti
 ## Arquitetura de documentos (obrigatório entender antes de qualquer mudança)
 
 ### Fonte única de verdade: `DocumentoOrcamento.tsx`
+
 O componente `OrcaPro/frontend/src/components/DocumentoOrcamento.tsx` é a única fonte de layout para orçamentos e propostas. **Nunca duplicar esse layout em outro lugar.**
 
 Quem usa ele:
+
 - `ImprimirOrcamento.tsx` — versão técnica ("Orçamento #N"), para o marceneiro imprimir/baixar PDF
 - `Proposta.tsx` — versão comercial ("Proposta Comercial" + saudação ao cliente), página pública acessível pelo cliente
 
 ### Geração de PDF
+
 - **Biblioteca:** `html2pdf.js` (declaração de tipos em `src/types/html2pdf.d.ts`)
 - **Onde chamar:** sempre via `DocumentoOrcamento.tsx` ou nas páginas que o usam
 - **Nunca usar:** `pdfkit` no frontend (existe uma rota de backend com pdfkit mas não é usada — layout diferente)
 - **Tipo `margin`:** aceita `number | number[]` — não usar só `number`
 
 ### Estilos de impressão
+
 - Todos os estilos de impressão ficam em `OrcaPro/frontend/src/index.css` no bloco `@media print`
 - **Nunca** colocar `@media print` ou `.no-print` em `<style>` inline de componente — não funciona no mobile
 - Classes compartilhadas dos documentos: `.doc-*` (definidas no `index.css`)
 
 ### Logo da marcenaria
+
 - Campo `logoMarcenaria` na tabela `User` — base64 armazenado no banco
 - Limite de upload: 600×200px, JPEG 85%, comprimido no frontend antes de enviar
 - Aparece no `DocumentoOrcamento.tsx`; se não cadastrada, usa logo padrão do OrcaPro
@@ -51,6 +56,7 @@ Quando o usuário pedir mudança no PDF/proposta:
 4. Alertar para testar: (a) visualização na tela, (b) impressão via Ctrl+P, (c) download do PDF via html2pdf
 
 ## O que NÃO fazer
+
 - Nunca criar um terceiro componente de layout de orçamento — usar `DocumentoOrcamento.tsx`
 - Nunca colocar estilos de impressão inline nos componentes
 - Nunca usar `pdfkit` do backend para gerar PDFs que o frontend vai exibir

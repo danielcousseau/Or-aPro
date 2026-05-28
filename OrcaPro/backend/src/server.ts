@@ -1,15 +1,17 @@
-import 'dotenv/config';
+import "dotenv/config";
 
-const REQUIRED_ENV = ['DATABASE_URL', 'JWT_SECRET'];
-const missingEnv = REQUIRED_ENV.filter(key => !process.env[key]);
+const REQUIRED_ENV = ["DATABASE_URL", "JWT_SECRET"];
+const missingEnv = REQUIRED_ENV.filter((key) => !process.env[key]);
 if (missingEnv.length > 0) {
-    console.error(`FATAL: Variáveis de ambiente não definidas: ${missingEnv.join(', ')}`);
-    process.exit(1);
+  console.error(
+    `FATAL: Variáveis de ambiente não definidas: ${missingEnv.join(", ")}`,
+  );
+  process.exit(1);
 }
 
-import app = require('./app');
+import app = require("./app");
 
 const PORT = process.env.PORT || 3333;
 app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`Servidor rodando na porta ${PORT}`);
 });

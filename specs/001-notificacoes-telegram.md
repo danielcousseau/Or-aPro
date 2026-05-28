@@ -48,14 +48,17 @@ Integrar um bot do Telegram que envia uma mensagem automática ao cliente sempre
 ## Design técnico
 
 ### Backend
+
 - `backend/src/services/telegram.js` — funções `enviarMensagem`, `notificarMudancaStatus`, `buscarPendentes`
 - `OrcamentoController.atualizarStatus` — dispara `notificarMudancaStatus` após update (fire-and-forget)
 - `GET /api/telegram/pendentes` — chama `getUpdates` da API do Telegram para listar chat_ids recentes
 
 ### Frontend
+
 - `Clientes.jsx` — campo "Chat ID do Telegram" no formulário; indicador "✈️ Telegram ativo" no card
 
 ### Banco de dados
+
 - `Cliente.telegramChatId String?` — campo opcional adicionado via `prisma db push`
 
 ## Riscos e dependências

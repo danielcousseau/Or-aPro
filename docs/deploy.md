@@ -21,6 +21,7 @@ Usuário (browser)
 **Deploy:** Automático a cada push na branch `main` do GitHub. O Vercel detecta o push e faz o build (`npm run build`) sozinho.
 
 **Variáveis de ambiente configuradas no painel do Vercel:**
+
 - `VITE_API_URL` — URL do backend no Render (o frontend usa isso para saber para onde enviar as requisições)
 - Chaves do Cloudflare Turnstile (captcha)
 
@@ -29,6 +30,7 @@ Usuário (browser)
 **O que é:** O Render hospeda o servidor Node.js/Express. Processa requisições, acessa o banco de dados, envia emails, etc.
 
 **Deploy:**
+
 - O Render tem auto-deploy nativo, mas no plano gratuito é **instável** (frequentemente ignora pushes)
 - Solução definitiva: GitHub Actions (`ci.yml`) dispara o deploy manualmente via **Deploy Hook** após os testes passarem
 - O Deploy Hook é uma URL secreta do Render que, quando chamada, força o início de um novo deploy
@@ -36,6 +38,7 @@ Usuário (browser)
 **Tempo de deploy:** 3–7 minutos. Durante esse tempo, rotas novas retornam `Cannot GET /rota` (o servidor antigo ainda está rodando). Isso não é bug — é a janela de transição.
 
 **Variáveis de ambiente configuradas no painel do Render:**
+
 - `DATABASE_URL` — URL de conexão com o banco (via pooler do Neon.tech)
 - `DIRECT_URL` — URL direta do banco (sem pooler — necessário para operações de schema)
 - `JWT_SECRET` — chave para assinar tokens de autenticação
@@ -50,6 +53,7 @@ Usuário (browser)
 **Projeto:** `neondb`, schema `public`
 
 **Duas URLs importantes:**
+
 - `DATABASE_URL` — URL do pooler (gerenciador de conexões). Usar para queries normais
 - `DIRECT_URL` — URL direta. Usar apenas para `prisma db push` (alterações de schema)
 
@@ -60,12 +64,14 @@ Usuário (browser)
 **Arquivo:** `.github/workflows/ci.yml`
 
 **O que faz a cada push na `main`:**
+
 1. Instala dependências (`npm install`)
 2. Roda os testes (`npm test`) — conecta no banco real do Neon.tech
 3. Se os testes passarem: dispara o deploy no Render via Deploy Hook (`curl`)
 4. Se os testes falharem: o deploy NÃO acontece (código com erro não sobe para produção)
 
 **Secrets configurados no GitHub** (em Settings → Secrets and variables → Actions):
+
 - `DATABASE_URL` — para os testes
 - `DIRECT_URL` — para os testes
 - `JWT_SECRET` — para os testes
@@ -76,6 +82,7 @@ Usuário (browser)
 O OrcaPro usa `prisma db push` (não `prisma migrate dev`) porque foi criado sem histórico de migrations.
 
 **Fluxo obrigatório:**
+
 1. Editar `OrcaPro/backend/prisma/schema.prisma`
 2. Mostrar o diff para Victor e explicar o que vai mudar
 3. Aguardar aprovação
@@ -83,6 +90,7 @@ O OrcaPro usa `prisma db push` (não `prisma migrate dev`) porque foi criado sem
 5. **Nunca** usar `--accept-data-loss` sem aprovação explícita e lista do que será perdido
 
 **Rodar localmente:**
+
 ```bash
 cd OrcaPro/backend
 # Renomear prisma.config.ts temporariamente (causa conflito)
@@ -95,6 +103,7 @@ npx prisma db push
 **Sintoma:** rota nova retorna 404 ou `Cannot GET /rota` mesmo após push.
 
 **Checklist:**
+
 1. Aguardar 3–7 min — pode ser que o deploy ainda não terminou
 2. Verificar no painel do Render se o deploy finalizou com sucesso
 3. Se finalizou mas rota ainda não funciona: rodar `npx tsc --noEmit` localmente para verificar erros de TypeScript
