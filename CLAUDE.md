@@ -1,365 +1,132 @@
-# CLAUDE.md — Guia de Trabalho do Projeto OrcaPro
+# OrcaPro — Guia para Claude Code
 
-> Leia este arquivo no início de TODA sessão. Ao terminar, atualize as seções "Estado Atual" e "Backlog".º
+OrcaPro é um SaaS multi-tenant brasileiro de orçamentos para marcenarias.
+**Dono: Victor** (iniciante em programação — sempre explique em linguagem simples antes de fazer qualquer coisa).
+**Prioridades:** segurança > isolamento de dados > funcionalidade > velocidade.
 
 ---
 
-## 1. VISÃO GERAL DO PROJETO
+## Stack
 
-**OrcaPro** é um sistema web SaaS (Software as a Service) de gestão de orçamentos para marcenarias. Multi-tenant: cada marceneiro tem conta própria e vê apenas seus dados.
-
-### Funcionalidades principais
-- Cadastro de clientes
-- Criação de orçamentos com materiais, mão de obra e markup
-- Geração de proposta para envio ao cliente (PDF + WhatsApp)
-- Quadro Kanban de produção (Aguardando → Aprovado → Produção → Instalação → Entregue)
-- Notificações automáticas via Telegram quando o status muda
-- Dashboard gerencial com gráficos
-
-### Stack completa
 | Camada | Tecnologia | Hospedagem |
 |---|---|---|
-| Frontend | React + Vite + TypeScript + PWA | Vercel |
-| Backend (API) | Node.js + Express + Prisma ORM + TypeScript | Render |
-| Banco de dados | PostgreSQL | Neon.tech (serverless) |
+| Frontend | React 18 + Vite + TypeScript + PWA | Vercel |
+| Backend | Node.js + Express 5 + Prisma ORM + TypeScript | Render |
+| Banco | PostgreSQL | Neon.tech (serverless) |
+| Auth | JWT (httpOnly cookie + refresh tokens 7 dias) | — |
 
-### Estrutura de pastas
+Detalhes completos: [docs/architecture.md](docs/architecture.md)
+
+---
+
+## REGRAS DE OURO (NUNCA quebrar sem aprovação explícita do Victor)
+
+1. NUNCA rode `prisma db push`, `migrate reset` ou qualquer comando que altera o banco sem mostrar o diff e aguardar aprovação
+2. NUNCA use `--accept-data-loss` sem listar exatamente o que será apagado
+3. NUNCA crie query Prisma sem filtro de tenant (`userId`) — veja [docs/tenant-model.md](docs/tenant-model.md)
+4. NUNCA escreva segredos, tokens ou senhas no código, logs ou commits
+5. NUNCA desabilite Helmet, rate limit ou validação cross-tenant
+6. NUNCA delete arquivos ou pastas sem listar o que será removido e aguardar OK
+7. NUNCA faça refactor em múltiplos arquivos ao mesmo tempo — um por vez
+8. SEMPRE valide entrada de usuário com Zod antes de tocar no banco
+9. SEMPRE explique em linguagem simples ANTES de executar, mencionando o risco
+10. SEMPRE mostre o que vai mudar antes de mudar (liste arquivos afetados)
+
+---
+
+## Comandos comuns
+
+```bash
+# Dentro de OrcaPro/backend/
+npm run dev          # sobe o servidor local
+npm test             # roda os testes
+npx tsc --noEmit     # checa tipos TypeScript (sem compilar)
+npx prisma studio    # abre interface visual do banco
+
+# Dentro de OrcaPro/frontend/
+npm run dev          # sobe o frontend local
+npm run build        # gera versão de produção
 ```
-OrcaPro/
-├── OrcaPro/
-│   ├── backend/
-│   │   ├── prisma/           # schema.prisma + migrations (não usar migrate dev — ver seção 7)
-│   │   ├── src/
-│   │   │   ├── controllers/  # lógica de negócio (.ts)
-│   │   │   ├── middlewares/  # auth, validate, errorHandler, adminAuth (.ts)
-│   │   │   ├── routes/       # rotas Express (.ts)
-│   │   │   ├── services/     # telegram.ts, audit.ts, email (.ts)
-│   │   │   ├── lib/          # prisma.ts (singleton)
-│   │   │   ├── constants/    # materiaisPadrao.ts
-│   │   │   └── app.ts        # Express app (separado do server.ts para testes)
-│   │   ├── dist/             # output compilado pelo tsc (gerado no build, não commitar)
-│   │   ├── tsconfig.json     # TypeScript backend (strict: true, output em dist/)
-│   │   └── __tests__/        # Jest + Supertest
-│   └── frontend/
-│       ├── src/
-│       │   ├── pages/        # uma tela por arquivo (.tsx)
-│       │   ├── components/   # componentes reutilizáveis (.tsx)
-│       │   ├── constants/    # constantes compartilhadas (ex: status.ts com CORES_STATUS)
-│       │   ├── services/     # api.ts (Axios com interceptor de refresh token)
-│       │   ├── utils/        # format.ts, masks.ts, validators.ts
-│       │   ├── types.ts      # todas as interfaces compartilhadas do frontend
-│       │   └── types/        # html2pdf.d.ts (declaração de tipos de libs sem @types)
-│       ├── public/           # ícones PWA, logo
-│       └── tsconfig.json     # TypeScript frontend (noEmit: true — Vite compila, TS só checa tipos)
-├── specs/                    # specs de features (escrever antes de implementar)
-├── .github/workflows/        # CI/CD GitHub Actions
-├── CLAUDE.md                 # este arquivo
-└── README.md                 # documentação pública
-```
-
-### URLs de produção
-- **Frontend:** https://orca-pro-seven.vercel.app
-- **Backend:** hospedado no Render (URL configurada como `VITE_API_URL` no Vercel)
-- **Banco:** Neon.tech projeto `neondb`, schema `public`
-- **Trello (backlog + concluídos):** https://trello.com/b/3IwYopQt/projeto-orcapro
 
 ---
 
-## 2. REGRAS DE OURO — NUNCA FAÇA SEM APROVAÇÃO EXPLÍCITA
+## Workflow padrão para mudanças
 
-Estas regras existem porque erros aqui causam perda de dados em produção ou quebram o sistema para usuários reais.
-
-### ❌ PROIBIDO sem aprovação explícita
-
-- **Nunca** rodar `prisma db push` em produção sem antes explicar o que vai mudar no banco e aguardar confirmação
-- **Nunca** usar a flag `--accept-data-loss` sem listar exatamente quais tabelas/dados serão apagados e aguardar aprovação — esta flag ignora o aviso de segurança do Prisma
-- **Nunca** commitar e dar push de mudanças que afetam o banco (schema, migrations) sem mostrar o diff primeiro
-- **Nunca** deletar arquivos sem listar o que será removido e justificar por quê
-- **Nunca** alterar variáveis de ambiente de produção (Render, Vercel, GitHub Secrets) sem confirmação
-- **Nunca** fazer refactor grande em múltiplos arquivos de uma vez — um arquivo por vez, aguardando confirmação
-
-### ✅ SEMPRE fazer
-
-- Perguntar antes de qualquer ação irreversível (deletar dados, alterar banco, força push)
-- Mostrar o que vai mudar **antes** de mudar — descrever em linguagem simples
-- Fazer uma coisa por vez e aguardar confirmação para continuar
-- Explicar o risco de cada ação: "o que pode dar errado se isso falhar?"
+1. **Schema do banco** → mostrar diff → aguardar aprovação → `prisma db push`
+2. **Novo endpoint** → verificar filtro de tenant → implementar → testar
+3. **Feature nova** → criar spec em `specs/` → implementar → testar
+4. **Antes de declarar concluído** → `npx tsc --noEmit` (zero erros) + `npm test` (todos passando)
 
 ---
 
-## 3. ESTADO ATUAL DO PROJETO
+## Armadilhas conhecidas
 
-Tudo que já foi implementado e está funcionando em produção (salvo indicação contrária).
-
-### Segurança
-- [x] JWT sem fallback inseguro; envs obrigatórias validadas no boot com `process.exit(1)`
-- [x] Rate limiter no `/api/login` e `/api/registrar` — 10 tentativas por 15 minutos por IP
-- [x] Validação cross-tenant no `OrcamentoController` (verifica que `clienteId` pertence ao `req.userId`)
-- [x] `PrismaClient` singleton em `backend/src/lib/prisma.js`
-- [x] Middleware de erro global `errorHandler.js`
-- [x] `httpOnly cookies` + `refresh tokens` (access token: 15min, refresh token: 7 dias)
-- [x] Recuperação de senha via e-mail (Brevo HTTP API) — `EsqueciSenha.tsx`, `RedefinirSenha.tsx`
-- [x] Helmet.js ativo no backend
-- [x] Cloudflare Turnstile no cadastro (chaves reais configuradas para `orca-pro-seven.vercel.app`)
-- [x] CSP (Content-Security-Policy) configurado no `vercel.json`
-- [x] Fix Safari/iOS: access token em memória JS + refreshToken no `localStorage` (cookies cross-domain bloqueados pelo Safari ITP)
-
-### Infraestrutura
-- [x] `directUrl` no `schema.prisma` — necessário para o Neon.tech (usa pooler por padrão; DDL precisa de URL direta)
-- [x] CI/CD: `.github/workflows/ci.yml` — roda `npm test` a cada push na main (Node.js 22) e depois dispara deploy automático no Render via Deploy Hook
-- [x] Secrets configurados no GitHub: `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `RENDER_DEPLOY_HOOK`
-- [x] `postinstall: npx prisma generate` no `package.json` do backend
-
-### Features
-- [x] Cadastro de clientes com busca de CEP (ViaCEP com fallback automático para BrasilAPI)
-- [x] Orçamentos com materiais, mão de obra (fixo/hora/diária/percentual), markup/lucro
-- [x] Histórico de orçamentos com toggle de materiais por card
-- [x] Dashboard gerencial com gráficos (Chart.js) — status, ambientes, receita
-- [x] Quadro Kanban com busca por título e cliente
-- [x] Proposta para cliente (HTML imprimível + PDF via html2pdf.js)
-- [x] Geração de link WhatsApp com mensagem pré-formatada (nome da marcenaria incluso)
-- [x] PDF download via `html2pdf.js` — `ImprimirOrcamento.tsx` e `Proposta.tsx`
-- [x] Nome da Marcenaria (`nomeMarcenaria`) editável no Perfil — aparece no PDF e no WhatsApp
-- [x] Materiais padrão de marcenaria (31 itens) — lazy init na primeira listagem do usuário
-- [x] Campos select + "Outro (digitar manualmente)": Ambiente, Forma de Pagamento, Categoria, Unidade
-- [x] Opções customizadas fixas (`OpcaoCustomizada`) — checkbox "Salvar como opção fixa"
-- [x] Notificações Telegram automáticas ao mudar status no Kanban
-- [x] Audit Log de ações (criar/editar/excluir/login) — card no Perfil + painel Admin
-- [x] PWA: ícones, manifest, service worker com `skipWaiting: true`
-- [x] Testes automatizados: `__tests__/auth.test.js` + `__tests__/crossTenant.test.js`
-- [x] Estoque básico de materiais — `quantidadeEstoque` e `estoqueMinimo` por material, modal de ajuste via PATCH, alerta visual (⚠️) nos cards e toast ao salvar orçamentos quando materiais ficam abaixo do mínimo
-- [x] Financeiro — contas a receber por orçamento: resumo "a receber / já recebido", barra de progresso por obra, registrar/excluir pagamentos (sinal, parcelas, saldo), badge "Pago" quando quitado, filtros (todos/pendentes/pagos). Tabela `Pagamento` no banco. Backend: `PagamentoController.ts` + `/api/pagamentos`. Frontend: `Financeiro.tsx`. Commit: `842291c`.
-- [x] Rentabilidade por projeto — aba "Rentabilidade" dentro da página Financeiro. Endpoint `GET /api/pagamentos/rentabilidade` calcula por orçamento: custo de materiais (soma valor×quantidade), receita (totalFinal), lucro bruto e margem %. Resumo geral no topo (receita, custo, lucro, margem média). Cards com barra visual custo×lucro e badge de margem colorido (verde ≥40%, amarelo ≥20%, vermelho <20%). Filtro por status. Sem nova tabela no banco — tudo calculado em memória no backend. Commit: `1c7e27b`.
-- [x] Ordem de Produção — seção no Dashboard listando orçamentos aprovados como ordens ativas + página `/ordem-producao/:id` imprimível (sem menu/botões). Commit: `9206d80`. Nota: criação automática ao aprovar (1 clique) ainda está no backlog.
-
-### Fixes e melhorias sessão 27/05/2026 (segunda parte — financeiro + CI/CD)
-
-- [x] **Financeiro básico — contas a receber** — módulo completo implementado. Ver detalhes na seção Features acima. Commit: `842291c`.
-- [x] **Rentabilidade por projeto** — aba "Rentabilidade" na página Financeiro. Cálculo no backend (sem nova tabela): custo materiais, lucro bruto, margem %. Badge colorido verde/amarelo/vermelho, barra visual custo×lucro, filtro por status, resumo geral no topo. Commit: `1c7e27b`.
-- [x] **Deploy automático no Render via GitHub Actions** — o Render tem webhook de auto-deploy nativo que é instável no plano gratuito (frequentemente ignora pushes). Solução: adicionado job `deploy` no `.github/workflows/ci.yml` que roda após os testes passarem e dispara o deploy via `curl` no Render Deploy Hook URL. A URL fica salva como secret `RENDER_DEPLOY_HOOK` no GitHub (não exposta no código). Agora todo push na `main` garante deploy automático e só sobe código que passou nos testes. Commit: `1d7c01f`.
-- [x] **Diagnóstico via Jam** — identificado padrão de erro: quando o Render ainda está deployando (3–7 min após push), rotas novas retornam `Cannot GET /rota` (404 do Express) porque o processo antigo ainda está no ar. Não é bug de código — é janela de transição do deploy. O GitHub Actions resolve isso pois o deploy é disparado de forma confiável após cada push.
-
-### Fixes sessão 27/05/2026 (primeira parte)
-
-- [x] **Fix definitivo do build do Render — rotas de contrato** — `buscarContratoPorToken` e `aceitarContrato` usavam `const { token } = req.params`, que no `@types/express` v5 resulta em tipo `string | string[]`. Isso conflitava com o campo `contratoToken` do Prisma (que espera `string`), causava falha silenciosa no `tsc` do Render e mantinha o código antigo no ar (sem as rotas de contrato). Fix: `const token = req.params.token as string` — mesmo padrão já usado em `buscarPorTokenPublico`. Após o fix, `tsc --noEmit` zerou todos os erros. O `b5aeb39` era o último build bem-sucedido; o deploy novo subiu com todas as rotas de contrato funcionando. Commit: `bf88c54`.
-- [x] **Fix mensagens WhatsApp** — removidos emojis (🎉 da mensagem de contrato, 📲 do botão "Compartilhar Contrato"). Adicionado `.trim()` no título do orçamento e nome do cliente antes de montar o negrito `*texto*` — evita `*Mesa do Victor *` que quebra a formatação no WhatsApp. Arquivos: `Kanban.tsx`, `ImprimirOrcamento.tsx`. Commit: `03fc885`.
-
-### Fixes e melhorias sessão 26/05/2026 (noite — segunda parte)
-
-- [x] **Contrato automático ao aprovar orçamento** — quando o marceneiro move um orçamento para "Aprovado" no Kanban, o backend gera automaticamente um `contratoToken` (UUID único) e salva no banco com `contratoGeradoEm`. Novas rotas públicas: `GET /api/orcamentos/contrato/:token` (busca dados) e `PATCH /api/orcamentos/contrato/:token/aceitar` (cliente confirma). Rota autenticada: `POST /api/orcamentos/:id/gerar-contrato` (para orçamentos que já eram Aprovados antes da feature). Página pública `/contrato/:token` com tabela de materiais, condições gerais, botão de aceite verde — ao clicar registra `contratoAceito = true` e `contratoAceitoEm` no banco. Após aceite, exibe confirmação com data/hora e desabilita botão.
-- [x] **Drag-and-drop no Kanban** — arrastar e soltar cards entre colunas usando a API HTML5 nativa (sem biblioteca). Coluna alvo fica destacada (borda tracejada colorida + fundo suave) durante o arraste. Card arrastado fica translúcido. Status salvo no banco ao soltar.
-- [x] **Botão "Compartilhar Contrato" no Kanban** — aparece nos cards com status "Aprovado" que já têm contrato gerado. Abre WhatsApp com mensagem pré-formatada (nome do cliente + link do contrato). Indica se o contrato já foi aceito pelo cliente. TODO EvolutionAPI marcado no código para integração futura.
-- [x] **Fix html2pdf.d.ts** — tipo `margin` corrigido para aceitar `number | number[]` (estava só `number`, causando erro de TypeScript em 3 páginas).
-- [x] **Schema do banco** — 4 novos campos no model `Orcamento`: `contratoToken String? @unique`, `contratoGeradoEm DateTime?`, `contratoAceito Boolean @default(false)`, `contratoAceitoEm DateTime?`. `prisma db push` executado em produção.
-- [x] **Fix máscara de telefone** — `mascaraTelefone` agora strip do prefixo DDI 55 ao colar (ex: "5551995154309" → "(51) 99515-4309"). Máscara aplicada só no `onBlur` (saída do campo) em vez de a cada tecla — elimina bug do cursor pulando pro final ao editar no meio do número. Arquivo: `masks.ts` + `Clientes.tsx`.
-
-### Fixes e melhorias sessão 26/05/2026 (noite — primeira parte)
-
-- [x] **Clean code — remoção de duplicações e bugs silenciosos** — refactor em 6 arquivos, nada deletado:
-  - `Dashboard.tsx`: removida chamada desnecessária a `GET /clientes` que era ignorada (economiza 1 request por abertura do dashboard)
-  - `src/constants/status.ts`: criado arquivo de constantes compartilhadas com `CORES_STATUS` — `Dashboard.tsx` e `Historico.tsx` agora importam daqui (fim da duplicata)
-  - `Clientes.tsx`: corrigido bug silencioso — `setSalvando(true)` nunca era chamado, então o botão "Salvar" nunca ficava desabilitado durante o envio; adicionado guard `if (salvando) return` para evitar duplo submit
-  - `Historico.tsx`, `Clientes.tsx`, `Materiais.tsx`: filtros e listas derivadas agora usam `useMemo` — só recalculam quando os dados mudam; `todasCategorias` e `todasUnidades` também memoizados no `Materiais.tsx`
-  - `OrcamentoController.ts` (backend): lógica idêntica de "atualizar estoque + coletar alertas" extraída para helper `aplicarMudancasEstoque`; `descontarEstoque` e `ajustarDiffEstoque` agora delegam para ele
-
-### Fixes e melhorias sessão 26/05/2026 (tarde)
-
-- [x] **Pluralização de unidades de medida no estoque** — unidades agora aparecem em minúsculo e no plural quando quantidade > 1 (ex: "5 caixas", "1 metro", "3 pares"). Função `pluralizarUnidade` com tabela de plurais para as 10 unidades padrão + fallback genérico para unidades customizadas. Arquivo: `Materiais.tsx`.
-- [x] **Layout unificado de orçamento/proposta** — criado componente compartilhado `DocumentoOrcamento.tsx` usado por `ImprimirOrcamento.tsx` e `Proposta.tsx`. PDF, impressão e tela agora são idênticos (antes havia diferença visual). Estilos centralizados em `index.css` com classes `.doc-*`. `ImprimirOrcamento` usa linguagem técnica ("Orçamento #N"), `Proposta` usa linguagem comercial ("Proposta Comercial" + saudação ao cliente).
-- [x] **Logo da marcenaria nos documentos** — campo `logoMarcenaria String?` adicionado à tabela `User` (db push executado). Upload no Perfil com compressão automática para 600×200px JPEG 85%. Aparece no PDF e na proposta pública do cliente. Cada marceneiro tem sua própria logo isolada. Se não cadastrada, usa logo padrão do OrcaPro. `express.json` com limite aumentado para 600kb. Commits: `ba72606`, `1cdee83`, `4a095f1`.
-- [x] **Fix: logo do perfil inicializada do localStorage** — ao navegar de volta ao Perfil, a logo agora é carregada imediatamente do localStorage (síncrono) antes da chamada à API. Evita que a logo suma visualmente se a API retornar `null` (ex: backend ainda não atualizado). `logoPreview` usa lazy initializer do `useState`.
-- [x] **Fix: input de logo resetado após operação** — após upload ou remoção de logo, o `<input type="file">` é recriado via `key={logoInputKey}` para aceitar o mesmo arquivo novamente sem precisar de F5.
-- [x] **Fix: `handlePerfilSubmit` preserva logoMarcenaria** — ao salvar Nome/E-mail no formulário de perfil, o `updated` agora inclui `logoMarcenaria` da resposta da API, evitando que o localStorage sobrescreva a logo com null.
-
-### Melhorias de design sessão 25/05/2026 (tarde)
-
-- [x] **Glassmorphism** — sidebar com `backdrop-filter: blur(20px)` e fundo translúcido, modais com efeito de vidro fosco e sombra profunda, dropdown do usuário com blur. Commit: `97fb51a`.
-- [x] **Micro-interações** — botões escalam com `scale(1.02)` no hover e encolhem no clique (`scale(0.97)`), transição com curva cúbica spring. Cards levitam `translateY(-3px)` no hover com sombra azulada. Modais surgem com `fadeIn` + `slideUp` animado. Commit: `a8ef84b`.
-- [ ] **Whitespace** — tentado em 26/05/2026, revertido a pedido do Victor (estava bom antes). Não tentar de novo sem proposta visual concreta primeiro.
-- [x] **Bento Grid no Dashboard** — grid de 4 colunas com cards assimétricos estilo Apple. Faturamento Confirmado ocupa 2 colunas com destaque (gradiente sutil + número maior). Gráfico de Ambientes ocupa 3 colunas. Mobile: 2 colunas em ≤900px, 1 coluna em ≤600px. Classes: `.bento-grid`, `.bento-span-2`, `.bento-span-3`, `.bento-card-featured`. Commit: `11bd615`.
-
-### Fixes e melhorias sessão 25/05/2026
-
-- [x] **Bug raiz do estoque encontrado e corrigido** — o `validate.ts` importava `ZodSchema` e `ZodIssue` do Zod, que **não existem mais no Zod v4** (`"zod": "^4.4.3"`). Isso causava falha silenciosa no `tsc` durante o build do Render, mantendo o servidor rodando uma versão antiga do código (sem rota PATCH e sem campos de estoque no controller). Fix: substituído `ZodSchema` por `z.ZodTypeAny` e removida a anotação explícita de `ZodIssue` — TypeScript infere automaticamente. Arquivo: `backend/src/middlewares/validate.ts`.
-- [x] **`prisma db push` na produção** — executado com a `DIRECT_URL` correta do Neon.tech. Colunas `quantidadeEstoque Float?` e `estoqueMinimo Float?` criadas no banco de produção (sessão anterior havia rodado o push contra URL errada ou sem o directUrl).
-- [x] **Sombra laranja removida dos botões** — removida a `box-shadow` laranja do seletor base `button {}` no `index.css`. Corrige de uma vez os botões "Estoque", "Ver/Imprimir", "Remover foto" e qualquer outro botão sem classe específica. Botões com shadow própria (`.btn-add`) continuam inalterados. `.btn-action` ganhou `box-shadow: none` explícito também.
-- [x] **Excluir materiais padrão** — `MaterialController.listar` agora só cria os padrões quando o usuário tem zero materiais (primeira vez). Antes recriava qualquer padrão deletado em toda listagem.
-- [x] **`playing_with_neon` removida** — tabela de demo do Neon.tech removida do banco com o `db push` (não era dado do sistema).
-- [x] **Alerta de estoque baixo** — implementado em dois pontos: (1) página de Materiais mostra ⚠️ e número em vermelho nos cards quando `quantidadeEstoque < estoqueMinimo`; (2) ao salvar orçamento, o backend retorna `alertasEstoque` com os materiais que ficaram abaixo do mínimo após o desconto — frontend exibe toast de aviso.
-
-### Fixes e melhorias sessão 24/05/2026
-
-- [x] **Sombra laranja removida dos botões** — (detalhe acima).
-- [x] **Excluir materiais padrão** — (detalhe acima).
-
-### Fixes e melhorias sessão 22/05/2026
-
-- [x] **Layout desktop com sidebar lateral** — menu horizontal do topo convertido em sidebar fixa de 220px na esquerda (`--sidebar-width: 220px`). Conteúdo preenche toda a largura restante. Em telas ≤ 900px reverte para menu horizontal no topo (comportamento anterior). Estrutura: `.app-shell` (flex) → `Menu` sidebar + `.app-main`. Avatar e dropdown de perfil/logout movidos para dentro do `Menu.tsx` como props (`user`, `avatarUrl`, `onLogout`).
-- [x] **Botão de materiais no Histórico** — chip/pílula com borda e texto dinâmico "Ver/Ocultar X materiais". Remove `btn-ghost` que herdava `box-shadow` laranja do base `button`. Adiciona label "Materiais:" sempre visível. Fundo azul claro + borda azul quando expandido.
-
-- [x] **Migração para TypeScript — backend completo** — todos os arquivos `src/**/*.js` convertidos para `.ts`. Pacotes instalados: `typescript`, `ts-node`, `ts-jest`, `cross-env`, `@types/*`. `tsconfig.json` com `strict: true`, output em `dist/`. Testes: 14/14 passando. Script `build` atualizado para `npx prisma generate && tsc`. Script `start` aponta para `dist/server.js`.
-- [x] **Migração para TypeScript — frontend completo** — todos os arquivos `.jsx`/`.js` convertidos para `.tsx`/`.ts` (26 arquivos, ~3100 linhas). `tsconfig.json` com `noEmit: true` (Vite compila, TS só checa tipos), `strict: true`, `types: ["vite/client"]`. `src/types.ts` centraliza todas as interfaces compartilhadas. `src/types/html2pdf.d.ts` declara tipos do `html2pdf.js`. `tsc --noEmit`: zero erros. Build: sucesso.
-
-### Decisões de arquitetura importantes
-- **Banco:** usar `prisma db push` (não `migrate dev`) — o projeto não tem histórico de migrations. Novas colunas exigem `db push` explícito com aprovação do Victor. Para rodar localmente: renomear `prisma.config.ts` temporariamente (o arquivo importa `dotenv` e `prisma/config` que precisam estar instalados).
-- **Zod v4:** o projeto usa `"zod": "^4.4.3"`. Não importar `ZodSchema` ou `ZodIssue` diretamente — não existem no Zod v4. Usar `z.ZodTypeAny` e deixar TypeScript inferir tipos de issues.
-- **prisma.config.ts:** arquivo criado automaticamente pelo Prisma no raiz do backend. Não commitar modificações temporárias nele. No Render, funciona pois `dotenv` e `prisma/config` estão no `node_modules` instalado.
-- **Email:** Brevo HTTP API via `fetch` nativo — o Render bloqueia a porta 587 (SMTP), então Nodemailer não funciona.
-- **PDF:** sempre usar `html2pdf.js` no frontend via componente `DocumentoOrcamento.tsx`. O backend tem uma rota `GET /api/orcamentos/:id/pdf` com `pdfkit`, mas não é usada pelo frontend (layout diferente, mantida por precaução).
-- **Contrato token:** UUID gerado com `randomUUID()` do Node.js `crypto` (built-in, sem dependência extra). Salvo no banco como `contratoToken String? @unique`. Diferente do `propostaToken` (JWT stateless com validade), o `contratoToken` é permanente para rastrear aceite do cliente. Só é gerado uma vez — se o status voltar de Aprovado e retornar, o token original é mantido.
-- **Express 5 + req.params:** o projeto usa Express 5 (`^5.2.1`) com `@types/express` v5. Nessa versão, desestruturar `const { token } = req.params` resulta em tipo `string | string[]`. Sempre usar `const token = req.params.token as string` ao passar parâmetros de rota para campos do Prisma que esperam `string`. (Usar `Number(id)` não precisa do cast porque `Number()` aceita qualquer tipo.)
-- **Debugar build do Render localmente:** se suspeitar de erro de TypeScript quebrando o build, rodar `npm install` na pasta `backend/` e depois `npx tsc --noEmit`. O TypeScript não está instalado globalmente na máquina do Victor — o `npm install` baixa o `typescript` listado nas `devDependencies` e permite rodar via `npx`.
-- **Logo da marcenaria:** armazenada como base64 no campo `logoMarcenaria` da tabela `User`. Limite de corpo HTTP aumentado para 600kb no `app.ts`. Compressão feita no frontend (600×200px, JPEG 85%) antes de enviar. A proposta pública (`/orcamentos/proposta/:token`) inclui `nomeMarcenaria` e `logoMarcenaria` do usuário dono do orçamento na resposta.
-- **localStorage no Perfil:** sempre inicializar previews (logo, avatar) com lazy initializer do `useState` lendo do localStorage — garante exibição imediata antes da chamada à API completar.
-- **Estilos de impressão:** centralizados no `index.css` em `@media print`. Nunca colocar `.no-print` apenas em `<style>` inline de componente — não funciona no mobile.
-- **Testes:** conectam no banco real do Neon.tech (não mockado). O `helpers.ts` deve deletar `AuditLog` antes do `User` na limpeza (FK constraint).
-- **Deploy automático (Render):** o webhook nativo do Render no plano gratuito é instável — ignora pushes com frequência. A solução definitiva é o job `deploy` no `ci.yml` que chama o Deploy Hook via `curl` após os testes passarem. O hook URL fica em `secrets.RENDER_DEPLOY_HOOK` no GitHub. Nunca colocar essa URL direto no código (qualquer pessoa poderia disparar deploys).
-- **Diagnóstico de "rota não encontrada" no Render:** se uma rota nova retorna `Cannot GET /rota` logo após um push, provavelmente o deploy ainda não terminou (leva 3–7 min). Aguardar e testar novamente antes de investigar erro de código.
+- **Express 5 + req.params**: usar `req.params.token as string` (não destruturar) — evita tipo `string | string[]`
+- **Zod v4**: não importar `ZodSchema` ou `ZodIssue` — usar `z.ZodTypeAny` e inferência automática
+- **Render deploy**: leva 3–7 min; "Cannot GET /rota" logo após push não é bug de código
+- **Banco local**: renomear `prisma.config.ts` temporariamente ao rodar `prisma db push` localmente
+- **Email**: Render bloqueia porta 587 (SMTP) — usar Brevo HTTP API via `fetch` nativo
+- **PDF**: sempre usar `html2pdf.js` via `DocumentoOrcamento.tsx` no frontend
+- **Safari/iOS**: access token em memória JS + refreshToken no localStorage (cookies cross-domain bloqueados pelo Safari ITP)
 
 ---
 
-## 4. BACKLOG PRIORIZADO
+## Estado atual (o que está funcionando em produção)
 
-> **O backlog completo está no Trello:** https://trello.com/b/3IwYopQt/projeto-orcapro
-> Colunas: `🧊 Icebox` (ideias sem previsão) · `📚 Backlog Priorizado` (pronto p/ dev) · `🎯 Sprint Atual` · `⚙️ Em Desenvolvimento` · `🔍 Code Review / QA` · `✅ Concluído` · `⚠️ Débito Técnico` · `📋 Documentação do Produto`
-> Etiquetas: `Bug` · `Débito Técnico` · `Front-end` · `Back-end` · `Full-Stack` · `Infra / DevOps` · `UI/UX` · `Épico: Core` · `Épico: Integrações` · `Épico: Financeiro` · `Épico: Growth`
-> Template de cartão: usar o card `📌 TEMPLATE` da coluna Documentação do Produto como base para toda nova tarefa.
-> Manter este arquivo e o Trello sincronizados ao final de cada sessão.
+### Segurança implementada
+- JWT httpOnly cookie + refresh tokens (15min / 7 dias)
+- Rate limit: 10 tentativas / 15 min por IP em `/login` e `/registrar`
+- Validação cross-tenant no `OrcamentoController`
+- Helmet.js, CSP no `vercel.json`, Cloudflare Turnstile no cadastro
+- Recuperação de senha via Brevo HTTP API
 
-### 🔴 Bugs abertos
-
-Nenhum bug aberto no momento.
-
-### 🎨 Design — em andamento
-
-- [x] Glassmorphism — sidebar, modais, dropdown
-- [x] Micro-interações — botões, cards, modais
-- [x] Bento Grid — Dashboard com cards assimétricos
-- [ ] Whitespace — não aplicar sem proposta visual concreta; Victor reverteu a última tentativa
-
-### ✅ Bugs resolvidos (histórico)
-
-- [x] **Telegram chatId não salva pelo formulário** — resolvido. Campo salva corretamente.
-- [x] **Botão "Adicionar Material" — cor azul não aparece no Vercel** — resolvido. Botão aparece azul corretamente.
-- [x] **Layout mobile quebrado após sidebar desktop** — resolvido. `.app-shell` é `display: flex` (row por padrão); no mobile o menu voltava ao fluxo (`position: sticky`) mas o conteúdo ficava espremido à direita. Fix: `flex-direction: column` no `.app-shell` dentro do `@media (max-width: 900px)` no `index.css`.
-- [x] **Estoque — campos quantidadeEstoque/estoqueMinimo não salvavam em produção** — resolvido em 25/05/2026. Causa raiz: `validate.ts` importava `ZodSchema` e `ZodIssue` que não existem no Zod v4, causando falha silenciosa do `tsc` no Render. O servidor ficava rodando versão antiga do código (sem rota PATCH e sem campos de estoque). Fix: substituído por `z.ZodTypeAny` e inferência automática. Colunas já existiam no banco (db push anterior funcionou).
-- [x] **`POST /api/orcamentos/:id/gerar-contrato` retorna 404** — resolvido em 27/05/2026. Causa raiz: `buscarContratoPorToken` e `aceitarContrato` usavam `const { token } = req.params`, que no `@types/express` v5 resulta em `string | string[]`. O conflito de tipos quebrava o `tsc` silenciosamente no Render (último build bem-sucedido era `b5aeb39`). Fix: `req.params.token as string`. Commit: `bf88c54`.
+### Features implementadas
+- Clientes, Orçamentos (materiais + mão de obra + markup), Histórico
+- Kanban com drag-and-drop + notificações Telegram
+- Proposta ao cliente (PDF + WhatsApp) com logo da marcenaria
+- Contrato automático ao aprovar — cliente assina online via link único
+- Dashboard com gráficos (Chart.js) + Bento Grid + Glassmorphism
+- Estoque de materiais com alertas de nível baixo
+- Financeiro: contas a receber + rentabilidade por projeto
+- Ordem de Produção no Dashboard + página imprimível
+- PWA, Audit Log, TypeScript completo (front + back)
 
 ---
 
-### Roadmap de produto — o que falta pra ser competitivo
+## Backlog
 
-> Baseado em análise de mercado (22/05/2026). Implementar uma feature por vez com spec antes de começar.
+**Trello completo:** https://trello.com/b/3IwYopQt/projeto-orcapro
 
-#### 🔴 Fase 1 — Sem isso o sistema é incompleto
+### Próximas prioridades
+- [ ] Ordem de produção em 1 clique (criação automática ao aprovar + botão no Kanban)
+- [ ] Métricas do funil de vendas (conversão, valor médio, perdidos no mês)
+- [ ] Fluxo de caixa (projeção 30/60/90 dias)
+- [ ] WhatsApp via EvolutionAPI (substituir Telegram)
+- [ ] Assinatura digital do contrato (ClickSign ou DocuSign)
 
-- [x] **Melhoria do PDF de proposta** — layout unificado entre PDF, impressão e tela. Componente `DocumentoOrcamento.tsx` compartilhado. Logo da marcenaria personalizável. Concluído em 26/05/2026.
-- [x] **Contrato gerado automaticamente** — 100% funcionando em produção. Implementado em 26/05/2026 (noite); bug de deploy corrigido em 27/05/2026.
-- [x] **Estoque básico de materiais** — implementado e funcionando em produção (25/05/2026). Campos `quantidadeEstoque` e `estoqueMinimo` no cadastro/edição de materiais. Modal "Estoque" via PATCH. Alerta visual (⚠️) quando abaixo do mínimo.
-- [x] **Alerta de estoque baixo** — implementado em dois pontos: (1) na página de Materiais, os cards exibem ⚠️ e o número em vermelho quando `quantidadeEstoque < estoqueMinimo`; (2) ao salvar um orçamento, o backend calcula quais materiais ficaram abaixo do mínimo após o desconto e retorna `alertasEstoque` — o frontend exibe um toast de aviso com os nomes dos materiais afetados.
-- [x] **Financeiro básico — contas a receber** — implementado em 27/05/2026. Registrar sinal pago, parcelas, saldo restante. Barra de progresso e badge "Pago" por obra.
-- [x] **Rentabilidade por projeto** — implementado em 27/05/2026. Aba na página Financeiro com custo de materiais vs receita, lucro bruto e margem % por obra. Badge colorido e barra visual custo×lucro.
-
-#### 🟡 Fase 2 — Transforma o produto
-
-- [ ] **Ordem de produção em 1 clique** — seção no Dashboard e página imprimível já existem (commit `9206d80`). Falta: criação automática ao aprovar (sem clique extra) e botão "Ver Ordem" direto no card do Kanban
-- [ ] **Métricas do funil de vendas** — o Kanban já existe, mas precisa de números: total em negociação, aprovados no mês, perdidos, valor médio
-- [ ] **Taxa de conversão** — relatório "de X orçamentos enviados, Y viraram venda" — referência valiosa pro marceneiro
-- [x] **Rentabilidade por projeto** — implementado em 27/05/2026. Ver detalhes acima.
-- [ ] **Fluxo de caixa** — projeção do dinheiro que vai entrar nos próximos 30/60/90 dias com base nos projetos em andamento
-
-#### 🟢 Fase 3 — Diferencial competitivo
-
-- [ ] **WhatsApp via EvolutionAPI** — notificações automáticas pro cliente em cada etapa (substituir Telegram, que já está implementado). Já estava no backlog.
-- [ ] **Assinatura digital do contrato** — cliente assina pelo celular sem imprimir. Requer integração com ClickSign ou DocuSign (serviços pagos)
-- [ ] **Galeria de projetos concluídos** — marceneiro cadastra fotos das obras pra mostrar na proposta
-- [ ] **Catálogo de ambientes** — modelos prontos (cozinha, quarto, sala) com materiais e valores pré-calculados pra agilizar orçamento *(relacionado aos materiais padrão já existentes)*
-- [ ] **App nativo (Play Store)** — hoje o PWA já funciona como app; publicar na Play Store dá credibilidade mas é bastante trabalho. Deixar por último.
+### Bugs abertos
+Nenhum.
 
 ---
 
-### 🟡 Outros itens
+## Convenções do código
 
-- [ ] **Notificações push PWA** — service worker existe mas não tem push notifications implementado
-- [ ] **Planos e billing** — freemium vs pago; Stripe ou Pagar.me
-- [x] **TypeScript** — migração completa: backend (22/05/2026) + frontend (22/05/2026)
+**Idioma:** variáveis de negócio em português (`orcamento`, `cliente`, `marcenaria`), padrões técnicos em inglês (`handleSubmit`, `isLoading`, `useEffect`)
 
----
+**CSS:** variáveis `var(--primary)`, sem inline styles (exceto valores dinâmicos de JS); estilos de impressão sempre em `index.css` no bloco `@media print`
 
-## 5. CONVENÇÕES DO PROJETO
+**API:** sempre retornar `{ data, error, message }`; erros sempre pelo `errorHandler` global
 
-### Idioma do código
-- **Português:** variáveis de domínio do negócio — `orcamento`, `cliente`, `marcenaria`, `nomeMarcenaria`, `tipoMaoDeObra`
-- **Inglês:** padrões técnicos — `handleSubmit`, `isLoading`, `useEffect`, `useState`, `errorHandler`
+**Commits:** em português com prefixo — `feat:`, `fix:`, `docs:`, `refactor:`
 
-### CSS
-- Design System próprio com variáveis CSS (ex: `var(--primary)`, `var(--danger)`)
-- Não usar inline styles — exceção apenas para valores dinâmicos calculados em JS
-- Estilos de impressão sempre em `index.css` no bloco `@media print`, nunca em `<style>` inline de componente
-
-### API REST
-- Sempre retornar `{ data, error, message }` padronizado
-- Erros sempre passam pelo `errorHandler.js` global — nunca `catch` vazio ou `console.log` sem tratamento
-- Autenticação via middleware `auth.js` — lê Bearer token do header `Authorization` (fallback para cookie)
-
-### Banco de dados
-- Schema em `backend/prisma/schema.prisma`
-- Para adicionar coluna: editar o schema → mostrar o diff para Victor → aguardar aprovação → `prisma db push` (nunca com `--accept-data-loss` sem aprovação explícita)
-
-### Commits
-- Mensagens em português, com prefixo descritivo
-- Exemplos: `feat: adiciona validação cross-tenant`, `fix: corrige overflow no mobile`, `docs: atualiza CLAUDE.md`
-- Nunca commitar arquivos `.env` ou credenciais
-
-### Testes
-- Arquivos em `backend/__tests__/`
-- Helpers compartilhados em `__tests__/helpers.js`
-- Conectam no banco real do Neon.tech (não mockado) — os dados de teste são limpos no `afterAll`
+**Testes:** conectam no banco real do Neon.tech (não mockado); `helpers.ts` deleta `AuditLog` antes do `User`
 
 ---
 
-## 6. SOBRE O DONO DO PROJETO
+## Documentação detalhada
 
-**O Victor é iniciante em programação.** Estas regras de comunicação são obrigatórias em toda sessão:
-
-- **Antes de fazer QUALQUER coisa**, explique o que vai fazer em linguagem simples — como se estivesse explicando para alguém que nunca programou
-- **Explique o risco** de cada ação: o que pode dar errado se algo falhar? Quais dados podem ser afetados?
-- **Nunca assuma** que ele conhece um termo técnico — sempre explique entre parênteses na primeira vez que usar
-- **Mostre o que vai mudar** antes de mudar — liste os arquivos que serão alterados e por quê
-- **Uma coisa por vez** — não tente resolver tudo junto; faça, mostre o resultado, aguarde aprovação para continuar
-
-**Exemplos de como comunicar:**
-
-✅ Bom: "Vou adicionar um índice no banco (pensa num índice como o sumário de um livro — ajuda o banco a encontrar registros muito mais rápido, sem precisar ler tudo). O risco é zero, porque só estamos adicionando — não removemos nem alteramos nenhum dado existente."
-
-❌ Ruim: "Vou criar um B-tree index na coluna `userId` para melhorar a performance das queries com filtro por tenant."
-
----
-
-## 7. COMO TRABALHAR NESTE PROJETO
-
-### No início de cada sessão
-1. Leia este `CLAUDE.md` completamente
-2. Pergunte ao Victor qual é o objetivo da sessão
-3. Confirme o que vai ser feito antes de começar
-
-### Durante a sessão
-- Foque em **um item do backlog por vez** — nunca tente resolver tudo de uma vez
-- Após cada mudança, descreva o que foi feito em linguagem simples
-- Se encontrar um bug novo ou decisão arquitetural importante, mencione antes de tentar corrigir sozinho
-
-### No final de cada sessão
-- Atualize a seção "Estado Atual" com o que foi implementado
-- Atualize o Backlog (marque o que foi concluído, adicione bugs novos)
-- Se a sessão trouxe mudanças estruturais, atualize também as seções afetadas: Stack, Estrutura de pastas, Decisões de arquitetura, Convenções — qualquer campo que ficou desatualizado em relação ao que foi feito
-- Faça commit e push de tudo que ficou pendente
-
-### Regras críticas para banco de dados
-O projeto usa `prisma db push` (não `prisma migrate dev`) porque o banco foi criado sem histórico de migrations. Isso significa:
-- Toda alteração de schema precisa de aprovação explícita do Victor antes de rodar
-- `prisma db push` modifica o banco de produção real — não existe "ambiente de teste separado"
-- **Nunca** usar `--accept-data-loss` sem mostrar ao Victor exatamente o que será apagado
-
-### Se o contexto da sessão estiver acabando
-- Pare, atualize este `CLAUDE.md` com o estado atual
-- Avise o Victor: "Contexto próximo do limite — atualizei o CLAUDE.md. Recomendo continuar numa nova sessão."
+- Arquitetura completa: [docs/architecture.md](docs/architecture.md)
+- Modelo multi-tenant: [docs/tenant-model.md](docs/tenant-model.md)
+- Regras de segurança: [docs/security-rules.md](docs/security-rules.md)
+- Deploy e infraestrutura: [docs/deploy.md](docs/deploy.md)
+- Glossário para iniciantes: [docs/iniciante.md](docs/iniciante.md)
