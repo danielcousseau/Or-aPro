@@ -106,6 +106,9 @@ model Orcamento {
   contratoAceito   Boolean   @default(false)
   contratoAceitoEm DateTime?
 
+  // Ordem de produção gerada automaticamente ao aprovar
+  ordemGeradaEm    DateTime?
+
   // Etiqueta de dono (SaaS)
   userId          Int
   user            User     @relation(fields: [userId], references: [id])

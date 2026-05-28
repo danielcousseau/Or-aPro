@@ -420,15 +420,21 @@ export default {
         return;
       }
 
-      // Gera token do contrato ao aprovar (só se ainda não tiver um)
+      // Gera token do contrato e registra OP ao aprovar (só se ainda não tiver)
       const updateData: {
         status: string;
         contratoToken?: string;
         contratoGeradoEm?: Date;
+        ordemGeradaEm?: Date;
       } = { status };
-      if (status === "Aprovado" && !pertence.contratoToken) {
-        updateData.contratoToken = randomUUID();
-        updateData.contratoGeradoEm = new Date();
+      if (status === "Aprovado") {
+        if (!pertence.contratoToken) {
+          updateData.contratoToken = randomUUID();
+          updateData.contratoGeradoEm = new Date();
+        }
+        if (!pertence.ordemGeradaEm) {
+          updateData.ordemGeradaEm = new Date();
+        }
       }
 
       const orcamentoAtualizado = await prisma.orcamento.update({

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { toast } from "react-toastify";
 import { Orcamento } from "../types";
@@ -25,7 +26,10 @@ interface OrcamentoComContrato extends Orcamento {
   contratoAceitoEm?: string | null;
 }
 
+const STATUS_COM_ORDEM = ["Aprovado", "Produção", "Instalação", "Entregue"];
+
 export default function Kanban() {
+  const navigate = useNavigate();
   const [orcamentos, setOrcamentos] = useState<OrcamentoComContrato[]>([]);
   const [termoBusca, setTermoBusca] = useState("");
   const [draggingId, setDraggingId] = useState<number | null>(null);
@@ -302,13 +306,29 @@ export default function Kanban() {
                           width: "100%",
                         }}
                       >
-                        {/* TODO: EvolutionAPI - quando integrado, substituir o envio manual abaixo
-                                                    por envio automático via POST /message/sendText na instância configurada.
-                                                    Dados necessários: número do cliente, link do contrato, nome do marceneiro.
-                                                    Ref: https://doc.evolution-api.com/v2/pt/messages/send-messages */}
                         Compartilhar Contrato
                       </button>
                     </div>
+                  )}
+
+                  {STATUS_COM_ORDEM.includes(orc.status ?? "") && (
+                    <button
+                      onClick={() => navigate(`/ordem-producao/${orc.id}`)}
+                      style={{
+                        marginTop: "8px",
+                        background: "#7c3aed",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "6px",
+                        padding: "6px 10px",
+                        fontSize: "0.78rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        width: "100%",
+                      }}
+                    >
+                      🔨 Ver Ordem de Produção
+                    </button>
                   )}
                 </div>
               ))}

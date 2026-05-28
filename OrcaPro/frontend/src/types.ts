@@ -97,6 +97,7 @@ export interface Orcamento {
   contratoGeradoEm?: string | null;
   contratoAceito?: boolean;
   contratoAceitoEm?: string | null;
+  ordemGeradaEm?: string | null;
 }
 
 export interface AuditLog {
