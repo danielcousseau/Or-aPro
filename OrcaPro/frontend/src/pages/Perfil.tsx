@@ -348,115 +348,113 @@ export default function Perfil() {
       <h1 style={{ marginBottom: "30px" }}>Meu Perfil</h1>
 
       <div className="form-grid-1-1">
-        <div
-          className="cliente-card"
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifySelf: "start",
-            alignSelf: "start",
-            width: "100%",
-          }}
-        >
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div
+            className="cliente-card"
             style={{
-              width: "130px",
-              height: "130px",
-              borderRadius: "50%",
-              background: "var(--primary)",
-              color: "#fff",
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
-              fontSize: "3.5rem",
-              fontWeight: "bold",
-              marginBottom: "15px",
-              overflow: "hidden",
-              border: "4px solid var(--panel-soft)",
-              boxShadow: "var(--shadow-soft)",
-              position: "relative",
+              width: "100%",
             }}
           >
-            {fotoPreview ? (
-              <img
-                src={fotoPreview}
-                alt="Perfil"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            <div
+              style={{
+                width: "130px",
+                height: "130px",
+                borderRadius: "50%",
+                background: "var(--primary)",
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "3.5rem",
+                fontWeight: "bold",
+                marginBottom: "15px",
+                overflow: "hidden",
+                border: "4px solid var(--panel-soft)",
+                boxShadow: "var(--shadow-soft)",
+                position: "relative",
+              }}
+            >
+              {fotoPreview ? (
+                <img
+                  src={fotoPreview}
+                  alt="Perfil"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : user.nome ? (
+                user.nome.charAt(0).toUpperCase()
+              ) : (
+                "U"
+              )}
+            </div>
+
+            <h2
+              style={{
+                margin: "0 0 5px 0",
+                fontSize: "1.2rem",
+                textAlign: "center",
+              }}
+            >
+              {user.nome || user.usuario}
+            </h2>
+            <p
+              style={{
+                margin: "0 0 20px 0",
+                fontSize: "0.9rem",
+                color: "var(--text-soft)",
+              }}
+            >
+              @{user.usuario}
+            </p>
+
+            <label
+              style={{
+                background: "var(--panel-soft)",
+                border: "1px solid var(--border)",
+                padding: "10px 20px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "0.9rem",
+                fontWeight: "bold",
+                color: "var(--primary)",
+                transition: "0.2s",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              Trocar Foto
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleFotoChange}
               />
-            ) : user.nome ? (
-              user.nome.charAt(0).toUpperCase()
-            ) : (
-              "U"
+            </label>
+
+            {fotoPreview && (
+              <button
+                type="button"
+                onClick={handleRemoverFoto}
+                style={{
+                  marginTop: "10px",
+                  background: "transparent",
+                  border: "1px solid var(--border)",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "0.85rem",
+                  color: "var(--text-soft)",
+                  transition: "0.2s",
+                }}
+              >
+                Remover foto
+              </button>
             )}
           </div>
 
-          <h2
-            style={{
-              margin: "0 0 5px 0",
-              fontSize: "1.2rem",
-              textAlign: "center",
-            }}
-          >
-            {user.nome || user.usuario}
-          </h2>
-          <p
-            style={{
-              margin: "0 0 20px 0",
-              fontSize: "0.9rem",
-              color: "var(--text-soft)",
-            }}
-          >
-            @{user.usuario}
-          </p>
-
-          <label
-            style={{
-              background: "var(--panel-soft)",
-              border: "1px solid var(--border)",
-              padding: "10px 20px",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "0.9rem",
-              fontWeight: "bold",
-              color: "var(--primary)",
-              transition: "0.2s",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            Trocar Foto
-            <input
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={handleFotoChange}
-            />
-          </label>
-
-          {fotoPreview && (
-            <button
-              type="button"
-              onClick={handleRemoverFoto}
-              style={{
-                marginTop: "10px",
-                background: "transparent",
-                border: "1px solid var(--border)",
-                padding: "8px 16px",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "0.85rem",
-                color: "var(--text-soft)",
-                transition: "0.2s",
-              }}
-            >
-              Remover foto
-            </button>
-          )}
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div className="cliente-card">
             <h2
               style={{
@@ -551,7 +549,9 @@ export default function Perfil() {
               </button>
             </form>
           </div>
+        </div>
 
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div className="cliente-card">
             <h2
               style={{
