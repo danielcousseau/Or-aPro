@@ -1,24 +1,58 @@
 {
   "permissions": {
     "allow": [
-      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\victor.amorim\\\\Documents\\\\GitHub\\\\OrcaPro\" -Force)",
-      "Bash(node_modules\\\\.bin\\\\prisma migrate *)",
-      "Bash(npm exec *)",
-      "Bash(node_modules/.bin/prisma migrate *)",
-      "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\victor.amorim\\\\Documents\\\\GitHub\\\\OrcaPro\\\\OrcaPro\\\\backend\\\\prisma\\\\migrations\\\\20260521000000_add_opcao_customizada\")",
-      "Bash(git add *)",
-      "Bash(git commit -m ' *)",
-      "Bash(ls \"c:\\\\Users\\\\victor.amorim\\\\.claude\\\\projects\\\\c--Users-victor-amorim-Documents-GitHub-OrcaPro\\\\memory\\\\\" 2>/dev/null || echo \"vazio\")",
-      "Read(//c/Users/victor.amorim/.claude/projects/c--Users-victor-amorim-Documents-GitHub-OrcaPro/memory\" 2>/dev/**)",
-      "Read(//c/Users/victor.amorim/.claude/projects/c--Users-victor-amorim-Documents-GitHub-OrcaPro/**)",
-      "Bash(git push *)",
-      "Bash(sha256sum __TRACKED_VAR__/migration.sql)",
-      "Bash(certutil -hashfile __TRACKED_VAR__/migration.sql SHA256)",
-      "Bash(git -C \"c:\\\\Users\\\\victor.amorim\\\\Documents\\\\GitHub\\\\OrcaPro\" show HEAD:OrcaPro/frontend/src/components/Orcamento/ListaMateriais.jsx)",
-      "Bash(xargs grep -l \"html2pdf\\\\|baixarPDF\\\\|enviarWhatsApp\")"
+      "Bash(npm run *)",
+      "Bash(npm test*)",
+      "Bash(npx tsc*)",
+      "Bash(npx prisma studio*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git add*)",
+      "Bash(git log*)",
+      "Bash(git commit*)",
+      "Read(*)",
+      "Glob(*)",
+      "Grep(*)"
     ],
-    "additionalDirectories": [
-      "c:\\Users\\victor.amorim\\.claude\\projects\\c--Users-victor-amorim-Documents-GitHub-OrcaPro\\memory"
+    "ask": [
+      "Bash(git push*)",
+      "Bash(npx prisma db push*)",
+      "Bash(npx prisma migrate deploy*)",
+      "Edit(OrcaPro/backend/prisma/schema.prisma)"
+    ],
+    "deny": [
+      "Bash(rm -rf*)",
+      "Bash(rm -r*)",
+      "Bash(*--accept-data-loss*)",
+      "Bash(*migrate reset*)",
+      "Bash(*DROP TABLE*)",
+      "Bash(*DROP DATABASE*)",
+      "Read(**/.env*)",
+      "Edit(**/.env*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cmd = process.env.CLAUDE_TOOL_INPUT || ''; const blocked = ['rm -rf','--accept-data-loss','migrate reset','DROP TABLE','DROP DATABASE']; const found = blocked.find(b => cmd.includes(b)); if (found) { console.error('BLOQUEADO: comando destrutivo detectado: ' + found); process.exit(2); }\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx prettier --write \"${CLAUDE_TOOL_INPUT_FILE_PATH}\" 2>/dev/null || true"
+          }
+        ]
+      }
     ]
   }
 }

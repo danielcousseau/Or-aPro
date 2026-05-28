@@ -1,6 +1,6 @@
 # Reorganização do projeto — Fases pendentes
 
-Iniciada em 28/05/2026. Fases 0 e 1 concluídas.
+Iniciada em 28/05/2026. Fases 0, 1 e 2 concluídas.
 
 ## O que já foi feito
 
@@ -14,27 +14,34 @@ Iniciada em 28/05/2026. Fases 0 e 1 concluídas.
   - `docs/deploy.md` — Vercel, Render, Neon.tech, CI/CD
   - `docs/iniciante.md` — glossário com ~30 termos em português simples
   - Commit: `567133d`
+- **Fase 2** — Configuração de segurança (settings.json + hooks)
+  - `.claude/settings.json` reescrito com allow/ask/deny + hooks PreToolUse e PostToolUse
+  - `.gitignore` — linha duplicada de `settings.local.json` removida
+  - Commit: ver abaixo
 
 ---
 
 ## O que falta fazer
 
-### Fase 2 — Configuração de segurança (settings.json + hooks)
+### ~~Fase 2 — Configuração de segurança (settings.json + hooks)~~ ✅ CONCLUÍDA
 
 Criar/atualizar `.claude/settings.json` com:
 
 **Permissions allow** (comandos liberados automaticamente):
+
 - `Bash(npm run *)`, `Bash(npm test*)`, `Bash(npx tsc*)`, `Bash(npx prisma studio*)`
 - `Bash(git status*)`, `Bash(git diff*)`, `Bash(git add*)`, `Bash(git log*)`
 - `Bash(git commit*)`, `Read(*)`, `Glob(*)`, `Grep(*)`
 
 **Permissions ask** (Claude pergunta antes):
+
 - `Bash(git push*)` — push requer confirmação
 - `Bash(npx prisma db push*)` — altera banco de produção
 - `Bash(npx prisma migrate deploy*)` — idem
 - `Edit(OrcaPro/backend/prisma/schema.prisma)` — editar schema
 
 **Permissions deny** (bloqueado sempre):
+
 - `Bash(rm -rf*)`, `Bash(rm -r*)` — deletar recursivo
 - `Bash(*--accept-data-loss*)` — flag destrutiva do Prisma
 - `Bash(*migrate reset*)` — apaga todo o banco
@@ -42,28 +49,36 @@ Criar/atualizar `.claude/settings.json` com:
 - `Read(**/.env*)`, `Edit(**/.env*)` — arquivos de segredos
 
 **Hook PreToolUse** — bloqueia comandos destrutivos com mensagem de aviso:
+
 ```json
 {
   "hooks": {
-    "PreToolUse": [{
-      "matcher": "Bash",
-      "hooks": [{
-        "type": "command",
-        "command": "node -e \"const cmd = process.env.CLAUDE_TOOL_INPUT || ''; const blocked = ['rm -rf','--accept-data-loss','migrate reset','DROP TABLE','DROP DATABASE']; const found = blocked.find(b => cmd.includes(b)); if (found) { console.error('BLOQUEADO: comando destrutivo detectado: ' + found); process.exit(2); }\""
-      }]
-    }]
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const cmd = process.env.CLAUDE_TOOL_INPUT || ''; const blocked = ['rm -rf','--accept-data-loss','migrate reset','DROP TABLE','DROP DATABASE']; const found = blocked.find(b => cmd.includes(b)); if (found) { console.error('BLOQUEADO: comando destrutivo detectado: ' + found); process.exit(2); }\""
+          }
+        ]
+      }
+    ]
   }
 }
 ```
 
 **Hook PostToolUse** — roda prettier após edições (opcional):
+
 ```json
 {
   "matcher": "Edit",
-  "hooks": [{
-    "type": "command",
-    "command": "npx prettier --write \"${CLAUDE_TOOL_INPUT_FILE_PATH}\" 2>/dev/null || true"
-  }]
+  "hooks": [
+    {
+      "type": "command",
+      "command": "npx prettier --write \"${CLAUDE_TOOL_INPUT_FILE_PATH}\" 2>/dev/null || true"
+    }
+  ]
 }
 ```
 
@@ -76,6 +91,7 @@ Criar/atualizar `.claude/settings.json` com:
 Criar pasta `.claude/agents/` com um arquivo `.md` por subagent.
 
 Cada arquivo precisa de:
+
 - YAML frontmatter: `name`, `description` (com "Use proactively when..."), `tools`, `model`
 - Corpo: instruções do que o subagent faz
 
@@ -120,6 +136,7 @@ Criar pasta `.claude/skills/` com subpasta para cada skill.
 5. `audit-log/SKILL.md` — middleware de auditoria LGPD com a tabela `AuditLog` existente
 
 Cada `SKILL.md` precisa de:
+
 - YAML frontmatter: `name`, `description` (com "Use whenever...")
 - Corpo: passo a passo concreto de implementação
 
