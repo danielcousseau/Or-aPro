@@ -107,6 +107,7 @@ export default function Perfil() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [carregandoLogs, setCarregandoLogs] = useState(false);
   const [logsAbertos, setLogsAbertos] = useState(false);
+  const [opcoesAbertas, setOpcoesAbertas] = useState(false);
   const [opcoes, setOpcoes] = useState<OpcoesPorTipo>({
     ambiente: [],
     pagamento: [],
@@ -347,7 +348,13 @@ export default function Perfil() {
     <div>
       <h1 style={{ marginBottom: "30px" }}>Meu Perfil</h1>
 
-      <div className="form-grid-1-1">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1.3fr",
+          gap: "20px",
+        }}
+      >
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
           <div
             className="cliente-card"
@@ -730,94 +737,122 @@ export default function Perfil() {
       </div>
 
       <div className="cliente-card" style={{ marginTop: "24px" }}>
-        <h2
+        <button
+          type="button"
+          onClick={() => setOpcoesAbertas((v) => !v)}
           style={{
-            borderBottom: "1px solid var(--border)",
-            paddingBottom: "12px",
-            marginBottom: "20px",
-            fontSize: "1.2rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+            background: "none",
+            border: "none",
+            padding: "0",
+            cursor: "pointer",
+            color: "var(--text-main)",
           }}
         >
-          Opções Personalizadas
-        </h2>
-        <p
-          style={{
-            fontSize: "0.85rem",
-            color: "var(--text-soft)",
-            marginBottom: "20px",
-          }}
-        >
-          Opções que você salvou como fixas nos formulários de orçamento e
-          materiais. Clique no{" "}
-          <strong style={{ color: "var(--danger, #dc2626)" }}>×</strong> para
-          remover.
-        </p>
-        {(Object.keys(LABELS_TIPO) as (keyof OpcoesPorTipo)[]).map((tipo) => (
-          <div key={tipo} style={{ marginBottom: "20px" }}>
+          <h2 style={{ fontSize: "1.2rem", margin: 0 }}>
+            Opções Personalizadas
+          </h2>
+          <span
+            style={{
+              fontSize: "1.2rem",
+              color: "var(--text-soft)",
+              transition: "transform 0.2s",
+              transform: opcoesAbertas ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+          >
+            ▾
+          </span>
+        </button>
+
+        {opcoesAbertas && (
+          <div style={{ marginTop: "20px" }}>
             <p
               style={{
-                fontWeight: "600",
-                fontSize: "0.9rem",
-                marginBottom: "8px",
-                color: "var(--text-main)",
+                fontSize: "0.85rem",
+                color: "var(--text-soft)",
+                marginBottom: "20px",
               }}
             >
-              {LABELS_TIPO[tipo]}
+              Opções que você salvou como fixas nos formulários de orçamento e
+              materiais. Clique no{" "}
+              <strong style={{ color: "var(--danger, #dc2626)" }}>×</strong>{" "}
+              para remover.
             </p>
-            {opcoes[tipo].length === 0 ? (
-              <p
-                style={{
-                  fontSize: "0.85rem",
-                  color: "var(--text-soft)",
-                  fontStyle: "italic",
-                }}
-              >
-                Nenhuma opção salva.
-              </p>
-            ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                {opcoes[tipo].map((opcao) => (
-                  <span
-                    key={opcao.id}
+            {(Object.keys(LABELS_TIPO) as (keyof OpcoesPorTipo)[]).map(
+              (tipo) => (
+                <div key={tipo} style={{ marginBottom: "20px" }}>
+                  <p
                     style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      background: "var(--panel-soft)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "999px",
-                      padding: "4px 12px",
-                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                      fontSize: "0.9rem",
+                      marginBottom: "8px",
                       color: "var(--text-main)",
                     }}
                   >
-                    {opcao.nome}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleExcluirOpcao(tipo, opcao.id, opcao.nome)
-                      }
-                      title={`Remover "${opcao.nome}"`}
+                    {LABELS_TIPO[tipo]}
+                  </p>
+                  {opcoes[tipo].length === 0 ? (
+                    <p
                       style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        padding: "0",
-                        lineHeight: 1,
-                        fontSize: "1rem",
+                        fontSize: "0.85rem",
                         color: "var(--text-soft)",
-                        display: "flex",
-                        alignItems: "center",
+                        fontStyle: "italic",
                       }}
                     >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
+                      Nenhuma opção salva.
+                    </p>
+                  ) : (
+                    <div
+                      style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}
+                    >
+                      {opcoes[tipo].map((opcao) => (
+                        <span
+                          key={opcao.id}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            background: "var(--panel-soft)",
+                            border: "1px solid var(--border)",
+                            borderRadius: "999px",
+                            padding: "4px 12px",
+                            fontSize: "0.85rem",
+                            color: "var(--text-main)",
+                          }}
+                        >
+                          {opcao.nome}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleExcluirOpcao(tipo, opcao.id, opcao.nome)
+                            }
+                            title={`Remover "${opcao.nome}"`}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: "0",
+                              lineHeight: 1,
+                              fontSize: "1rem",
+                              color: "var(--text-soft)",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ),
             )}
           </div>
-        ))}
+        )}
       </div>
 
       <div className="cliente-card" style={{ marginTop: "24px" }}>
