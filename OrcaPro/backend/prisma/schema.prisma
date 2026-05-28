@@ -69,6 +69,7 @@ model Material {
   orcamentoMateriais OrcamentoMaterial[]
 
   @@index([userId])
+  @@unique([nome, userId])
 }
 
 model Orcamento {
@@ -111,6 +112,7 @@ model Orcamento {
 
   @@index([userId])
   @@index([status])
+  @@unique([titulo, clienteId, userId])
 }
 
 model OrcamentoMaterial {

@@ -155,6 +155,16 @@ export default {
         return;
       }
 
+      const duplicado = await prisma.orcamento.findFirst({
+        where: { titulo, clienteId, userId: req.userId },
+      });
+      if (duplicado) {
+        res.status(409).json({
+          error: `Este cliente já possui um orçamento chamado "${titulo}".`,
+        });
+        return;
+      }
+
       const novoOrcamento = await prisma.orcamento.create({
         data: {
           titulo,
@@ -240,6 +250,21 @@ export default {
       });
       if (!clienteDoUsuario) {
         res.status(403).json({ error: "Cliente não encontrado." });
+        return;
+      }
+
+      const duplicado = await prisma.orcamento.findFirst({
+        where: {
+          titulo,
+          clienteId,
+          userId: req.userId,
+          NOT: { id: Number(id) },
+        },
+      });
+      if (duplicado) {
+        res.status(409).json({
+          error: `Este cliente já possui um orçamento chamado "${titulo}".`,
+        });
         return;
       }
 

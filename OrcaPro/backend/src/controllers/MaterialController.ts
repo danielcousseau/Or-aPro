@@ -31,6 +31,17 @@ export default {
   async criar(req: Request, res: Response): Promise<void> {
     try {
       const dados = req.body;
+
+      const duplicado = await prisma.material.findFirst({
+        where: { nome: dados.nome, userId: req.userId },
+      });
+      if (duplicado) {
+        res
+          .status(409)
+          .json({ error: `Já existe um material chamado "${dados.nome}".` });
+        return;
+      }
+
       const novoMaterial = await prisma.material.create({
         data: { ...dados, userId: req.userId! },
       });
@@ -68,6 +79,19 @@ export default {
         quantidadeEstoque,
         estoqueMinimo,
       } = req.body;
+
+      if (nome && nome !== pertence.nome) {
+        const duplicado = await prisma.material.findFirst({
+          where: { nome, userId: req.userId, NOT: { id: Number(id) } },
+        });
+        if (duplicado) {
+          res
+            .status(409)
+            .json({ error: `Já existe um material chamado "${nome}".` });
+          return;
+        }
+      }
+
       const materialAtualizado = await prisma.material.update({
         where: { id: Number(id) },
         data: {

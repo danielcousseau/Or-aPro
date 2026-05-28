@@ -37,7 +37,8 @@
       "Edit(/.claude/skills/gerar-pdf-orcamento/**)",
       "Edit(/.claude/skills/evolution-whatsapp/**)",
       "Edit(/.claude/skills/billing-pagarme/**)",
-      "Edit(/.claude/skills/audit-log/**)"
+      "Edit(/.claude/skills/audit-log/**)",
+      "Bash(xargs grep -l 'extension\\\\|Prisma\\\\.$extends')"
     ],
     "additionalDirectories": [
       "c:\\Users\\victo\\.claude\\projects\\c--Users-victo-Documents-Github-OrcaPro\\memory"
