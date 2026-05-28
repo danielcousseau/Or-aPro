@@ -3,6 +3,21 @@ import { toast } from "react-toastify";
 import api from "../services/api";
 import { AuditLog, User } from "../types";
 
+type OpcaoCustomizada = { id: number; nome: string };
+type OpcoesPorTipo = {
+  ambiente: OpcaoCustomizada[];
+  pagamento: OpcaoCustomizada[];
+  material_categoria: OpcaoCustomizada[];
+  material_unidade: OpcaoCustomizada[];
+};
+
+const LABELS_TIPO: Record<keyof OpcoesPorTipo, string> = {
+  ambiente: "Ambientes",
+  pagamento: "Formas de Pagamento",
+  material_categoria: "Categorias de Material",
+  material_unidade: "Unidades de Medida",
+};
+
 const CORES_ACAO: Record<string, { bg: string; color: string }> = {
   criou: { bg: "#dcfce7", color: "#166534" },
   atualizou: { bg: "#dbeafe", color: "#1e40af" },
@@ -91,6 +106,12 @@ export default function Perfil() {
   const [salvandoSenha, setSalvandoSenha] = useState(false);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [carregandoLogs, setCarregandoLogs] = useState(false);
+  const [opcoes, setOpcoes] = useState<OpcoesPorTipo>({
+    ambiente: [],
+    pagamento: [],
+    material_categoria: [],
+    material_unidade: [],
+  });
 
   useEffect(() => {
     setCarregandoLogs(true);
@@ -100,6 +121,41 @@ export default function Perfil() {
       .catch(() => {})
       .finally(() => setCarregandoLogs(false));
   }, []);
+
+  useEffect(() => {
+    const tipos = Object.keys(LABELS_TIPO) as (keyof OpcoesPorTipo)[];
+    Promise.all(
+      tipos.map((tipo) =>
+        api
+          .get(`/opcoes-customizadas?tipo=${tipo}`)
+          .then((r) => ({ tipo, dados: r.data as OpcaoCustomizada[] }))
+          .catch(() => ({ tipo, dados: [] })),
+      ),
+    ).then((resultados) => {
+      const novo = { ...opcoes };
+      resultados.forEach(({ tipo, dados }) => {
+        novo[tipo] = dados;
+      });
+      setOpcoes(novo);
+    });
+  }, []);
+
+  const handleExcluirOpcao = async (
+    tipo: keyof OpcoesPorTipo,
+    id: number,
+    nome: string,
+  ) => {
+    try {
+      await api.delete(`/opcoes-customizadas/${id}`);
+      setOpcoes((prev) => ({
+        ...prev,
+        [tipo]: prev[tipo].filter((o) => o.id !== id),
+      }));
+      toast.success(`"${nome}" removido.`);
+    } catch {
+      toast.error("Erro ao remover opção.");
+    }
+  };
 
   useEffect(() => {
     api
@@ -774,6 +830,97 @@ export default function Perfil() {
             })}
           </div>
         )}
+      </div>
+
+      <div className="cliente-card" style={{ marginTop: "24px" }}>
+        <h2
+          style={{
+            borderBottom: "1px solid var(--border)",
+            paddingBottom: "12px",
+            marginBottom: "20px",
+            fontSize: "1.2rem",
+          }}
+        >
+          Opções Personalizadas
+        </h2>
+        <p
+          style={{
+            fontSize: "0.85rem",
+            color: "var(--text-soft)",
+            marginBottom: "20px",
+          }}
+        >
+          Opções que você salvou como fixas nos formulários de orçamento e
+          materiais. Clique no{" "}
+          <strong style={{ color: "var(--danger, #dc2626)" }}>×</strong> para
+          remover.
+        </p>
+        {(Object.keys(LABELS_TIPO) as (keyof OpcoesPorTipo)[]).map((tipo) => (
+          <div key={tipo} style={{ marginBottom: "20px" }}>
+            <p
+              style={{
+                fontWeight: "600",
+                fontSize: "0.9rem",
+                marginBottom: "8px",
+                color: "var(--text-main)",
+              }}
+            >
+              {LABELS_TIPO[tipo]}
+            </p>
+            {opcoes[tipo].length === 0 ? (
+              <p
+                style={{
+                  fontSize: "0.85rem",
+                  color: "var(--text-soft)",
+                  fontStyle: "italic",
+                }}
+              >
+                Nenhuma opção salva.
+              </p>
+            ) : (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                {opcoes[tipo].map((opcao) => (
+                  <span
+                    key={opcao.id}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      background: "var(--panel-soft)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "999px",
+                      padding: "4px 12px",
+                      fontSize: "0.85rem",
+                      color: "var(--text-main)",
+                    }}
+                  >
+                    {opcao.nome}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleExcluirOpcao(tipo, opcao.id, opcao.nome)
+                      }
+                      title={`Remover "${opcao.nome}"`}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "0",
+                        lineHeight: 1,
+                        fontSize: "1rem",
+                        color: "var(--text-soft)",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   );
