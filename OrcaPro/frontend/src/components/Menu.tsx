@@ -66,6 +66,9 @@ export default function Menu({ user, avatarUrl, onLogout }: MenuProps) {
         <Link to="/orcamento" className={isActive("/orcamento")}>
           Novo Orçamento
         </Link>
+        <Link to="/corte" className={isActive("/corte")}>
+          Corte &amp; Peças
+        </Link>
         <Link to="/historico" className={isActive("/historico")}>
           Histórico
         </Link>
@@ -74,6 +77,9 @@ export default function Menu({ user, avatarUrl, onLogout }: MenuProps) {
         </Link>
         <Link to="/financeiro" className={isActive("/financeiro")}>
           Financeiro
+        </Link>
+        <Link to="/marcenaria" className={isActive("/marcenaria")}>
+          Marcenaria
         </Link>
       </div>
 

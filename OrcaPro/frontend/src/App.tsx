@@ -26,6 +26,8 @@ import Admin from "./pages/Admin";
 import FormasPagamento from "./pages/FormasPagamento";
 import Financeiro from "./pages/Financeiro";
 import OrdemProducao from "./pages/OrdemProducao";
+import ConfiguracaoMarcenaria from "./pages/ConfiguracaoMarcenaria";
+import CortePecas from "./pages/CortePecas";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { User } from "./types";
@@ -245,6 +247,22 @@ export default function App() {
               element={
                 <RotaProtegida>
                   <OrdemProducao />
+                </RotaProtegida>
+              }
+            />
+            <Route
+              path="/marcenaria"
+              element={
+                <RotaProtegida>
+                  <ConfiguracaoMarcenaria />
+                </RotaProtegida>
+              }
+            />
+            <Route
+              path="/corte"
+              element={
+                <RotaProtegida>
+                  <CortePecas />
                 </RotaProtegida>
               }
             />

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../services/api";
 import DadosGerais from "../components/Orcamento/DadosGerais";
 import ListaMateriais from "../components/Orcamento/ListaMateriais";
@@ -197,6 +197,43 @@ export default function NovoOrcamento() {
       localStorage.setItem("rascunhoOrcamento", JSON.stringify(orcamento));
   }, [orcamento, id]);
 
+  // Recebe peças geradas na página "Corte & Peças" (handoff via localStorage)
+  useEffect(() => {
+    if (id) return;
+    const raw = localStorage.getItem("pecasParaOrcamento");
+    if (!raw) return;
+    try {
+      const pecas = JSON.parse(raw) as {
+        nome: string;
+        valor: string;
+        quantidade: number;
+      }[];
+      if (pecas.length > 0) {
+        setMateriaisSelecionados(
+          pecas.map((p) => ({
+            idFalso: (self.crypto?.randomUUID() ??
+              Date.now() + Math.random()) as string | number,
+            nome: p.nome,
+            valor: p.valor,
+            quantidade: p.quantidade,
+          })),
+        );
+        const tituloPecas = localStorage.getItem("tituloParaOrcamento");
+        if (tituloPecas)
+          setOrcamento((prev) => ({
+            ...prev,
+            titulo: prev.titulo || tituloPecas,
+          }));
+        toast.success(`${pecas.length} peças importadas de Corte & Peças.`);
+      }
+    } catch {
+      // JSON inválido — ignora
+    } finally {
+      localStorage.removeItem("pecasParaOrcamento");
+      localStorage.removeItem("tituloParaOrcamento");
+    }
+  }, [id]);
+
   useEffect(() => {
     if (!id)
       localStorage.setItem(
@@ -337,6 +374,63 @@ export default function NovoOrcamento() {
           clientes={clientes}
           onChange={handleChange}
         />
+        {/* Gerar peças do móvel agora é uma página própria: Corte & Peças */}
+        <div
+          style={{
+            marginBottom: 20,
+            padding: "16px 20px",
+            background: "var(--panel-soft)",
+            borderRadius: "var(--radius-sm)",
+            border: "1px solid var(--border)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 16,
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div
+              style={{
+                fontWeight: 700,
+                fontSize: 14,
+                color: "var(--text-main)",
+              }}
+            >
+              📐 Gerar as peças deste móvel
+            </div>
+            <div
+              style={{
+                fontSize: 12,
+                color: "var(--text-soft)",
+                marginTop: 2,
+              }}
+            >
+              Calcule as peças, o relatório com fita de borda e o plano de corte
+              — e traga tudo pronto para o orçamento.
+            </div>
+          </div>
+          <Link
+            to="/corte"
+            style={{
+              background: "var(--primary)",
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: 14,
+              padding: "12px 22px",
+              borderRadius: "var(--radius-sm)",
+              textDecoration: "none",
+              whiteSpace: "nowrap",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              boxShadow: "var(--shadow-soft)",
+            }}
+          >
+            Abrir Corte &amp; Peças →
+          </Link>
+        </div>
+
         <ListaMateriais
           materiaisSelecionados={materiaisSelecionados}
           materiaisDb={materiaisDb}

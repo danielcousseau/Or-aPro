@@ -10,6 +10,7 @@ import orcamentoRoutes from "./routes/orcamentoRoutes";
 import auditRoutes from "./routes/auditRoutes";
 import opcaoCustomizadaRoutes from "./routes/opcaoCustomizadaRoutes";
 import pagamentoRoutes from "./routes/pagamentoRoutes";
+import marcenariaRoutes from "./routes/marcenariaRoutes";
 import AuthController from "./controllers/AuthController";
 import authMiddleware from "./middlewares/auth";
 import errorHandler from "./middlewares/errorHandler";
@@ -78,6 +79,7 @@ app.use("/api/orcamentos", orcamentoRoutes);
 app.use("/api/audit-log", auditRoutes);
 app.use("/api/opcoes-customizadas", opcaoCustomizadaRoutes);
 app.use("/api/pagamentos", pagamentoRoutes);
+app.use("/api/marcenaria", marcenariaRoutes);
 
 app.get(
   "/api/telegram/pendentes",

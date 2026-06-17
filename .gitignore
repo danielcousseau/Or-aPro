@@ -16,6 +16,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Logs de execução (podem conter tokens — nunca subir)
+*.log
+
 # Arquivos do Sistema Operacional e do VS Code
 .DS_Store
 .vscode/

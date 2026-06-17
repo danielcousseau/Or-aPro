@@ -1,5 +1,40 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+
+// Detecta e parseia peças geradas pelo motor paramétrico
+// Formato do nome: "Lateral | 400×720mm | 18mm Branco TX"
+type PecaParametrica = {
+  nome: string;
+  qtd: number;
+  largura: number;
+  altura: number;
+  espessura: number;
+  cor: string;
+  m2Unit: number;
+};
+
+function parsePecaParametrica(
+  nome: string,
+  quantidade: number,
+): PecaParametrica | null {
+  const parts = nome.split(" | ");
+  if (parts.length !== 3) return null;
+  const [nomePeca, dimPart, matPart] = parts;
+  const dimMatch = dimPart.match(/^(\d+)×(\d+)mm$/);
+  const matMatch = matPart.match(/^(\d+)mm (.+)$/);
+  if (!dimMatch || !matMatch) return null;
+  const l = parseInt(dimMatch[1]);
+  const a = parseInt(dimMatch[2]);
+  return {
+    nome: nomePeca,
+    qtd: quantidade,
+    largura: l,
+    altura: a,
+    espessura: parseInt(matMatch[1]),
+    cor: matMatch[2],
+    m2Unit: (l * a) / 1_000_000,
+  };
+}
 import api from "../services/api";
 import { toast } from "react-toastify";
 import { Orcamento, User } from "../types";
@@ -73,6 +108,27 @@ export default function OrdemProducao() {
     0,
   );
   const dataFormatada = new Date(orc.createdAt).toLocaleDateString("pt-BR");
+
+  // Separa peças paramétricas dos materiais comuns
+  const pecasParametricas: PecaParametrica[] = (orc.materiais ?? []).flatMap(
+    (m) => parsePecaParametrica(m.nome, m.quantidade) ?? [],
+  );
+  const materiaisComuns = (orc.materiais ?? []).filter(
+    (m) => !parsePecaParametrica(m.nome, m.quantidade),
+  );
+
+  // m² líquido por cor/espessura
+  type ResumoChapa = { cor: string; espessura: number; m2: number };
+  const resumoChapaMap = pecasParametricas.reduce<Record<string, ResumoChapa>>(
+    (acc, p) => {
+      const key = `${p.espessura}mm ${p.cor}`;
+      if (!acc[key]) acc[key] = { cor: p.cor, espessura: p.espessura, m2: 0 };
+      acc[key].m2 += p.m2Unit * p.qtd;
+      return acc;
+    },
+    {},
+  );
+  const resumoChapas = Object.values(resumoChapaMap);
 
   return (
     <div className="doc-wrapper">
@@ -175,11 +231,78 @@ export default function OrdemProducao() {
 
         <hr className="op-divisor" />
 
+        {/* Plano de Corte — só aparece se houver peças paramétricas */}
+        {pecasParametricas.length > 0 && (
+          <div className="op-secao">
+            <h2 className="op-secao-titulo">
+              Plano de Corte — {pecasParametricas.length} peças
+            </h2>
+            <table className="op-tabela">
+              <thead>
+                <tr>
+                  <th>Peça</th>
+                  <th className="op-col-num">Qtd</th>
+                  <th className="op-col-num">L (mm)</th>
+                  <th className="op-col-num">A (mm)</th>
+                  <th className="op-col-num">Esp.</th>
+                  <th>Cor / Chapa</th>
+                  <th className="op-col-check">Cortado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pecasParametricas.map((p, i) => (
+                  <tr key={i}>
+                    <td>{p.nome}</td>
+                    <td className="op-col-num">{p.qtd}</td>
+                    <td className="op-col-num">{p.largura}</td>
+                    <td className="op-col-num">{p.altura}</td>
+                    <td className="op-col-num">{p.espessura} mm</td>
+                    <td>{p.cor}</td>
+                    <td className="op-col-check">
+                      <span className="op-checkbox" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {resumoChapas.length > 0 && (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: "10px 14px",
+                  background: "#f5f7fa",
+                  borderRadius: 6,
+                  fontSize: 12,
+                }}
+              >
+                <p style={{ margin: "0 0 6px", fontWeight: 600 }}>
+                  m² líquido por cor (sem margem de perda):
+                </p>
+                {resumoChapas.map((g) => (
+                  <p
+                    key={`${g.espessura}-${g.cor}`}
+                    style={{ margin: "0 0 2px" }}
+                  >
+                    {g.cor} {g.espessura}mm — <b>{g.m2.toFixed(3)} m²</b>
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {pecasParametricas.length > 0 && <hr className="op-divisor" />}
+
         {/* Lista de materiais */}
         <div className="op-secao">
           <h2 className="op-secao-titulo">Materiais Necessários</h2>
           {(orc.materiais ?? []).length === 0 ? (
             <p className="op-vazio">Nenhum material cadastrado.</p>
+          ) : materiaisComuns.length === 0 ? (
+            <p className="op-vazio">
+              Todos os materiais são peças de MDF (ver Plano de Corte acima).
+            </p>
           ) : (
             <table className="op-tabela">
               <thead>
@@ -192,7 +315,7 @@ export default function OrdemProducao() {
                 </tr>
               </thead>
               <tbody>
-                {(orc.materiais ?? []).map((mat, i) => (
+                {materiaisComuns.map((mat, i) => (
                   <tr key={i}>
                     <td>{mat.nome}</td>
                     <td className="op-col-num">{mat.quantidade}</td>

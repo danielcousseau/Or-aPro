@@ -28,6 +28,7 @@ model User {
   orcamentos         Orcamento[]
   auditLogs          AuditLog[]
   opcoesCustomizadas OpcaoCustomizada[]
+  configMarcenaria   ConfiguracaoMarcenaria?
 }
 
 model Cliente {
@@ -165,4 +166,96 @@ model AuditLog {
 
   @@index([userId])
   @@index([criadoEm])
+}
+
+// --- Módulo de Engenharia Paramétrica ---
+
+model ConfiguracaoMarcenaria {
+  id                 Int      @id @default(autoincrement())
+  userId             Int      @unique
+  user               User     @relation(fields: [userId], references: [id])
+  espEstrutura       Int      @default(18)
+  espFundo           Int      @default(6)
+  rasgoProfundidade  Int      @default(10)
+  rasgoBorda         Int      @default(10)
+  folgaPorta         Int      @default(4)
+  avancoTamponamento Int      @default(25)
+  larguraReforco     Int      @default(100)
+  larguraTiraOculta  Int      @default(60)
+  kerfSerra          Int      @default(3)
+  margemPerda        Float    @default(0.10)
+  recuoPrateleira    Int      @default(20)
+  folgaPrateleiraLat Int      @default(2)
+  folgaAlturaGaveta  Int      @default(4)
+  corCaixaInterna    String   @default("Branco")
+  chapaLargura       Int      @default(2750)
+  chapaAltura        Int      @default(1850)
+  configurado        Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  tiposMovel TipoMovel[]
+  chapas     Chapa[]
+  fitas      Fita[]
+  corredicas Corredica[]
+  ferragens  Ferragem[]
+}
+
+model TipoMovel {
+  id                   Int                    @id @default(autoincrement())
+  configId             Int
+  config               ConfiguracaoMarcenaria @relation(fields: [configId], references: [id], onDelete: Cascade)
+  nome                 String
+  tamponamentoTampo    Boolean                @default(false)
+  tamponamentoLaterais Boolean                @default(false)
+  tamponamentoBase     Boolean                @default(false)
+  tipoPorta            String                 @default("SOBREPOSTA")
+
+  @@index([configId])
+}
+
+model Chapa {
+  id         Int                    @id @default(autoincrement())
+  configId   Int
+  config     ConfiguracaoMarcenaria @relation(fields: [configId], references: [id], onDelete: Cascade)
+  cor        String
+  espessura  Int
+  precoChapa Float
+
+  @@index([configId])
+}
+
+model Fita {
+  id         Int                    @id @default(autoincrement())
+  configId   Int
+  config     ConfiguracaoMarcenaria @relation(fields: [configId], references: [id], onDelete: Cascade)
+  cor        String
+  largura    Int
+  precoMetro Float
+
+  @@index([configId])
+}
+
+model Corredica {
+  id                Int                    @id @default(autoincrement())
+  configId          Int
+  config            ConfiguracaoMarcenaria @relation(fields: [configId], references: [id], onDelete: Cascade)
+  tipo              String
+  nome              String
+  descontoLarguraMm Int
+  comprimentos      String
+
+  @@index([configId])
+}
+
+model Ferragem {
+  id       Int                    @id @default(autoincrement())
+  configId Int
+  config   ConfiguracaoMarcenaria @relation(fields: [configId], references: [id], onDelete: Cascade)
+  nome     String
+  tipo     String // DOBRADICA|PUXADOR|PE|OUTRO
+  unidade  String // "un" | "par"
+  preco    Float
+
+  @@index([configId])
 }

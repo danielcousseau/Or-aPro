@@ -1549,6 +1549,23 @@ input[type="number"] {
     padding: 0 !important;
     min-height: 0 !important;
   }
+
+  /* Área de impressão dedicada (Relatório de Peças / Plano de Corte).
+     Quando body.modo-impressao está ativo, escondemos o app inteiro e
+     mostramos só o conteúdo enviado ao portal #area-impressao. */
+  body.modo-impressao #root {
+    display: none !important;
+  }
+  body.modo-impressao #area-impressao {
+    display: block !important;
+    padding: 8mm;
+    color: #000;
+  }
+}
+
+/* Fora da impressão, a área dedicada fica oculta */
+#area-impressao {
+  display: none;
 }
 
 /* =============================================
