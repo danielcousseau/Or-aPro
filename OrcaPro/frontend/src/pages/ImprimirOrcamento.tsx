@@ -12,6 +12,7 @@ export default function ImprimirOrcamento() {
   const [erro, setErro] = useState(false);
   const [numeroLocal, setNumeroLocal] = useState<string | number>("");
   const [gerando, setGerando] = useState(false);
+  const [enviandoTelegram, setEnviandoTelegram] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const userStorage = JSON.parse(
@@ -56,26 +57,58 @@ export default function ImprimirOrcamento() {
     );
   if (!orc) return <p style={{ padding: "20px" }}>Carregando orçamento...</p>;
 
+  const opcoesPdf = () => {
+    const nomeCliente = orc?.cliente?.nome.replace(/\s+/g, "_") ?? "";
+    return {
+      margin: [10, 10, 10, 10],
+      filename: `Orcamento_${numeroLocal || id}_${nomeCliente}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak: { mode: "avoid-all" },
+    };
+  };
+
   const baixarPDF = async () => {
+    if (!contentRef.current) return;
     setGerando(true);
     try {
       const html2pdf = (await import("html2pdf.js")).default;
-      const nomeCliente = orc.cliente?.nome.replace(/\s+/g, "_") ?? "";
-      await html2pdf()
-        .set({
-          margin: [10, 10, 10, 10],
-          filename: `Orcamento_${numeroLocal || id}_${nomeCliente}.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-          pagebreak: { mode: "avoid-all" },
-        })
-        .from(contentRef.current)
-        .save();
+      await html2pdf().set(opcoesPdf()).from(contentRef.current).save();
     } catch {
       toast.error("Erro ao gerar o PDF. Tente novamente.");
     } finally {
       setGerando(false);
+    }
+  };
+
+  const enviarTelegram = async () => {
+    if (!orc.cliente?.telegramChatId) {
+      toast.warn(
+        "Este cliente ainda não conectou o Telegram. Conecte na tela de Clientes.",
+      );
+      return;
+    }
+    if (!contentRef.current) return;
+    setEnviandoTelegram(true);
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+      const pdfBlob = await html2pdf()
+        .set(opcoesPdf())
+        .from(contentRef.current)
+        .outputPdf("blob");
+
+      await api.post(`/orcamentos/${orc.id}/enviar-telegram`, pdfBlob, {
+        headers: { "Content-Type": "application/pdf" },
+      });
+      toast.success("Orçamento enviado no Telegram do cliente!");
+    } catch (error) {
+      const err = error as { response?: { data?: { error?: string } } };
+      toast.error(
+        err.response?.data?.error || "Erro ao enviar o PDF pelo Telegram.",
+      );
+    } finally {
+      setEnviandoTelegram(false);
     }
   };
 
@@ -137,6 +170,17 @@ export default function ImprimirOrcamento() {
           style={{ background: "#25D366", color: "#fff" }}
         >
           WhatsApp
+        </button>
+        <button
+          onClick={enviarTelegram}
+          disabled={enviandoTelegram}
+          style={{
+            background: "#229ED9",
+            color: "#fff",
+            opacity: enviandoTelegram ? 0.7 : 1,
+          }}
+        >
+          {enviandoTelegram ? "Enviando..." : "Telegram"}
         </button>
         <button
           onClick={() => navigate("/historico")}

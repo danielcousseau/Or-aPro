@@ -1,0 +1,45 @@
+name: Deploy Apresentação (GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apresentacao/index.html"
+      - ".github/workflows/deploy-apresentacao.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # A apresentação é um único HTML autocontido (logo e prints embutidos em
+      # base64). Não precisa de build: só copiamos o index.html para o site.
+      - name: Montar site estático
+        run: |
+          mkdir -p _site
+          cp apresentacao/index.html _site/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

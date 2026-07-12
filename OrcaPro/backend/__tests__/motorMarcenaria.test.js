@@ -469,19 +469,19 @@ describe("Seções HORIZONTAL — porta + gavetas + divisória vertical", () => 
   };
   const { pecas } = calcularMovel(cfg, input);
 
-  test("Gera 1 Divisória Vertical: 350 × 664 × 18", () => {
+  test("Gera 1 Divisória Vertical: 340 × 628 × 18", () => {
     const d = buscar(pecas, "Divisória Vertical");
     expect(d).toBeDefined();
     expect(d.qtd).toBe(1);
-    expect(d.largura).toBe(350); // profundidade
-    expect(d.altura).toBe(664); // A - 2E
+    expect(d.largura).toBe(340); // profundidade - rebaixe do fundo (350 - 10)
+    expect(d.altura).toBe(628); // (A - 2E) - reforço do topo (664 - 36)
     expect(d.espessura).toBe(18);
   });
 
   test("Divisória Vertical leva fita na frente (altura)", () => {
     const d = buscar(pecas, "Divisória Vertical");
     expect(d.larguraFitaMm).toBe(22);
-    expect(d.metrosFitaUnit).toBeCloseTo(664 / 1000, 3);
+    expect(d.metrosFitaUnit).toBeCloseTo(628 / 1000, 3);
   });
 
   test("Porta da seção 1: 367 × 656", () => {

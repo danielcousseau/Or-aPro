@@ -99,17 +99,6 @@ export default function DadosGerais({ orcamento, clientes, onChange }: Props) {
     <div className="cliente-card highlight-primary">
       <h3>1. Dados Gerais</h3>
       <section className="form-section">
-        <label>Título do Orçamento *</label>
-        <input
-          type="text"
-          name="titulo"
-          value={orcamento.titulo}
-          onChange={onChange}
-          placeholder="Ex: Cozinha Planejada Dona Maria"
-          required
-        />
-      </section>
-      <section className="form-section">
         <label>Cliente *</label>
         <select
           name="clienteId"

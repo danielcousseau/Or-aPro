@@ -19,10 +19,20 @@ import { buscarPendentes } from "./services/telegram";
 const app = express();
 app.set("trust proxy", 1);
 
-const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:5173";
+const frontendUrls = (process.env.FRONTEND_URL || "http://localhost:5173")
+  .split(",")
+  .map((url) => url.trim())
+  .filter(Boolean);
+const allowedOrigins = [
+  ...frontendUrls,
+  "https://or-a-pro-daniel.vercel.app",
+  "https://orca-pro-seven.vercel.app",
+  "https://localhost", // app nativo Android (Capacitor)
+  "capacitor://localhost", // app nativo iOS (Capacitor)
+];
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin: allowedOrigins,
     credentials: true,
     optionsSuccessStatus: 200,
   }),

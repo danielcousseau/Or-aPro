@@ -1,4 +1,4 @@
-import { Router } from "express";
+import express, { Router } from "express";
 import OrcamentoController from "../controllers/OrcamentoController";
 import authMiddleware from "../middlewares/auth";
 import validate from "../middlewares/validate";
@@ -23,5 +23,10 @@ router.patch("/:id/status", OrcamentoController.atualizarStatus);
 router.post("/:id/gerar-contrato", OrcamentoController.gerarContrato);
 router.delete("/:id", OrcamentoController.excluir);
 router.post("/:id/link-publico", OrcamentoController.gerarTokenPublico);
+router.post(
+  "/:id/enviar-telegram",
+  express.raw({ type: "application/pdf", limit: "15mb" }),
+  OrcamentoController.enviarPdfTelegram,
+);
 
 export default router;

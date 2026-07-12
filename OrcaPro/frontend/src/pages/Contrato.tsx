@@ -54,6 +54,7 @@ export default function Contrato() {
   };
 
   const baixarPDF = async () => {
+    if (!contentRef.current) return;
     setGerando(true);
     try {
       const html2pdf = (await import("html2pdf.js")).default;
@@ -192,102 +193,6 @@ export default function Contrato() {
             )}
           </section>
         </div>
-
-        {/* Resumo do projeto */}
-        {dados.materiais && dados.materiais.length > 0 && (
-          <section className="doc-section" style={{ marginTop: "16px" }}>
-            <h4>Itens do Projeto</h4>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: "0.85rem",
-              }}
-            >
-              <thead>
-                <tr style={{ background: "#f1f5f9" }}>
-                  <th
-                    style={{
-                      textAlign: "left",
-                      padding: "6px 8px",
-                      border: "1px solid #e2e8f0",
-                    }}
-                  >
-                    Item
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "center",
-                      padding: "6px 8px",
-                      border: "1px solid #e2e8f0",
-                    }}
-                  >
-                    Qtd
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      padding: "6px 8px",
-                      border: "1px solid #e2e8f0",
-                    }}
-                  >
-                    Valor unit.
-                  </th>
-                  <th
-                    style={{
-                      textAlign: "right",
-                      padding: "6px 8px",
-                      border: "1px solid #e2e8f0",
-                    }}
-                  >
-                    Total
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {dados.materiais.map((mat, i) => (
-                  <tr key={i} style={{ borderBottom: "1px solid #e2e8f0" }}>
-                    <td
-                      style={{
-                        padding: "6px 8px",
-                        border: "1px solid #e2e8f0",
-                      }}
-                    >
-                      {mat.nome}
-                    </td>
-                    <td
-                      style={{
-                        padding: "6px 8px",
-                        border: "1px solid #e2e8f0",
-                        textAlign: "center",
-                      }}
-                    >
-                      {mat.quantidade}
-                    </td>
-                    <td
-                      style={{
-                        padding: "6px 8px",
-                        border: "1px solid #e2e8f0",
-                        textAlign: "right",
-                      }}
-                    >
-                      {formatarMoeda(mat.valor)}
-                    </td>
-                    <td
-                      style={{
-                        padding: "6px 8px",
-                        border: "1px solid #e2e8f0",
-                        textAlign: "right",
-                      }}
-                    >
-                      {formatarMoeda(mat.valor * mat.quantidade)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-        )}
 
         {/* Valor e condições */}
         <div className="doc-total-box">

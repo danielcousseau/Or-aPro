@@ -9,7 +9,7 @@
 | Banco de dados | PostgreSQL                                  | —                  | Neon.tech (serverless) |
 | Auth           | JWT httpOnly cookie + refresh tokens        | —                  | —                      |
 | Email          | Brevo HTTP API                              | —                  | —                      |
-| Notificações   | Telegram Bot API                            | —                  | —                      |
+| Notificações + envio de PDF ao cliente | Telegram Bot API   | —                  | —                      |
 | Captcha        | Cloudflare Turnstile                        | —                  | Frontend               |
 | CI/CD          | GitHub Actions                              | —                  | GitHub                 |
 
@@ -95,6 +95,14 @@ OrcaPro/
 
 - Sempre usar `html2pdf.js` no frontend via componente `DocumentoOrcamento.tsx`
 - O backend tem rota `GET /api/orcamentos/:id/pdf` com pdfkit mas não é usada pelo frontend
+
+### Telegram
+
+- `services/telegram.ts` cobre dois usos: notificações de mudança de status e envio do PDF do orçamento ao cliente
+- Envio de PDF: o frontend gera o arquivo (`html2pdf().outputPdf("blob")`) e faz POST em `/api/orcamentos/:id/enviar-telegram` (body `application/pdf` cru, limite 15 MB via `express.raw`); o backend repassa ao bot com `sendDocument`, junto de legenda + link da proposta (mesmo JWT de 7 dias do `link-publico`)
+- Todo texto de usuário interpolado em mensagem passa por `escaparMarkdown()` — o Markdown legado do Telegram rejeita a mensagem inteira se houver `_`, `*`, `` ` `` ou `[` sem par
+- O cliente precisa ter `telegramChatId` salvo (fluxo de conexão na tela de Clientes); o envio é registrado no Audit Log
+- Spec completa: [specs/004-envio-pdf-telegram.md](../specs/004-envio-pdf-telegram.md)
 
 ### Contrato token
 

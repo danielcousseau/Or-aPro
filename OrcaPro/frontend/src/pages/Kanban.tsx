@@ -270,7 +270,7 @@ export default function Kanban() {
                         width: "100%",
                       }}
                     >
-                      📄 Gerar Contrato
+                      Gerar Contrato
                     </button>
                   )}
 
@@ -291,7 +291,7 @@ export default function Kanban() {
                       >
                         {orc.contratoAceito
                           ? "✓ Contrato aceito"
-                          : "📄 Contrato gerado"}
+                          : "Contrato gerado"}
                       </div>
                       <button
                         onClick={() => compartilharContrato(orc)}
@@ -321,8 +321,8 @@ export default function Kanban() {
                         color: "#fff",
                         border: "none",
                         borderRadius: "6px",
-                        padding: "4px 8px",
-                        fontSize: "0.75rem",
+                        padding: "6px 10px",
+                        fontSize: "0.78rem",
                         fontWeight: 600,
                         cursor: "pointer",
                         width: "100%",

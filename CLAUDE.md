@@ -11,6 +11,7 @@ OrcaPro é um SaaS multi-tenant brasileiro de orçamentos para marcenarias.
 | Camada   | Tecnologia                                    | Hospedagem             |
 | -------- | --------------------------------------------- | ---------------------- |
 | Frontend | React 18 + Vite + TypeScript + PWA            | Vercel                 |
+| App      | Capacitor 8 (mesmo frontend React empacotado) | Google Play (em breve) |
 | Backend  | Node.js + Express 5 + Prisma ORM + TypeScript | Render                 |
 | Banco    | PostgreSQL                                    | Neon.tech (serverless) |
 | Auth     | JWT (httpOnly cookie + refresh tokens 7 dias) | —                      |
@@ -46,6 +47,7 @@ npx prisma studio    # abre interface visual do banco
 # Dentro de OrcaPro/frontend/
 npm run dev          # sobe o frontend local
 npm run build        # gera versão de produção
+npm run app:android  # build + sincroniza o app Android (Capacitor)
 ```
 
 ---
@@ -60,6 +62,24 @@ npm run build        # gera versão de produção
    - Se existia card relacionado no Backlog/Sprint → mover para ✅ Concluído e adicionar comentário com o que foi feito
    - Se não existia card → criar novo em ✅ Concluído com descrição da mudança, label correta (Back-end / Front-end / Full-Stack) e hash do commit
 
+## Fluxo de PR (padrão desde jul/2026)
+
+Features e mudanças relevantes passam por Pull Request em vez de commit direto na `main`:
+
+1. Criar branch: `git checkout -b feat/nome-da-feature`
+2. Commitar na branch e abrir PR: `gh pr create --fill` (usar o caminho completo do gh no Bash)
+3. O GitHub roda automaticamente: **CI** (tipos + testes backend, tipos + build frontend) e **Claude Review** (revisão de IA focada em tenant, Zod, segredos e padrões)
+4. Corrigir o que a revisão apontar → merge na `main` → deploy automático no Render
+5. Hotfixes urgentes ainda podem ir direto na `main` (o CI roda mesmo assim)
+
+### Workflows do GitHub (`.github/workflows/`)
+
+- `ci.yml` — tipos + testes do backend (banco real via secrets) + tipos + build do frontend; deploy no Render após passar
+- `claude-review.yml` — Claude revisa todo PR automaticamente
+- `claude.yml` — mencionar `@claude` em issue/PR para o Claude analisar, responder ou implementar
+- `deploy-apresentacao.yml` — publica os slides no GitHub Pages
+- Os workflows de IA usam o secret `CLAUDE_CODE_OAUTH_TOKEN` (gerado com `claude setup-token`)
+
 ---
 
 ## Armadilhas conhecidas
@@ -70,7 +90,10 @@ npm run build        # gera versão de produção
 - **Banco local**: renomear `prisma.config.ts` temporariamente ao rodar `prisma db push` localmente
 - **Email**: Render bloqueia porta 587 (SMTP) — usar Brevo HTTP API via `fetch` nativo
 - **PDF**: sempre usar `html2pdf.js` via `DocumentoOrcamento.tsx` no frontend
+- **html2pdf.js 0.14+**: os tipos que o pacote distribui são incompletos (sem `pagebreak`) — o `tsconfig.json` do frontend aponta `html2pdf.js` para `src/types/html2pdf.d.ts` via `paths`; manter esse shim ao atualizar o pacote
 - **Safari/iOS**: access token em memória JS + refreshToken no localStorage (cookies cross-domain bloqueados pelo Safari ITP)
+- **Telegram + Markdown**: todo texto vindo do usuário (nome, título) interpolado em mensagem do bot precisa passar por `escaparMarkdown()` (`telegram.ts`) — um `_`, `*`, `` ` `` ou `[` sem par faz o Telegram rejeitar a mensagem inteira
+- **claude-review.yml**: a action só executa se o arquivo do workflow no PR for idêntico ao da `main` (proteção contra roubo de token) — mudanças no workflow de review precisam entrar pela `main` antes de valerem nos PRs
 
 ---
 
@@ -79,22 +102,27 @@ npm run build        # gera versão de produção
 ### Segurança implementada
 
 - JWT httpOnly cookie + refresh tokens (15min / 7 dias)
-- Rate limit: 10 tentativas / 15 min por IP em `/login` e `/registrar`
+- Rate limit: 10 tentativas / 15 min por IP em `/login`, `/registrar`, `/forgot-password` e `/reset-password`
 - Validação cross-tenant no `OrcamentoController`
-- Helmet.js, CSP no `vercel.json`, Cloudflare Turnstile no cadastro
+- Helmet.js, CSP no `vercel.json` (sem `unsafe-eval`; `connect-src` restrito ao domínio da API), Cloudflare Turnstile no cadastro
 - Recuperação de senha via Brevo HTTP API
+- Validação Zod nas rotas de auth (`authSchema.ts`) — senha mínima de 6 caracteres no cadastro
+- Rotas públicas (`/proposta/:token`, `/contrato/:token`) com `select` restrito: não expõem lucro, mão de obra, `contratoToken` nem cadastro completo do cliente
 
 ### Features implementadas
 
 - Clientes, Orçamentos (materiais + mão de obra + markup), Histórico
 - Kanban com drag-and-drop + notificações Telegram
 - Proposta ao cliente (PDF + WhatsApp) com logo da marcenaria
+- Envio do PDF do orçamento pelo Telegram: botão na tela do orçamento manda o arquivo real + link da proposta no chat do cliente (`POST /orcamentos/:id/enviar-telegram`, com escape de Markdown e registro no Audit Log — veja [specs/004-envio-pdf-telegram.md](specs/004-envio-pdf-telegram.md))
 - Contrato automático ao aprovar — cliente assina online via link único
 - Dashboard com gráficos (Chart.js) + Bento Grid + Glassmorphism
 - Estoque de materiais com alertas de nível baixo
 - Financeiro: contas a receber + rentabilidade por projeto
 - Ordem de Produção no Dashboard + página imprimível
+- Plano de Corte: motor de nesting, otimização de chapas, fita de borda, configuração da marcenaria e relatório de peças imprimível
 - PWA, Audit Log, TypeScript completo (front + back)
+- App Android nativo (Capacitor) com ícone e splash da marca — testado no emulador contra a API de produção; falta assinar e publicar na Play Store (veja [docs/app-android.md](docs/app-android.md))
 
 ---
 
@@ -104,8 +132,6 @@ npm run build        # gera versão de produção
 
 ### Próximas prioridades
 
-- [ ] Ordem de produção em 1 clique (criação automática ao aprovar + botão no Kanban)
-- [ ] Métricas do funil de vendas (conversão, valor médio, perdidos no mês)
 - [ ] Fluxo de caixa (projeção 30/60/90 dias)
 - [ ] WhatsApp via EvolutionAPI (substituir Telegram)
 - [ ] Assinatura digital do contrato (ClickSign ou DocuSign)
@@ -126,7 +152,7 @@ Nenhum.
 
 **Commits:** em português com prefixo — `feat:`, `fix:`, `docs:`, `refactor:`
 
-**Testes:** conectam no banco real do Neon.tech (não mockado); `helpers.ts` deleta `AuditLog` antes do `User`
+**Testes:** conectam no banco real do Neon.tech (não mockado); `helpers.ts` deleta `AuditLog` antes do `User`. Exceções que rodam sem banco: `authValidation.test.js` e `motorMarcenaria.test.js`
 
 ---
 
@@ -136,4 +162,5 @@ Nenhum.
 - Modelo multi-tenant: [docs/tenant-model.md](docs/tenant-model.md)
 - Regras de segurança: [docs/security-rules.md](docs/security-rules.md)
 - Deploy e infraestrutura: [docs/deploy.md](docs/deploy.md)
+- App Android (Capacitor): [docs/app-android.md](docs/app-android.md)
 - Glossário para iniciantes: [docs/iniciante.md](docs/iniciante.md)

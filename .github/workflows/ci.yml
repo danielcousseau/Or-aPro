@@ -36,9 +36,40 @@ jobs:
         working-directory: OrcaPro/backend
         run: npx prisma generate
 
+      - name: Checar tipos TypeScript
+        working-directory: OrcaPro/backend
+        run: npx tsc --noEmit
+
       - name: Rodar testes
         working-directory: OrcaPro/backend
         run: npm test
+
+  frontend:
+    name: Frontend — tipos e build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: OrcaPro/frontend/package-lock.json
+
+      - name: Instalar dependências
+        working-directory: OrcaPro/frontend
+        run: npm ci
+
+      - name: Checar tipos TypeScript
+        working-directory: OrcaPro/frontend
+        run: npx tsc --noEmit
+
+      - name: Build de produção
+        working-directory: OrcaPro/frontend
+        run: npm run build
 
   deploy:
     name: Deploy no Render

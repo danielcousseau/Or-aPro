@@ -6,6 +6,7 @@ import ListaMateriais from "../components/Orcamento/ListaMateriais";
 import ResumoValores from "../components/Orcamento/ResumoValores";
 import { toast } from "react-toastify";
 import { mascaraMoeda, desmascararMoeda } from "../utils/masks";
+import { gerarTituloOrcamento } from "../utils/format";
 import {
   OrcamentoFormData,
   MaterialSelecionado,
@@ -218,19 +219,23 @@ export default function NovoOrcamento() {
             quantidade: p.quantidade,
           })),
         );
-        const tituloPecas = localStorage.getItem("tituloParaOrcamento");
-        if (tituloPecas)
+        const ambientePecas = localStorage.getItem("ambienteParaOrcamento");
+        const tipoPecas = localStorage.getItem("tipoMovelParaOrcamento");
+        if (ambientePecas || tipoPecas) {
           setOrcamento((prev) => ({
             ...prev,
-            titulo: prev.titulo || tituloPecas,
+            ambiente: prev.ambiente || ambientePecas || "",
+            tipoMovel: prev.tipoMovel || tipoPecas || "",
           }));
+        }
         toast.success(`${pecas.length} peças importadas de Corte & Peças.`);
       }
     } catch {
       // JSON inválido — ignora
     } finally {
       localStorage.removeItem("pecasParaOrcamento");
-      localStorage.removeItem("tituloParaOrcamento");
+      localStorage.removeItem("ambienteParaOrcamento");
+      localStorage.removeItem("tipoMovelParaOrcamento");
     }
   }, [id]);
 
@@ -311,8 +316,21 @@ export default function NovoOrcamento() {
 
     setSalvando(true);
 
+    const clienteNome = clientes.find(
+      (c) => String(c.id) === String(orcamento.clienteId),
+    )?.nome;
+    const titulo =
+      orcamento.titulo?.trim().length >= 3
+        ? orcamento.titulo.trim()
+        : gerarTituloOrcamento(
+            clienteNome,
+            orcamento.ambiente,
+            orcamento.tipoMovel,
+          );
+
     const dadosParaEnviar = {
       ...orcamento,
+      titulo,
       maoDeObraValor: desmascararMoeda(orcamento.maoDeObraValor),
       lucroValor: desmascararMoeda(orcamento.lucroValor),
       totalFinal: totais.final,
@@ -374,60 +392,25 @@ export default function NovoOrcamento() {
           clientes={clientes}
           onChange={handleChange}
         />
-        {/* Gerar peças do móvel agora é uma página própria: Corte & Peças */}
-        <div
-          style={{
-            marginBottom: 20,
-            padding: "16px 20px",
-            background: "var(--panel-soft)",
-            borderRadius: "var(--radius-sm)",
-            border: "1px solid var(--border)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <div
-              style={{
-                fontWeight: 700,
-                fontSize: 14,
-                color: "var(--text-main)",
-              }}
-            >
-              📐 Gerar as peças deste móvel
-            </div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "var(--text-soft)",
-                marginTop: 2,
-              }}
-            >
-              Calcule as peças, o relatório com fita de borda e o plano de corte
-              — e traga tudo pronto para o orçamento.
+        <div className="corte-pecas-cta no-print">
+          <div className="corte-pecas-cta__icon" aria-hidden="true">
+            ✂
+          </div>
+          <div>
+            <p className="corte-pecas-cta__title">Corte &amp; Peças</p>
+            <p className="corte-pecas-cta__desc">
+              Monte o móvel, gere as peças e importe os materiais direto neste
+              orçamento — sem digitar linha por linha.
+            </p>
+            <div className="corte-pecas-cta__tags">
+              <span className="corte-pecas-cta__tag">Plano de corte</span>
+              <span className="corte-pecas-cta__tag">Fita de borda</span>
+              <span className="corte-pecas-cta__tag">Lista de peças</span>
             </div>
           </div>
-          <Link
-            to="/corte"
-            style={{
-              background: "var(--primary)",
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: 14,
-              padding: "12px 22px",
-              borderRadius: "var(--radius-sm)",
-              textDecoration: "none",
-              whiteSpace: "nowrap",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              boxShadow: "var(--shadow-soft)",
-            }}
-          >
-            Abrir Corte &amp; Peças →
+          <Link to="/corte" className="corte-pecas-cta__btn">
+            Abrir calculadora
+            <span aria-hidden="true">→</span>
           </Link>
         </div>
 

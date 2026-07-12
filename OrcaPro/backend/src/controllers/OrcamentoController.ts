@@ -6,13 +6,34 @@ import path from "path";
 import fs from "fs";
 import prisma = require("../lib/prisma");
 import { registrar } from "../services/audit";
-import { notificarMudancaStatus } from "../services/telegram";
+import {
+  notificarMudancaStatus,
+  enviarDocumento,
+  escaparMarkdown,
+} from "../services/telegram";
 
 const formatarMoedaBR = (valor: unknown): string =>
   Number(valor || 0).toLocaleString("pt-BR", {
     style: "currency",
     currency: "BRL",
   });
+
+// Número sequencial do orçamento dentro da conta do usuário (posição na
+// ordem de criação) — usado no nome do arquivo PDF
+async function calcularNumeroLocal(
+  userId: number,
+  orcamento: { id: number; createdAt: Date },
+): Promise<number> {
+  return prisma.orcamento.count({
+    where: {
+      userId,
+      OR: [
+        { createdAt: { lt: orcamento.createdAt } },
+        { createdAt: orcamento.createdAt, id: { lte: orcamento.id } },
+      ],
+    },
+  });
+}
 
 interface MatLineInput {
   id?: number;
@@ -491,11 +512,26 @@ export default {
     try {
       const token = req.params.token as string;
 
+      // Rota pública: retorna somente o que a página do contrato exibe —
+      // nunca dados internos (lucro, mão de obra) nem cadastro completo do cliente
       const orcamento = await prisma.orcamento.findUnique({
         where: { contratoToken: token },
-        include: {
-          cliente: true,
-          materiais: true,
+        select: {
+          id: true,
+          titulo: true,
+          tipoMovel: true,
+          ambiente: true,
+          medidas: true,
+          prazo: true,
+          pagamento: true,
+          observacoes: true,
+          totalFinal: true,
+          contratoGeradoEm: true,
+          contratoAceito: true,
+          contratoAceitoEm: true,
+          cliente: {
+            select: { nome: true, telefone: true, email: true, cidade: true },
+          },
           user: { select: { nomeMarcenaria: true, logoMarcenaria: true } },
         },
       });
@@ -584,19 +620,34 @@ export default {
     }
   },
 
-  async gerarPDF(req: Request, res: Response): Promise<void> {
+  async enviarPdfTelegram(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const pdf = req.body as Buffer;
 
-      const [orcamento, todos] = await Promise.all([
+      if (!Buffer.isBuffer(pdf) || pdf.length === 0) {
+        res.status(400).json({ error: "Arquivo PDF não recebido." });
+        return;
+      }
+
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        res
+          .status(500)
+          .json({ error: "Erro interno de configuração de segurança." });
+        return;
+      }
+
+      const [orcamento, usuario] = await Promise.all([
         prisma.orcamento.findFirst({
           where: { id: Number(id), userId: req.userId },
-          include: { cliente: true },
+          include: {
+            cliente: { select: { nome: true, telegramChatId: true } },
+          },
         }),
-        prisma.orcamento.findMany({
-          where: { userId: req.userId },
-          select: { id: true, createdAt: true },
-          orderBy: { createdAt: "asc" },
+        prisma.user.findUnique({
+          where: { id: req.userId },
+          select: { nomeMarcenaria: true },
         }),
       ]);
 
@@ -604,9 +655,73 @@ export default {
         res.status(404).json({ error: "Orçamento não encontrado." });
         return;
       }
+      if (!orcamento.cliente?.telegramChatId) {
+        res.status(400).json({
+          error:
+            "Este cliente ainda não conectou o Telegram. Conecte na tela de Clientes.",
+        });
+        return;
+      }
 
-      const posicao = todos.findIndex((o) => o.id === Number(id));
-      const numeroLocal = posicao !== -1 ? posicao + 1 : Number(id);
+      const numeroLocal = await calcularNumeroLocal(req.userId!, orcamento);
+      const nomeArquivo = `Orcamento_${numeroLocal}_${orcamento.cliente.nome.replace(/\s+/g, "_")}.pdf`;
+
+      const token = jwt.sign({ orcamentoId: Number(id) }, jwtSecret, {
+        expiresIn: "7d",
+      });
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+      const linkProposta = `${frontendUrl}/proposta/${token}`;
+
+      const nomeCliente = escaparMarkdown(orcamento.cliente.nome.trim());
+      const tituloProjeto = escaparMarkdown(orcamento.titulo.trim());
+      const identificacao = usuario?.nomeMarcenaria
+        ? `da *${escaparMarkdown(usuario.nomeMarcenaria)}*`
+        : "da Marcenaria";
+      const legenda = `📄 Olá, *${nomeCliente}*!\n\nAqui é ${identificacao}. Finalizamos o seu orçamento para o projeto *${tituloProjeto}* — o PDF completo está anexado.\n\nVocê também pode visualizar e aprovar online por este link exclusivo:\n${linkProposta}\n\nQualquer dúvida, estou à disposição!`;
+
+      const enviado = await enviarDocumento(
+        orcamento.cliente.telegramChatId,
+        pdf,
+        nomeArquivo,
+        legenda,
+      );
+      if (!enviado) {
+        res.status(502).json({
+          error: "O Telegram não aceitou o envio. Tente novamente.",
+        });
+        return;
+      }
+
+      await registrar(
+        req.userId!,
+        "enviou por Telegram",
+        "Orçamento",
+        orcamento.id,
+        orcamento.titulo,
+      );
+
+      res.json({ message: "Orçamento enviado no Telegram do cliente." });
+    } catch (error) {
+      console.error("Erro ao enviar PDF pelo Telegram:", error);
+      res.status(500).json({ error: "Erro ao enviar o PDF pelo Telegram." });
+    }
+  },
+
+  async gerarPDF(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      const orcamento = await prisma.orcamento.findFirst({
+        where: { id: Number(id), userId: req.userId },
+        include: { cliente: true },
+      });
+
+      if (!orcamento) {
+        res.status(404).json({ error: "Orçamento não encontrado." });
+        return;
+      }
+
+      const numeroLocal = await calcularNumeroLocal(req.userId!, orcamento);
       const nomeArquivo = `Orcamento_${numeroLocal}_${orcamento.cliente.nome.replace(/\s+/g, "_")}.pdf`;
 
       const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
@@ -824,10 +939,22 @@ export default {
         orcamentoId: number;
       };
 
+      // Rota pública: retorna somente o que o DocumentoOrcamento (modo cliente)
+      // exibe — nunca lucro, mão de obra, contratoToken ou cadastro completo do cliente
       const orcamento = await prisma.orcamento.findUnique({
         where: { id: Number(decoded.orcamentoId) },
-        include: {
-          cliente: true,
+        select: {
+          id: true,
+          titulo: true,
+          tipoMovel: true,
+          ambiente: true,
+          prazo: true,
+          pagamento: true,
+          validade: true,
+          observacoes: true,
+          totalFinal: true,
+          createdAt: true,
+          cliente: { select: { nome: true, telefone: true, cidade: true } },
           user: { select: { nomeMarcenaria: true, logoMarcenaria: true } },
         },
       });

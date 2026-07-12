@@ -349,6 +349,7 @@ export default function Perfil() {
       <h1 style={{ marginBottom: "30px" }}>Meu Perfil</h1>
 
       <div
+        className="grid-responsivo"
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
@@ -840,6 +841,10 @@ export default function Perfil() {
                               color: "var(--text-soft)",
                               display: "flex",
                               alignItems: "center",
+                              // Evita a regra global button{width:100%} do mobile
+                              width: "auto",
+                              minHeight: "auto",
+                              flexShrink: 0,
                             }}
                           >
                             ×
@@ -923,7 +928,9 @@ export default function Perfil() {
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "12px",
+                        // Quebra linha no celular em vez de estourar a largura
+                        flexWrap: "wrap",
+                        gap: "8px 12px",
                         padding: "10px 14px",
                         borderRadius: "8px",
                         background: "var(--panel-soft)",
@@ -958,6 +965,8 @@ export default function Perfil() {
                             color: "var(--text-soft)",
                             fontSize: "0.85rem",
                             flex: 1,
+                            // No celular, se não couber, desce pra linha de baixo
+                            minWidth: "140px",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                             whiteSpace: "nowrap",

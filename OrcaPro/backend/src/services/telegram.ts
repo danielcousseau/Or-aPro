@@ -11,6 +11,12 @@ const MENSAGENS_STATUS: Record<string, (titulo: string) => string> = {
     `🎉 Seu projeto *${titulo}* foi entregue com sucesso! Obrigado pela confiança.`,
 };
 
+// Telegram (Markdown legado) quebra a mensagem inteira se um _, *, ` ou [
+// interpolado ficar sem par — escapar todo texto vindo do usuário
+export function escaparMarkdown(texto: string): string {
+  return texto.replace(/[_*`[]/g, "\\$&");
+}
+
 interface ClienteComTelegram {
   telegramChatId?: string | null;
 }
@@ -43,7 +49,37 @@ export async function notificarMudancaStatus(
   if (!cliente?.telegramChatId) return;
   const mensagem = MENSAGENS_STATUS[novoStatus];
   if (!mensagem) return;
-  await enviarMensagem(cliente.telegramChatId, mensagem(tituloOrcamento));
+  await enviarMensagem(
+    cliente.telegramChatId,
+    mensagem(escaparMarkdown(tituloOrcamento)),
+  );
+}
+
+export async function enviarDocumento(
+  chatId: string,
+  arquivo: Buffer,
+  nomeArquivo: string,
+  legenda: string,
+): Promise<boolean> {
+  if (!process.env.TELEGRAM_BOT_TOKEN) return false;
+  const form = new FormData();
+  form.append("chat_id", chatId);
+  form.append("caption", legenda);
+  form.append("parse_mode", "Markdown");
+  form.append(
+    "document",
+    new Blob([new Uint8Array(arquivo)], { type: "application/pdf" }),
+    nomeArquivo,
+  );
+  const res = await fetch(`${TELEGRAM_API}/sendDocument`, {
+    method: "POST",
+    body: form,
+  });
+  if (!res.ok) {
+    const erro = await res.text();
+    console.error("Erro do Telegram ao enviar documento:", erro);
+  }
+  return res.ok;
 }
 
 export async function buscarPendentes(): Promise<TelegramUpdate[]> {

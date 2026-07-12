@@ -481,7 +481,7 @@ export default function Clientes() {
                   </div>
                   {cliente.telegramChatId && (
                     <p style={{ color: "#0088cc", fontSize: "0.9rem" }}>
-                      ✈️ Telegram ativo — receberá notificações de status
+                      Telegram ativo — receberá notificações de status
                     </p>
                   )}
                   {cliente.observacoes && (

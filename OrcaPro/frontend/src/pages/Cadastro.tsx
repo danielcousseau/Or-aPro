@@ -17,6 +17,8 @@ export default function Cadastro() {
   const [turnstileToken, setTurnstileToken] = useState("");
   const turnstileRef = useRef<TurnstileInstance | null>(null);
   const navigate = useNavigate();
+  const turnstileSiteKey =
+    import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
 
   const handleCadastro = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -65,7 +67,9 @@ export default function Cadastro() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        minHeight: "80vh",
+        minHeight: "100dvh",
+        padding: "24px 16px",
+        boxSizing: "border-box",
       }}
     >
       <div
@@ -246,14 +250,11 @@ export default function Cadastro() {
           >
             <Turnstile
               ref={turnstileRef}
-              siteKey={
-                import.meta.env.VITE_TURNSTILE_SITE_KEY ||
-                "1x00000000000000000000AA"
-              }
+              siteKey={turnstileSiteKey}
               onSuccess={setTurnstileToken}
               onError={() => setTurnstileToken("")}
               onExpire={() => setTurnstileToken("")}
-              options={{ theme: "light", language: "pt-BR" }}
+              options={{ theme: "light", language: "pt-br" }}
             />
           </div>
           <button

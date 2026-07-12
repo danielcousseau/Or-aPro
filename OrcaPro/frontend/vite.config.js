@@ -17,6 +17,8 @@ export default defineConfig({
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
+        cleanupOutdatedCaches: true,
+        navigateFallbackDenylist: [/^\/assets\//],
       },
       manifest: {
         name: "OrçaPro - Gestão de Marcenaria",

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">OrçaPro</string>
+    <string name="title_activity_main">OrçaPro</string>
+    <string name="package_name">com.orcapro.app</string>
+    <string name="custom_url_scheme">com.orcapro.app</string>
+</resources>

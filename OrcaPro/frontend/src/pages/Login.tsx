@@ -53,7 +53,9 @@ export default function Login() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        height: "80vh",
+        minHeight: "100dvh",
+        padding: "24px 16px",
+        boxSizing: "border-box",
       }}
     >
       <div

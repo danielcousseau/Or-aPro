@@ -1,0 +1,58 @@
+# Revisão automática de código com Claude em todo Pull Request.
+# Foca nas regras de ouro do OrcaPro: isolamento de tenant, validação
+# Zod, segredos e padrão de resposta da API.
+# Requer o secret CLAUDE_CODE_OAUTH_TOKEN (gerado com `claude setup-token`).
+name: Claude Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      id-token: write
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Revisar PR com Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Revise este Pull Request do OrcaPro (SaaS multi-tenant de
+            orçamentos para marcenarias). Siga o CLAUDE.md do repositório.
+
+            Verifique, nesta ordem de prioridade:
+            1. SEGURANÇA E TENANT: toda query Prisma nova ou alterada tem
+               filtro de tenant (userId)? Alguma rota expõe dados de outro
+               marceneiro? Algum segredo/token/senha no código?
+            2. VALIDAÇÃO: entrada de usuário validada com Zod antes de
+               tocar no banco?
+            3. BUGS: erros de lógica, casos de borda, promessas sem await,
+               tipos errados.
+            4. PADRÕES: respostas da API no formato { data, error, message },
+               erros pelo errorHandler global, convenções do CLAUDE.md.
+
+            Poste comentários inline nas linhas com problema usando
+            mcp__github_inline_comment__create_inline_comment e um resumo
+            geral com gh pr comment. Escreva em português, em tom direto
+            e didático (o dono do projeto é iniciante). Se estiver tudo
+            certo, diga isso claramente no resumo.
+          claude_args: |
+            --max-turns 50
+            --allowedTools "Read,Grep,Glob,mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"

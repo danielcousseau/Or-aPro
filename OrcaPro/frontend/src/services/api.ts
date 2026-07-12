@@ -6,8 +6,25 @@ declare module "axios" {
   }
 }
 
+function getApiBaseUrl(): string {
+  if (import.meta.env.DEV) {
+    return import.meta.env.VITE_API_URL || "http://localhost:3333/api";
+  }
+  // App nativo (Capacitor) não passa pelo proxy /api do Vercel
+  const isNativeApp =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.protocol === "capacitor:");
+  if (isNativeApp) {
+    return (
+      import.meta.env.VITE_API_URL || "https://orcapro-api.onrender.com/api"
+    );
+  }
+  return "/api";
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3333/api",
+  baseURL: getApiBaseUrl(),
   withCredentials: true,
 });
 

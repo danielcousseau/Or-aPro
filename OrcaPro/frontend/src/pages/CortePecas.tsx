@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -49,6 +49,105 @@ import {
   expandirPecas,
   type ResultadoNesting,
 } from "../utils/nestingMarcenaria";
+
+function tituloDoProjeto(itens: ItemProjeto[]): string {
+  if (itens.length === 0) return "Projeto";
+  if (itens.length === 1) {
+    const it = itens[0];
+    return it.nome ? `${it.ambiente} — ${it.nome}` : it.ambiente;
+  }
+  const ambientes = [...new Set(itens.map((i) => i.ambiente))];
+  if (ambientes.length === 1) {
+    return `${ambientes[0]} (${itens.length} módulos)`;
+  }
+  return `Projeto (${itens.length} módulos)`;
+}
+
+/** Vão interno disponível para as seções (desconta divisórias de 18 mm). */
+function capacidadeSecoes(alvoMm: number, qtdSecoes: number, espEstrutura: number) {
+  return Math.max(0, alvoMm - (qtdSecoes - 1) * espEstrutura);
+}
+
+/**
+ * Ao editar uma seção, redistribui o restante entre as outras para sempre
+ * fechar o vão (ex.: gaveta 600 mm → portas recebem o que sobrar).
+ */
+function ajustarSecoes(
+  secoes: SecaoUI[],
+  idxEditado: number,
+  novoTamanho: number,
+  alvoMm: number,
+  espEstrutura: number,
+): SecaoUI[] {
+  const n = secoes.length;
+  if (n <= 1) {
+    return [{ ...secoes[0], tamanhoMm: Math.round(alvoMm) }];
+  }
+
+  const capacidade = capacidadeSecoes(alvoMm, n, espEstrutura);
+  const minMm = 80;
+  const outrosIdx = secoes.map((_, i) => i).filter((i) => i !== idxEditado);
+
+  const maxEditado = capacidade - minMm * outrosIdx.length;
+  const editado = Math.max(
+    minMm,
+    Math.min(Math.round(novoTamanho), Math.max(minMm, maxEditado)),
+  );
+  const restante = capacidade - editado;
+
+  const pesos = outrosIdx.map((i) => secoes[i].tamanhoMm);
+  const somaPesos = pesos.reduce((a, b) => a + b, 0) || outrosIdx.length;
+
+  const resultado = secoes.map((s) => ({ ...s }));
+  resultado[idxEditado] = { ...resultado[idxEditado], tamanhoMm: editado };
+
+  let alocado = 0;
+  outrosIdx.forEach((idx, k) => {
+    const isLast = k === outrosIdx.length - 1;
+    const parte = isLast
+      ? restante - alocado
+      : Math.round((restante * pesos[k]) / somaPesos);
+    const tamanho = Math.max(minMm, parte);
+    resultado[idx] = { ...resultado[idx], tamanhoMm: tamanho };
+    alocado += tamanho;
+  });
+
+  const total = resultado.reduce((a, s) => a + s.tamanhoMm, 0);
+  if (total !== capacidade && outrosIdx.length > 0) {
+    const ultimo = outrosIdx[outrosIdx.length - 1];
+    resultado[ultimo] = {
+      ...resultado[ultimo],
+      tamanhoMm: Math.max(minMm, resultado[ultimo].tamanhoMm + (capacidade - total)),
+    };
+  }
+
+  return resultado;
+}
+
+/** Mantém proporções ao mudar largura/altura do móvel. */
+function reescalarSecoes(
+  secoes: SecaoUI[],
+  alvoNovo: number,
+  alvoAntigo: number,
+  espEstrutura: number,
+): SecaoUI[] {
+  if (secoes.length <= 1) {
+    return [{ ...secoes[0], tamanhoMm: Math.round(alvoNovo) }];
+  }
+  const capAntiga = capacidadeSecoes(alvoAntigo, secoes.length, espEstrutura);
+  const capNova = capacidadeSecoes(alvoNovo, secoes.length, espEstrutura);
+  if (capAntiga <= 0) return secoes;
+  return ajustarSecoes(
+    secoes.map((s) => ({
+      ...s,
+      tamanhoMm: Math.round((s.tamanhoMm / capAntiga) * capNova),
+    })),
+    0,
+    Math.round((secoes[0].tamanhoMm / capAntiga) * capNova),
+    alvoNovo,
+    espEstrutura,
+  );
+}
 import { gerarSiglasModulos, codigoPeca } from "../utils/siglaModulo";
 import { mascaraMoeda } from "../utils/masks";
 
@@ -78,7 +177,6 @@ export default function CortePecas() {
   const relatorioRef = useRef<HTMLDivElement>(null);
   const planoRef = useRef<HTMLDivElement>(null);
 
-  const [titulo, setTitulo] = useState("");
   const [pi, setPi] = useState({
     largura: 800,
     altura: 720,
@@ -266,6 +364,8 @@ export default function CortePecas() {
   const itensEfetivos: ItemProjeto[] = itemAtual
     ? [...projeto, itemAtual]
     : projeto;
+
+  const titulo = useMemo(() => tituloDoProjeto(itensEfetivos), [itensEfetivos]);
 
   const modulos: ModuloRelatorio[] = itensEfetivos.map((it) => ({
     ambiente: it.ambiente,
@@ -472,7 +572,11 @@ export default function CortePecas() {
       }),
     );
     localStorage.setItem("pecasParaOrcamento", JSON.stringify(linhas));
-    if (titulo) localStorage.setItem("tituloParaOrcamento", titulo);
+    const primeiro = itensEfetivos[0];
+    if (primeiro) {
+      localStorage.setItem("ambienteParaOrcamento", primeiro.ambiente);
+      localStorage.setItem("tipoMovelParaOrcamento", primeiro.nome);
+    }
     toast.success("Projeto enviado. Abrindo novo orçamento...");
     navigate("/orcamento");
   };
@@ -504,7 +608,6 @@ export default function CortePecas() {
             color: "var(--text-soft)",
           }}
         >
-          ⚙{" "}
           <Link to="/marcenaria" style={{ color: "var(--primary)" }}>
             Configure sua marcenaria
           </Link>{" "}
@@ -527,24 +630,65 @@ export default function CortePecas() {
     secoes.reduce((a, s) => a + s.tamanhoMm, 0) + (secoes.length - 1) * E;
   const sobra = alvoSecoes - usadoSecoes;
 
-  const atualizarSecao = (idx: number, patch: Partial<SecaoUI>) =>
+  const atualizarSecao = (idx: number, patch: Partial<SecaoUI>) => {
+    if (patch.tamanhoMm !== undefined && secoes.length >= 2) {
+      setSecoes((prev) =>
+        ajustarSecoes(prev, idx, patch.tamanhoMm!, alvoSecoes, E),
+      );
+      return;
+    }
     setSecoes((prev) =>
       prev.map((s, i) => (i === idx ? { ...s, ...patch } : s)),
     );
-  const adicionarSecao = () =>
+  };
+  const adicionarSecao = () => {
+    const cap = capacidadeSecoes(alvoSecoes, secoes.length + 1, E);
+    const tamanhoNova = Math.min(300, Math.round(cap * 0.4));
+    const tamanhoPrimeira = cap - tamanhoNova;
     setSecoes((prev) => [
-      ...prev,
+      { ...prev[0], tamanhoMm: tamanhoPrimeira },
       {
-        tamanhoMm: Math.max(0, Math.round(sobra - E)) || 300,
-        tipo: "PORTAS",
+        tamanhoMm: tamanhoNova,
+        tipo: "GAVETAS",
         nPortas: 1,
         nGavetas: 3,
         corredicaIdx: 0,
         comprimentoCorre: 400,
       },
     ]);
-  const removerSecao = (idx: number) =>
-    setSecoes((prev) => prev.filter((_, i) => i !== idx));
+  };
+  const reescalarAoMudarDimensao = (patch: Partial<typeof pi>) => {
+    const Elocal = cfg.espEstrutura ?? 18;
+    const REFlocal = cfg.larguraReforco ?? 100;
+    const next = { ...pi, ...patch };
+    const vaoLAnt = pi.largura - 2 * Elocal;
+    const vaoLNew = next.largura - 2 * Elocal;
+    const vaoAAnt =
+      pi.tipoTampo === "MDF" ? pi.altura - 2 * Elocal : pi.altura - Elocal - REFlocal;
+    const vaoANew =
+      next.tipoTampo === "MDF"
+        ? next.altura - 2 * Elocal
+        : next.altura - Elocal - REFlocal;
+    const alvoAnt =
+      orientacao === "HORIZONTAL" ? vaoLAnt : vaoAAnt;
+    const alvoNovo =
+      orientacao === "HORIZONTAL" ? vaoLNew : vaoANew;
+    setPi(next);
+    if (secoes.length >= 2 && alvoAnt > 0 && alvoAnt !== alvoNovo) {
+      setSecoes((prev) => reescalarSecoes(prev, alvoNovo, alvoAnt, Elocal));
+    } else if (secoes.length === 1) {
+      setSecoes((prev) => [{ ...prev[0], tamanhoMm: Math.round(alvoNovo) }]);
+    }
+  };
+  const removerSecao = (idx: number) => {
+    setSecoes((prev) => {
+      const restantes = prev.filter((_, i) => i !== idx);
+      if (restantes.length === 1) {
+        return [{ ...restantes[0], tamanhoMm: Math.round(alvoSecoes) }];
+      }
+      return ajustarSecoes(restantes, 0, restantes[0].tamanhoMm, alvoSecoes, E);
+    });
+  };
 
   return (
     <div>
@@ -572,24 +716,14 @@ export default function CortePecas() {
           Calculadora do Móvel
         </h3>
 
-        <div style={{ marginBottom: 16 }}>
-          <CampoP label="Nome do Projeto (opcional)">
-            <input
-              placeholder="Ex: Casa do Cliente João"
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-            />
-          </CampoP>
-        </div>
-
         {/* Dimensões */}
-        <div style={grid3}>
+        <div className="grid-responsivo" style={grid3}>
           <CampoP label="Largura (mm)">
             <input
               type="number"
               value={pi.largura || ""}
               onChange={(e) =>
-                setPi((p) => ({ ...p, largura: +e.target.value }))
+                reescalarAoMudarDimensao({ largura: +e.target.value })
               }
             />
           </CampoP>
@@ -598,7 +732,7 @@ export default function CortePecas() {
               type="number"
               value={pi.altura || ""}
               onChange={(e) =>
-                setPi((p) => ({ ...p, altura: +e.target.value }))
+                reescalarAoMudarDimensao({ altura: +e.target.value })
               }
             />
           </CampoP>
@@ -614,7 +748,7 @@ export default function CortePecas() {
         </div>
 
         {/* Tipo e cores */}
-        <div style={grid3}>
+        <div className="grid-responsivo" style={grid3}>
           <CampoP label="Tipo de Móvel">
             <select
               value={pi.tipoMovelIdx}
@@ -666,15 +800,14 @@ export default function CortePecas() {
         </div>
 
         {/* Opções */}
-        <div style={grid3}>
+        <div className="grid-responsivo" style={grid3}>
           <CampoP label="Tipo de Tampo">
             <select
               value={pi.tipoTampo}
               onChange={(e) =>
-                setPi((p) => ({
-                  ...p,
+                reescalarAoMudarDimensao({
                   tipoTampo: e.target.value as "MDF" | "PEDRA",
-                }))
+                })
               }
             >
               <option value="MDF">MDF</option>
@@ -746,7 +879,22 @@ export default function CortePecas() {
                   <button
                     key={o}
                     type="button"
-                    onClick={() => setOrientacao(o)}
+                    onClick={() => {
+                      const alvoAnt =
+                        orientacao === "HORIZONTAL" ? vaoLargura : vaoAltura;
+                      const alvoNovo =
+                        o === "HORIZONTAL" ? vaoLargura : vaoAltura;
+                      setOrientacao(o);
+                      if (secoes.length >= 2 && alvoAnt > 0) {
+                        setSecoes((prev) =>
+                          reescalarSecoes(prev, alvoNovo, alvoAnt, E),
+                        );
+                      } else if (secoes.length === 1) {
+                        setSecoes((prev) => [
+                          { ...prev[0], tamanhoMm: Math.round(alvoNovo) },
+                        ]);
+                      }
+                    }}
                     style={{
                       padding: "5px 12px",
                       borderRadius: "var(--radius-sm)",
@@ -765,6 +913,20 @@ export default function CortePecas() {
               </div>
             )}
           </div>
+
+          {secoes.length >= 2 && (
+            <p
+              style={{
+                fontSize: 11,
+                color: "var(--text-soft)",
+                margin: "0 0 10px",
+              }}
+            >
+              Ao alterar uma seção, as outras ajustam automaticamente para fechar
+              o vão. As folgas de porta ({cfg.folgaPorta ?? 4} mm) são descontadas
+              ao calcular portas e gavetas.
+            </p>
+          )}
 
           {secoes.map((s, idx) => (
             <div
@@ -805,6 +967,7 @@ export default function CortePecas() {
               </div>
 
               <div
+                className="grid-responsivo"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "1fr 1fr",
@@ -872,6 +1035,7 @@ export default function CortePecas() {
                 </CampoP>
               ) : (
                 <div
+                  className="grid-responsivo"
                   style={{
                     display: "grid",
                     gridTemplateColumns:
@@ -1044,6 +1208,7 @@ export default function CortePecas() {
             Escolha o ambiente e adicione ao projeto.
           </p>
           <div
+            className="grid-responsivo"
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr auto",
@@ -1075,7 +1240,7 @@ export default function CortePecas() {
               onClick={adicionarAoProjeto}
               style={{ ...btnSuccess, height: 40 }}
             >
-              ➕ Adicionar ao Projeto
+              Adicionar ao Projeto
             </button>
           </div>
         </div>
@@ -1171,17 +1336,17 @@ export default function CortePecas() {
               disabled={gerandoPdf}
               style={{ ...btnPrimary, opacity: gerandoPdf ? 0.7 : 1 }}
             >
-              {gerandoPdf ? "Gerando..." : "📄 Baixar PDF (Relatório)"}
+              {gerandoPdf ? "Gerando..." : "Baixar PDF (Relatório)"}
             </button>
             <button
               type="button"
               onClick={imprimirRelatorio}
               style={btnOutline}
             >
-              🖨 Imprimir Relatório
+              Imprimir Relatório
             </button>
             <button type="button" onClick={gerarPlano} style={btnOutline}>
-              📐 {planoAberto ? "Atualizar" : "Ver"} Plano de Corte
+              {planoAberto ? "Atualizar" : "Ver"} Plano de Corte
             </button>
             {planoAberto && (
               <button
@@ -1190,12 +1355,12 @@ export default function CortePecas() {
                 disabled={gerandoPdf}
                 style={{ ...btnPrimary, opacity: gerandoPdf ? 0.7 : 1 }}
               >
-                {gerandoPdf ? "Gerando..." : "📄 Baixar PDF (Plano)"}
+                {gerandoPdf ? "Gerando..." : "Baixar PDF (Plano)"}
               </button>
             )}
             {planoAberto && (
               <button type="button" onClick={imprimirPlano} style={btnOutline}>
-                🖨 Imprimir Plano
+                Imprimir Plano
               </button>
             )}
             <button type="button" onClick={usarNoOrcamento} style={btnSuccess}>

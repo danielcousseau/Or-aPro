@@ -239,6 +239,66 @@ html {
   z-index: 100;
 }
 
+/* Botão hambúrguer, botão de fechar e fundo escuro:
+   aparecem só no celular (ativados nas media queries abaixo) */
+.menu-hamburguer,
+.menu-drawer-close,
+.menu-backdrop {
+  display: none;
+}
+
+.menu-hamburguer {
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.menu-hamburguer:hover {
+  background: rgba(0, 86, 163, 0.06);
+}
+
+.menu-drawer-close {
+  align-self: flex-end;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-soft);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  margin-bottom: 4px;
+}
+.menu-drawer-close:hover {
+  background: rgba(0, 86, 163, 0.06);
+  color: var(--primary);
+}
+
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 39;
+  animation: fadeBackdrop 0.2s ease;
+}
+@keyframes fadeBackdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 h1,
 h2,
 h3,
@@ -656,29 +716,86 @@ input[type="number"] {
     position: sticky;
     top: 0;
     flex-direction: row;
-    padding: 6px 12px;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    padding: 8px 14px;
+    /* Empurra a barra pra baixo do relógio/bateria do celular (área segura) */
+    padding-top: calc(8px + env(safe-area-inset-top));
+    /* Mais opaca no celular pra o conteúdo não "vazar" por trás ao rolar */
+    background: rgba(255, 255, 255, 0.95);
     border-right: none;
     border-bottom: 1px solid var(--border);
     border-radius: 0;
   }
 
-  .menu-logo {
-    border-bottom: none;
-    border-right: 1px solid var(--border);
-    padding: 0 14px 0 0;
-    margin-bottom: 0;
+  .menu-hamburguer {
+    display: flex;
+    order: 0;
   }
 
+  /* Logo centralizada no header do celular (hambúrguer à esquerda, avatar à direita) */
+  .menu-logo {
+    order: 1;
+    position: absolute;
+    left: 50%;
+    top: calc(50% + env(safe-area-inset-top) / 2);
+    transform: translate(-50%, -50%);
+    border-bottom: none;
+    border-right: none;
+    padding: 0;
+    margin-bottom: 0;
+  }
+  /* Ao tocar/hover, as regras globais ".menu a:hover" e ".menu-logo:hover"
+     (transform: none) cancelavam a centralização e a logo pulava pra direita.
+     Seletor com especificidade maior mantém a logo parada no centro. */
+  .menu a.menu-logo:hover,
+  .menu a.menu-logo:active {
+    transform: translate(-50%, -50%);
+    background: transparent;
+  }
+
+  /* A lista de links vira um painel que desliza da esquerda */
   .menu-links {
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding-top: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(82vw, 320px);
+    flex-direction: column;
+    flex-wrap: nowrap;
     gap: 4px;
+    padding: 14px;
+    padding-top: calc(14px + env(safe-area-inset-top));
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    box-shadow: var(--shadow-main);
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.28s ease;
+    z-index: 40;
+  }
+  .menu-links-aberto {
+    transform: translateX(0);
+  }
+
+  .menu-drawer-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .menu-backdrop {
+    display: block;
+  }
+
+  /* Dentro do painel, os links ficam maiores e fáceis de tocar */
+  .menu a {
+    padding: 13px 14px;
+    font-size: 0.95rem;
   }
 
   .menu-user {
+    order: 2;
     border-top: none;
     padding-top: 0;
     margin-top: 0;
@@ -695,6 +812,8 @@ input[type="number"] {
 
   .app-main {
     margin-left: 0;
+    /* Impede que qualquer conteúdo largo gere rolagem horizontal no celular */
+    overflow-x: hidden;
   }
 
   .container {
@@ -718,30 +837,16 @@ input[type="number"] {
     font-size: 1.3rem;
   }
 
-  /* Menu mobile: logo pequena + links em scroll horizontal */
+  /* No celular pequeno: barra de topo mais compacta (os links viram painel) */
   .menu {
-    gap: 6px;
-    padding: 6px 10px;
+    gap: 8px;
+    padding: 8px 12px;
+    padding-top: calc(8px + env(safe-area-inset-top));
     top: 0;
   }
 
   .menu-user-name {
     display: none;
-  }
-  .menu-links {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  .menu-links::-webkit-scrollbar {
-    display: none;
-  }
-  .menu a {
-    flex-shrink: 0;
-    white-space: nowrap;
-    padding: 6px 10px;
-    font-size: 0.82rem;
   }
 
   .container {
@@ -776,6 +881,12 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 
+  /* Grades escritas direto no JSX (estilo inline) — força 1 coluna no celular.
+     Precisa de !important porque estilo inline tem prioridade sobre o CSS. */
+  .grid-responsivo {
+    grid-template-columns: 1fr !important;
+  }
+
   .input-group-flex {
     flex-direction: column;
   }
@@ -793,9 +904,6 @@ input[type="number"] {
   .menu-logo img {
     height: 32px;
     width: 32px;
-  }
-  .menu-logo-text {
-    display: none;
   }
 
   /* Modal não vaza a tela em celulares pequenos */
@@ -859,6 +967,15 @@ input[type="number"] {
   .bento-span-2,
   .bento-span-3 {
     grid-column: span 1;
+  }
+  /* Números grandes (moeda) não podem vazar a largura da tela no celular.
+     Prefixo .bento-grid dá especificidade maior que a regra base .dashboard-card h2. */
+  .bento-grid .dashboard-card h2 {
+    font-size: 1.7rem;
+    overflow-wrap: anywhere;
+  }
+  .bento-grid .bento-card-featured h2 {
+    font-size: 2rem;
   }
 }
 
@@ -1248,6 +1365,115 @@ input[type="number"] {
 
 .highlight-success {
   border-left: 4px solid var(--success);
+}
+
+/* Card de atalho: Corte & Peças no orçamento */
+.corte-pecas-cta {
+  margin-bottom: 24px;
+  padding: 20px 22px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.08) 0%,
+    var(--panel-soft) 55%,
+    var(--panel) 100%
+  );
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 18px;
+  align-items: center;
+  box-shadow: var(--shadow-soft);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.corte-pecas-cta:hover {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.12);
+}
+
+.corte-pecas-cta__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--primary);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.corte-pecas-cta__title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-main);
+  margin: 0 0 6px;
+}
+
+.corte-pecas-cta__desc {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-soft);
+  line-height: 1.45;
+}
+
+.corte-pecas-cta__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.corte-pecas-cta__tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--primary);
+}
+
+.corte-pecas-cta__btn {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 14px 20px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.corte-pecas-cta__btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+  color: #fff;
+}
+
+@media (max-width: 720px) {
+  .corte-pecas-cta {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .corte-pecas-cta__icon {
+    margin: 0 auto;
+  }
+
+  .corte-pecas-cta__tags {
+    justify-content: center;
+  }
+
+  .corte-pecas-cta__btn {
+    justify-content: center;
+    width: 100%;
+  }
 }
 
 /* =============================================

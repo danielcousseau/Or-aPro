@@ -74,7 +74,7 @@ export default function ListaMateriais({
               onClick={() => onRemove(mat.idFalso)}
               className="btn-delete btn-remover-material"
             >
-              🗑️ Remover
+              Remover
             </button>
           )}
         </div>
